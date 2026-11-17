@@ -2,9 +2,9 @@
 
 ## 获取和启动
 
-使用适配 Windows x64 的安装程序或便携包。安装后从开始菜单启动；便携包先完整解压，再运行 `Local Video Subtitle Translator.exe`。将启动程序与其运行时目录一起移动。
+使用适配 Windows x64 的安装程序或便携包。安装后从开始菜单启动；便携包先完整解压，再运行 `AheadSubs.exe`。将启动程序与其运行时目录一起移动。
 
-文件名前缀为 `local-video-subtitle-translator-v<版本>-windows-x64`。后缀 `-setup.exe` 为安装程序，`-portable.zip` 为便携包，`-SHA256.txt` 为校验清单。
+文件名前缀为 `aheadsubs-v<版本>-windows-x64`。后缀 `-setup.exe` 为安装程序，`-portable.zip` 为便携包，`-SHA256.txt` 为校验清单。
 
 - **标准版**包含 CPU 所需组件，也支持兼容硬件上的 Qwen3-ASR Vulkan 路线。
 - **CUDA 版**的文件名含 `-cuda`，额外包含 faster-whisper 与 NLLB 所用的 NVIDIA CUDA 运行库。仍需可用的 NVIDIA 驱动。

@@ -1,5 +1,6 @@
-import os
+import io
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -8,6 +9,46 @@ from unittest.mock import patch
 
 @unittest.skipUnless(os.name == "nt", "Desktop runtime requires Windows")
 class DiagnosticsTest(unittest.TestCase):
+    def test_typed_credentials_are_encrypted_and_redacted_by_the_bridge(self):
+        from subtitle_relay.desktop import bridge, credentials, runtime
+
+        test_key = "sk-test-desktop-credential"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with patch.object(runtime, "DATA", root), patch.object(runtime, "CONFIG", root / "settings.json"), \
+                    patch.object(runtime, "service_health", return_value=None):
+                with patch("sys.stdin", io.StringIO(json.dumps({
+                    "openai": {"mode": "direct", "value": test_key},
+                }))):
+                    bridge.run_command("save-credentials")
+                self.assertNotIn(test_key, runtime.CONFIG.read_text(encoding="utf-8"))
+                self.assertEqual(credentials.resolve(runtime.config(), "openai"), test_key)
+                status = bridge.run_command("status")
+                self.assertEqual(status["credentials"]["openai"], {"mode": "direct", "saved": True, "file": ""})
+                self.assertNotIn(credentials.PRIVATE_FIELD, status["settings"])
+                self.assertNotIn(test_key, json.dumps(status))
+
+                key_file = root / "test-key.txt"
+                key_file.write_text("OPENAI_API_KEY=sk-test-from-file\n", encoding="utf-8")
+                settings = runtime.config()
+                credentials.update(settings, {"openai": {"mode": "file", "value": str(key_file)}})
+                self.assertEqual(credentials.resolve(settings, "openai"), "sk-test-from-file")
+                self.assertFalse(credentials.public_state(settings)["openai"]["saved"])
+                credentials.update(settings, {"openai": {"mode": "default"}})
+                with patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test-env"}):
+                    self.assertEqual(credentials.resolve(settings, "openai"), "sk-test-env")
+                self.assertTrue(key_file.is_file())
+
+    def test_compatible_credentials_require_https_away_from_loopback(self):
+        from subtitle_relay.desktop import credentials
+
+        settings = {}
+        credentials.update(settings, {"compatible-asr": {"mode": "direct", "value": "test-asr-key"}})
+        self.assertEqual(credentials.resolve(settings, "compatible-asr", "http://[::1]:8000/v1"), "test-asr-key")
+        self.assertEqual(credentials.resolve(settings, "compatible-asr", "https://example.com/v1"), "test-asr-key")
+        with self.assertRaisesRegex(ValueError, "HTTPS"):
+            credentials.resolve(settings, "compatible-asr", "http://example.com/v1")
+
     def test_manual_player_folder_is_remembered_and_uninstall_removes_only_integration(self):
         from subtitle_relay.desktop import assets, runtime
 

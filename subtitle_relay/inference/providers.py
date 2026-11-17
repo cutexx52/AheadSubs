@@ -65,10 +65,10 @@ def provider_key(key_file, variable, provider):
         try:
             contents = Path(key_file).read_text(encoding="utf-8-sig")
         except (OSError, UnicodeError) as exc:
-            raise ValueError(f"无法读取 {provider} 密钥文件，请在高级设置重新选择。") from exc
+            raise ValueError(f"无法读取 {provider} 密钥文件，请在云端模型页重新选择。") from exc
         match = re.search(r"sk-[A-Za-z0-9_-]+", contents)
         if match is None:
-            raise ValueError(f"密钥文件中没有找到 {provider} API 密钥，请在高级设置重新选择。")
+            raise ValueError(f"密钥文件中没有找到 {provider} API Key，请在云端模型页重新选择。")
         key = match.group(0)
     if not key or not key.strip():
         raise ValueError(f"请选择 {provider} 密钥文件，或设置 {variable}。")
@@ -83,7 +83,7 @@ QWEN_MT_MODELS = ("qwen-mt-flash", "qwen-mt-lite", "qwen-mt-plus")
 DASHSCOPE_DEFAULT_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
 
 
-def qwen_mt_credentials(endpoint, key_file=None):
+def qwen_mt_credentials(endpoint, key_file=None, *, api_key=None):
     endpoint = endpoint.strip().rstrip("/") or DASHSCOPE_DEFAULT_URL
     url = urlsplit(endpoint)
     host = url.hostname or ""
@@ -93,22 +93,22 @@ def qwen_mt_credentials(endpoint, key_file=None):
     if (url.scheme != "https" or not official or url.path != "/compatible-mode/v1"
             or url.netloc != host or url.query or url.fragment):
         raise ValueError("请在云端模型设置填写百炼控制台的 Base URL（以 /compatible-mode/v1 结尾）。")
-    return endpoint, provider_key(key_file, "DASHSCOPE_API_KEY", "百炼")
+    return endpoint, api_key or provider_key(key_file, "DASHSCOPE_API_KEY", "百炼")
 
 
-def qwen_mt_client(endpoint, key_file=None):
+def qwen_mt_client(endpoint, key_file=None, *, api_key=None):
     from openai import OpenAI
 
-    endpoint, key = qwen_mt_credentials(endpoint, key_file)
+    endpoint, key = qwen_mt_credentials(endpoint, key_file, api_key=api_key)
     return OpenAI(api_key=key, base_url=endpoint, timeout=30)
 
 
-def openai_client(key_file=None, endpoint=None, endpoint_key="RELAY_LLM_API_KEY"):
+def openai_client(key_file=None, endpoint=None, endpoint_key="RELAY_LLM_API_KEY", *, api_key=None):
     from openai import OpenAI
 
     if endpoint:
-        return OpenAI(api_key=os.getenv(endpoint_key, "local"), base_url=endpoint, timeout=30)
-    return OpenAI(api_key=openai_key(key_file), base_url="https://api.openai.com/v1", timeout=30)
+        return OpenAI(api_key=api_key or os.getenv(endpoint_key) or "local", base_url=endpoint, timeout=30)
+    return OpenAI(api_key=api_key or openai_key(key_file), base_url="https://api.openai.com/v1", timeout=30)
 
 
 class OpenAIWhisper:

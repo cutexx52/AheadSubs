@@ -38,31 +38,46 @@ class ClockPlayer:
 
 
 def make_relay(args):
+    def desktop_key(provider, endpoint=None):
+        if args.desktop_config is None:
+            return None
+        from .desktop.credentials import resolve
+
+        return resolve(desktop_settings, provider, endpoint)
+
+    desktop_settings = {}
+    if args.desktop_config is not None and args.desktop_config.is_file():
+        desktop_settings = json.loads(args.desktop_config.read_text(encoding="utf-8"))
     dashscope_url = args.qwen_mt_url.strip().rstrip("/") or DASHSCOPE_DEFAULT_URL
     settings = Segmentation(args.before, args.after, args.max_speech, args.min_silence_ms,
                             args.pad_ms, args.vad_threshold, not args.no_vad, args.backfill, args.min_speech)
     if args.device == "cuda" and (args.asr == "local" or args.mt == "local"):
         configure_cuda()
-    cloud = openai_client(args.key_file) if "openai" in (args.asr, args.mt) or args.ast else None
+    cloud = (openai_client(args.key_file, api_key=desktop_key("openai"))
+             if "openai" in (args.asr, args.mt) or args.ast else None)
     recognizer = None
     translator = None
     if not args.ast:
         if args.asr == "local":
             recognizer = FasterWhisper(args.whisper_model, args.device, min(args.workers, 2))
         elif args.asr in {"compatible", "qwen"}:
-            client = openai_client(endpoint=args.asr_url, endpoint_key="RELAY_ASR_API_KEY")
+            key = desktop_key("compatible-asr", args.asr_url) if args.asr == "compatible" else None
+            client = openai_client(endpoint=args.asr_url, endpoint_key="RELAY_ASR_API_KEY", api_key=key)
             recognizer = OpenAIWhisper(client, args.asr_model)
         elif args.asr == "dashscope":
-            recognizer = DashScopeAudio(dashscope_url, args.qwen_mt_key_file, args.dashscope_asr_model)
+            recognizer = DashScopeAudio(dashscope_url, args.qwen_mt_key_file, args.dashscope_asr_model,
+                                        api_key=desktop_key("dashscope"))
         else:
             recognizer = OpenAIWhisper(cloud)
         if args.mt == "local":
             translator = NllbTranslation(args.nllb_model, args.device, min(args.workers, 2))
         elif args.mt == "qwen-mt":
-            translator = QwenMtTranslation(qwen_mt_client(dashscope_url, args.qwen_mt_key_file),
+            translator = QwenMtTranslation(qwen_mt_client(dashscope_url, args.qwen_mt_key_file,
+                                                          api_key=desktop_key("dashscope")),
                                            args.qwen_mt_model)
         else:
-            client = cloud if args.mt == "openai" else openai_client(endpoint=args.llm_url)
+            client = cloud if args.mt == "openai" else openai_client(
+                endpoint=args.llm_url, api_key=desktop_key("compatible-mt", args.llm_url))
             effort = "none" if args.mt == "openai" and args.llm_model.startswith("gpt-6-luna") else None
             translator = ChatTranslation(client, args.llm_model, reasoning_effort=effort)
     profile = ["v3-media-clock", args.asr, args.mt, args.ast, args.whisper_model, args.nllb_model,
@@ -79,7 +94,8 @@ def make_relay(args):
         profile.append(args.vad_model)
     return Relay(args.cache, recognizer, translator, profile, args.workers, args.chunk,
                  OpenAIWhisper(cloud) if args.ast else None, Segmenter(settings, args.vad_model),
-                 translation_settings=TranslationSettings(args.translation_previous_cues, args.translation_prompt))
+                 translation_settings=TranslationSettings(args.translation_previous_cues, args.translation_prompt,
+                                                          args.translation_context_chars))
 
 
 def main():
@@ -103,12 +119,15 @@ def main():
     server.add_argument("--llm-model", default="gpt-4.1-mini")
     server.add_argument("--llm-url", default="http://127.0.0.1:11434/v1")
     server.add_argument("--key-file")
+    server.add_argument("--desktop-config", type=Path, help=argparse.SUPPRESS)
     server.add_argument("--control-token-file", type=Path)
     server.add_argument("--diagnostics", action="store_true", help="Enable detailed service diagnostics")
     server.add_argument("--default-source")
     server.add_argument("--default-target", default="zh")
     server.add_argument("--default-bilingual", action="store_true")
     server.add_argument("--translation-previous-cues", type=int, default=0, choices=range(MAX_CONTEXT_CUES + 1))
+    server.add_argument("--translation-context-chars", type=int, default=TranslationSettings.context_chars,
+                        metavar="CHARS", help="Maximum characters per preceding subtitle cue (20–1000)")
     server.add_argument("--translation-prompt", default="")
     server.add_argument("--pot-hotkey-launcher", type=Path)
     server.add_argument("--cache", default=".relay")

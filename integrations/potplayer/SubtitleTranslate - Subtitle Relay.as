@@ -3,11 +3,11 @@ array<string> relay_languages = {
     "en", "ja", "ko", "zh-CN", "zh-TW", "fr", "de", "es", "ru", "pt"
 };
 
-string GetTitle() { return "Subtitle Relay (local service)"; }
+string GetTitle() { return "AheadSubs (local service)"; }
 string GetVersion() { return "1"; }
-string GetDesc() { return "Translate existing subtitle lines using the running Subtitle Relay service."; }
-string GetLoginTitle() { return "Subtitle Relay"; }
-string GetLoginDesc() { return "Start Subtitle Relay in its Windows settings app. Default port: 8769."; }
+string GetDesc() { return "Translate existing subtitle lines using the running AheadSubs service."; }
+string GetLoginTitle() { return "AheadSubs"; }
+string GetLoginDesc() { return "Start AheadSubs in its Windows settings app. Default port: 8769."; }
 string GetUserText() { return "Loopback server (optional)"; }
 string GetPasswordText() { return ""; }
 array<string> GetSrcLangs() { return relay_languages; }
@@ -19,7 +19,7 @@ string ServerLogin(string User, string Pass) {
         relay_url = User;
     }
     string health = HostUrlGetString(relay_url + "/v1/health", "SubtitleRelay/1");
-    if (health.findFirst("subtitle-relay") < 0) return "503 Start Subtitle Relay first";
+    if (health.findFirst("subtitle-relay") < 0) return "503 Start AheadSubs first";
     return "200 OK";
 }
 
