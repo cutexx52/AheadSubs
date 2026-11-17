@@ -16,7 +16,7 @@ AheadSubs 提前读取即将播放的音频，识别语音、翻译对白，再�
 - **本地、云端或混合使用。** 识别和翻译分别选择。全本地模型下载后在自己的电脑上处理；云端文字翻译上传字幕文本，云端识别上传音频片段。
 - **可读、同步的字幕。** 通过语音检测寻找自然停顿，译文沿用原对白片段的时间；双语 SRT 可将原文放上行、译文放下行。
 - **复用已完成的结果。** 字幕持久化到磁盘，兼容会话复用缓存，不必重复识别、翻译相同内容。临时音频缓冲有界，任务完成即释放。
-- **播放器集成与自动化。** 使用桌面助手和播放器入口，也能通过 CLI、HTTP 播放接口和桌面控制桥接入。每个窗口有独立会话，后台共享模型。
+- **播放器集成与自动化。** 使用桌面助手和播放器入口，也能通过 MCP、CLI、HTTP 播放接口和桌面控制桥接入。每个窗口有独立会话，后台共享模型。
 
 ## 快速开始
 
@@ -58,7 +58,7 @@ AheadSubs 提前读取即将播放的音频，识别语音、翻译对白，再�
 | 本地识别 | Vulkan Qwen3-ASR 0.6B / 1.7B；CPU / 受支持 CUDA 环境的 faster-whisper Small |
 | 本地翻译 | CTranslate2 NLLB 600M INT8 |
 | 云端处理 | 百炼 ASR / Qwen-MT、OpenAI 音频/文本 API、ChatGPT OAuth 文本翻译、MiniMax 文本翻译、兼容端点 |
-| 自动化 | CLI 命令、HTTP v1 播放/文本 API、JSON 桌面控制桥 |
+| 自动化 | MCP/CLI 共用状态、文字翻译、整文件 SRT 生成和播放会话操作；另有 HTTP v1、JSON 桌面桥 |
 | 新集成 | 按播放器适配器或 provider 合约扩展，无需改动其他层 |
 
 在安装好[开发环境](docs/contributing.zh-CN.md)的源码目录：
@@ -69,7 +69,7 @@ python -m subtitle_relay serve --asr local --whisper-model small --mt local --de
 python -m subtitle_relay clock D:\video\clip.mkv --source ja --target en --ahead 20
 ```
 
-服务和模拟播放头分别在两个终端运行。云端 CLI 配置见[后端示例](docs/providers.zh-CN.md)。项目**目前没有内置 MCP server**，Agent 和其他工具可通过现有 CLI、HTTP API 接入，后续可基于这些合约实现 MCP 适配。
+服务和模拟播放头分别在两个终端运行。云端 CLI 配置见[后端示例](docs/providers.zh-CN.md)。Agent 接入：打开 **接入 → 开启 MCP 接入 → 复制 MCP 配置**，添加到受信任的本机客户端。点击 **安装 CLI** 后重开终端即可使用 `aheadsubs`。MCP 与 CLI 共用参数模型和错误码，配置、工具与示例见 [Agent 与命令行接入](docs/automation.zh-CN.md)。
 
 ## 当前支持与性能
 
@@ -87,6 +87,7 @@ python -m subtitle_relay clock D:\video\clip.mkv --source ja --target en --ahead
 | [桌面助手](docs/desktop.zh-CN.md) | 模型、凭据、托盘和诊断 |
 | [字幕调校](docs/tuning.zh-CN.md) | 识别、边界、预读和双语显示 |
 | [模型后端](docs/providers.zh-CN.md) | 本地/云端选择、授权和 provider 合约 |
+| [Agent / CLI 接入](docs/automation.zh-CN.md) | MCP 配置、文本翻译、整文件 SRT 与自动化 |
 | [播放器集成](docs/adapters.zh-CN.md) | PotPlayer、mpv 和新适配器 |
 | [HTTP 协议](docs/server.zh-CN.md) / [架构](docs/architecture.zh-CN.md) | API、会话、时间轴与模块边界 |
 | [开发与贡献](docs/contributing.zh-CN.md) | 开发、测试和 Agent PR 到合并流程 |
