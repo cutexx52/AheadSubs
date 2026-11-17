@@ -9,6 +9,7 @@ from urllib.parse import parse_qs
 
 from ..inference.errors import provider_error
 from .engine import Playback
+from .history import InspectionError
 
 
 def playback_from_json(data, defaults=None):
@@ -67,12 +68,18 @@ def serve(relay, port, control_token=None, playback_defaults=None, *, local_mode
                     self.translate_text(body)
                     return
                 data = json.loads(body)
-                if self.path == "/v1/shutdown":
+                if self.path in {"/v1/shutdown", "/v1/inspection/regenerate"}:
                     supplied = data.get("token")
                     if not control_token or not isinstance(supplied, str) or not compare_digest(
-                        control_token, supplied
+                        control_token.encode(), supplied.encode()
                     ):
-                        self.reply(403, {"error": "shutdown not authorized"})
+                        self.reply(403, {"error": "service control not authorized"})
+                        return
+                    if self.path == "/v1/inspection/regenerate":
+                        key = data.get("key")
+                        if not isinstance(key, str) or not 1 <= len(key) <= 64:
+                            raise ValueError("invalid subtitle version")
+                        self.reply(202, relay.queue_regeneration(key))
                         return
                     self.reply(200, {})
                     Thread(target=self.server.shutdown, daemon=True).start()
@@ -87,6 +94,8 @@ def serve(relay, port, control_token=None, playback_defaults=None, *, local_mode
                     self.reply(200, {})
                 else:
                     self.reply(404, {"error": "unknown route"})
+            except InspectionError as exc:
+                self.reply(409, {"error": str(exc), "error_code": str(exc)})
             except ValueError as exc:
                 self.reply(400, {"error": str(exc)})
             except (TypeError, KeyError, FileNotFoundError):

@@ -81,14 +81,69 @@
     </StackPanel></Border>
     <TextBlock x:Name="ServiceDetail" Text="正在读取服务状态。" Style="{StaticResource Hint}"/><TextBlock x:Name="SessionStatus" Style="{StaticResource Hint}" Margin="0,6,0,0" Visibility="Collapsed"/>
    </StackPanel></ScrollViewer></TabItem>
-   <TabItem Header="字幕检查" x:Name="InspectTab"><Grid Margin="32,28,32,24" TextElement.Foreground="#242A35" TextElement.FontWeight="Normal"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-    <StackPanel><TextBlock Text="查看原文与译文" Style="{StaticResource PageTitle}"/><TextBlock Text="先检查识别结果，再判断翻译质量。这里显示已经生成的字幕。" Style="{StaticResource Hint}" Margin="0,0,0,24"/></StackPanel>
-    <DockPanel Grid.Row="1" Margin="0,0,0,18"><Button x:Name="InspectRefreshButton" Content="刷新字幕" Click="RefreshSubtitles" DockPanel.Dock="Right" Margin="12,0,0,0"/><ComboBox x:Name="MediaChoice" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="InspectMediaChanged" AutomationProperties.Name="检查的视频"/></DockPanel>
-    <DataGrid x:Name="SubtitleRows" Grid.Row="2" SizeChanged="SubtitleSizeChanged" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False" GridLinesVisibility="Horizontal" HeadersVisibility="Column" BorderBrush="#E0E5EC" BorderThickness="1" Background="White" RowBackground="White" AlternatingRowBackground="#FAFBFD" HorizontalGridLinesBrush="#E9EDF2" RowHeaderWidth="0" SelectionMode="Single" EnableRowVirtualization="True">
+   <TabItem x:Name="InspectTab">
+    <Grid Margin="28,24,28,20" TextElement.Foreground="#242A35" TextElement.FontWeight="Normal">
+     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+     <DockPanel Margin="0,0,0,14">
+      <Button x:Name="InspectRefreshButton" DockPanel.Dock="Right" Click="RefreshSubtitles" VerticalAlignment="Center"/>
+      <TextBlock x:Name="InspectTitle" Style="{StaticResource PageTitle}" Margin="0"/>
+     </DockPanel>
+     <Grid Grid.Row="1">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="29*" MinWidth="180" MaxWidth="270"/><ColumnDefinition Width="16"/><ColumnDefinition Width="71*"/></Grid.ColumnDefinitions>
+      <Grid>
+       <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+       <Label x:Name="InspectSearchLabel" Target="{Binding ElementName=MediaSearch}" Padding="0,0,0,4"/>
+       <TextBox x:Name="MediaSearch" Grid.Row="1" TextChanged="InspectFilterChanged" Margin="0,0,0,7" MinHeight="28"/>
+       <ComboBox x:Name="SourceFilter" Grid.Row="2" DisplayMemberPath="Label" SelectedValuePath="Value"
+                 SelectionChanged="InspectFilterChanged" Margin="0,0,0,10"/>
+       <ListBox x:Name="MediaList" Grid.Row="3" SelectedValuePath="Id" SelectionChanged="InspectMediaChanged"
+                Background="White" BorderBrush="#E0E5EC" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+        <ListBox.ItemContainerStyle>
+         <Style TargetType="ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch"/></Style>
+        </ListBox.ItemContainerStyle>
+        <ListBox.ItemTemplate>
+         <DataTemplate>
+          <StackPanel Margin="6,5" ToolTip="{Binding Path}">
+           <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+           <TextBlock Text="{Binding Location}" FontSize="12" Foreground="#526076" TextTrimming="CharacterEllipsis"/>
+          </StackPanel>
+         </DataTemplate>
+        </ListBox.ItemTemplate>
+       </ListBox>
+      </Grid>
+      <Grid x:Name="InspectDetails" Grid.Column="2" Visibility="Collapsed">
+       <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+       <StackPanel>
+        <TextBlock x:Name="InspectFileName" Style="{StaticResource Section}" Margin="0,0,0,3" TextTrimming="CharacterEllipsis"/>
+        <TextBlock x:Name="InspectPath" Style="{StaticResource Hint}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="0,0,0,9"/>
+        <DockPanel>
+         <Label x:Name="InspectVersionLabel" Target="{Binding ElementName=VersionChoice}" Padding="0,4,8,4" VerticalAlignment="Center"/>
+         <ComboBox x:Name="VersionChoice" DisplayMemberPath="Label" SelectedValuePath="Value"
+                   SelectionChanged="InspectVersionChanged"/>
+        </DockPanel>
+        <WrapPanel Margin="0,9,0,0">
+         <TextBlock x:Name="InspectSource" Margin="0,0,18,4"/>
+         <TextBlock x:Name="InspectCoverage" Margin="0,0,0,4"/>
+        </WrapPanel>
+        <TextBlock x:Name="InspectTargets" Style="{StaticResource Hint}" Margin="0,0,0,3"/>
+        <TextBlock x:Name="InspectGenerationState" Style="{StaticResource Hint}" AutomationProperties.LiveSetting="Polite"/>
+       </StackPanel>
+       <WrapPanel Grid.Row="1" Margin="0,9,0,8">
+        <Button x:Name="InspectRegenerate" Click="RegenerateSubtitle" Margin="0,0,7,3"/>
+        <Button x:Name="InspectOpen" Click="OpenSubtitle" Margin="0,0,7,3"/>
+        <Button x:Name="InspectSave" Click="SaveSubtitle" Margin="0,0,0,3"/>
+       </WrapPanel>
+       <TextBlock x:Name="InspectPreviewNote" Grid.Row="2" Style="{StaticResource Hint}" Margin="0,0,0,5"/>
+       <DataGrid x:Name="SubtitleRows" Grid.Row="3" SizeChanged="SubtitleTableResized" HorizontalScrollBarVisibility="Disabled" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False" GridLinesVisibility="Horizontal" HeadersVisibility="Column" BorderBrush="#E0E5EC" BorderThickness="1" Background="White" RowBackground="White" AlternatingRowBackground="#FAFBFD" HorizontalGridLinesBrush="#E9EDF2" RowHeaderWidth="0" SelectionMode="Single" EnableRowVirtualization="True">
      <DataGrid.Resources><Style TargetType="DataGridCell"><Setter Property="Padding" Value="12,10"/><Setter Property="BorderThickness" Value="0"/></Style><Style TargetType="DataGridColumnHeader"><Setter Property="Padding" Value="12"/><Setter Property="Background" Value="#EEF1F6"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="BorderThickness" Value="0"/></Style></DataGrid.Resources>
-     <DataGrid.Columns><DataGridTextColumn Header="时间" Binding="{Binding Time}" Width="100" MinWidth="100"/><DataGridTextColumn Header="识别原文" Binding="{Binding Original}" Width="*" MinWidth="180"><DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/><Setter Property="Margin" Value="12,10"/></Style></DataGridTextColumn.ElementStyle></DataGridTextColumn><DataGridTextColumn Header="翻译字幕" Binding="{Binding Translation}" Width="*" MinWidth="180"><DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/><Setter Property="Margin" Value="12,10"/></Style></DataGridTextColumn.ElementStyle></DataGridTextColumn></DataGrid.Columns>
-    </DataGrid><TextBlock x:Name="InspectStatus" Grid.Row="3" Text="点击刷新，读取最近的视频字幕。" Style="{StaticResource Hint}" Margin="0,12,0,0" AutomationProperties.LiveSetting="Polite"/>
-   </Grid></TabItem>
+     <DataGrid.Columns><DataGridTextColumn x:Name="InspectTimeColumn" Binding="{Binding Time}" Width="94"/><DataGridTextColumn x:Name="InspectOriginalColumn" Binding="{Binding Original}" Width="*" MinWidth="112"><DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/><Setter Property="Margin" Value="12,10"/></Style></DataGridTextColumn.ElementStyle></DataGridTextColumn><DataGridTextColumn x:Name="InspectTranslationColumn" Binding="{Binding Translation}" Width="*" MinWidth="112"><DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/><Setter Property="Margin" Value="12,10"/></Style></DataGridTextColumn.ElementStyle></DataGridTextColumn></DataGrid.Columns>
+    </DataGrid>
+      </Grid>
+     </Grid>
+     <TextBlock x:Name="InspectStatus" Grid.Row="2" Style="{StaticResource Hint}" Margin="0,10,0,0" AutomationProperties.LiveSetting="Polite"/>
+    </Grid>
+   </TabItem>
    <TabItem Header="播放器" x:Name="PlayersTab"><ScrollViewer Style="{StaticResource PageScroll}"><StackPanel>
     <TextBlock Text="播放器" Style="{StaticResource PageTitle}"/>
     <Border Style="{StaticResource Card}"><StackPanel>

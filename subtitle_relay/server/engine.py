@@ -5,18 +5,21 @@ import math
 import os
 import sqlite3
 import subprocess
+import tempfile
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import closing
 from dataclasses import asdict, dataclass, replace
 from itertools import chain, groupby
 from pathlib import Path
+from uuid import uuid4
 
 from ..inference.audio import Segmentation, make_wav
 from ..inference.errors import provider_error
 from ..inference.providers import Cue, NLLB_LANGUAGES
 from ..inference.recognition_cache import RecognitionCache
-from .history import create_history, remember_failed_cues, remember_media
+from .history import InspectionError, create_history, remember_failed_cues, remember_media
 
 
 BILINGUAL_SUFFIX = "-bilingual-v3"
@@ -117,9 +120,10 @@ def _translate_cues(cues, translator, language, target, *, previous=(), prompt="
             raise ValueError("Translation returned incomplete subtitle lines")
     except Exception as exc:
         if provider_error(exc).kind == "content_blocked":
-            return [Cue(cue.start, cue.end, "", cue.text, "content_blocked") for cue in cues]
+            return [Cue(cue.start, cue.end, "", cue.text, "content_blocked",
+                        source_language=cue.source_language or language) for cue in cues]
         raise TranslationFailure(cues) from exc
-    return [Cue(cue.start, cue.end, text, cue.text, source_language=language)
+    return [Cue(cue.start, cue.end, text, cue.text, source_language=cue.source_language or language)
             for cue, text in zip(cues, texts, strict=True)]
 
 
@@ -179,7 +183,8 @@ def translate_chunk(playback, index, chunk, recognizer, translator, speech_trans
         for cue in cues:
             # Assign each overlapping cue to one chunk by its original midpoint.
             midpoint = base + (cue.start + cue.end) / 2
-            absolute = Cue(max(base, base + cue.start), min(end, base + cue.end), cue.text)
+            absolute = Cue(max(base, base + cue.start), min(end, base + cue.end), cue.text,
+                           source_language=None if speech_translator else cue.source_language or language)
             if absolute.end <= absolute.start or not clear_dialogue(absolute.text):
                 continue
             if (owns_span if margin else start <= midpoint < stop):
@@ -234,6 +239,25 @@ class Session:
     updated: float
 
 
+@dataclass
+class Regeneration:
+    key: str
+    playback: Playback
+    size: int
+    mtime_ns: int
+    count: int
+    index: int = 0
+
+    def check_media(self):
+        try:
+            info = self.playback.path.stat()
+        except OSError as exc:
+            raise InspectionError("inspection_media_changed") from exc
+        if (info.st_size, info.st_mtime_ns) != (self.size, self.mtime_ns):
+            raise InspectionError("inspection_media_changed")
+        return info
+
+
 def merge_cues(cues):
     return list(merge_ordered_cues(sorted(cues, key=lambda cue: (cue.start, cue.end))))
 
@@ -284,6 +308,39 @@ def display_cues(cues, duration=None):
         current = following
 
 
+def render_srt(db, key, path, duration, source, target, *, bilingual=False, require_cues=False):
+    with closing(db.execute(
+        "SELECT entry.value FROM chunks JOIN json_each(chunks.cues) AS entry "
+        "WHERE chunks.key=? AND json_extract(entry.value, '$.status') IS NULL "
+        "ORDER BY json_extract(entry.value, '$.start'), json_extract(entry.value, '$.end'), chunks.idx",
+        (key,),
+    )) as rows:
+        cues = merge_ordered_cues(Cue(**json.loads(value)) for (value,) in rows)
+        visible = (cue for cue in cues if cue.text.strip() and clear_dialogue(cue.text)
+                   and clear_dialogue(cue.original or cue.text))
+        displayed = display_cues(visible, duration)
+        first = next(displayed, None)
+        if first is None and require_cues:
+            return False
+        output = tempfile.NamedTemporaryFile(dir=path.parent, suffix=".tmp", delete=False,
+                                             mode="w", encoding="utf-8", newline="\r\n")
+        temporary = Path(output.name)
+        try:
+            with output:
+                for index, cue in enumerate(chain((first,), displayed) if first else (), 1):
+                    translated = " ".join(cue.text.splitlines())
+                    original = " ".join((cue.original or "").splitlines())
+                    if bilingual and original:
+                        subtitle_source = subtitle_label(cue.source_language or source, "原文")
+                        subtitle_target = subtitle_label(target, "译文")
+                        translated = f"[{subtitle_source}] {original}\n[{subtitle_target}] {translated}"
+                    output.write(f"{index}\n{srt_time(cue.start)} --> {srt_time(cue.end)}\n{translated}\n\n")
+            os.replace(temporary, path)
+        finally:
+            temporary.unlink(missing_ok=True)
+    return True
+
+
 class Relay:
     def __init__(self, root, recognizer, translator, profile, workers=4, chunk=8,
                  speech_translator=None, segmenter=None, *, translation_settings=TranslationSettings()):
@@ -302,12 +359,14 @@ class Relay:
         self.db.execute("CREATE TABLE IF NOT EXISTS chunks (key TEXT, idx INTEGER, cues TEXT, "
                         "PRIMARY KEY (key, idx))")
         create_history(self.db)
+        self.db.execute("UPDATE media SET state='interrupted' WHERE state IN ('queued', 'running')")
         self.db.commit()
         self.pool = ThreadPoolExecutor(max_workers=workers)
         self.sessions = {}
         self.inflight = set()
         self.errors = {}
         self.rendered = {}
+        self.regeneration = None
         self.stopping = threading.Event()
         self.scheduler = threading.Thread(target=self._run, daemon=True)
         self.scheduler.start()
@@ -316,15 +375,63 @@ class Relay:
         self.stopping.set()
         self.scheduler.join()
         self.pool.shutdown(wait=True)
+        if self.regeneration is not None:
+            self._end_regeneration("interrupted")
         self.db.close()
 
-    def _identity(self, playback):
-        info = playback.path.stat()
+    def _identity(self, playback, info=None):
+        if info is None:
+            info = playback.path.stat()
         identity = [self.profile, self.chunk, os.path.normcase(str(playback.path)),
                     info.st_size, info.st_mtime_ns, playback.audio, playback.source, playback.target]
         if self.translation_settings != TranslationSettings():
             identity.append(["translation-context-v3", asdict(self.translation_settings)])
         return hashlib.sha256(json.dumps(identity).encode()).hexdigest()
+
+    def queue_regeneration(self, selected):
+        from ..automation import OperationError, media_duration
+
+        with self.lock:
+            if self.regeneration is not None:
+                raise InspectionError("inspection_busy")
+            row = self.db.execute(
+                "SELECT path, size, mtime_ns, audio, source, target FROM media WHERE key=?",
+                (selected,),
+            ).fetchone()
+        if not row or not row[0]:
+            raise InspectionError("inspection_path_unknown")
+        path, size, mtime_ns, audio, source, target = row
+        playback = Playback(Path(path), 0, audio, source=source, target=target)
+        task = Regeneration(uuid4().hex, playback, size, mtime_ns, 0)
+        task.check_media()
+        try:
+            duration = media_duration(playback.path, audio, 15)
+        except (OperationError, subprocess.TimeoutExpired) as exc:
+            raise InspectionError("inspection_probe_failed") from exc
+        with self.lock:
+            if self.regeneration is not None:
+                raise InspectionError("inspection_busy")
+            info = task.check_media()
+            task.playback = replace(playback, duration=duration)
+            task.count = math.ceil(duration / self.chunk)
+            remember_media(self.db, task.key, task.playback, self.speech_translator is None,
+                           info, self.chunk, state="queued")
+            self.regeneration = task
+        return {"key": task.key}
+
+    def _end_regeneration(self, state, error_code=None):
+        self.db.execute("UPDATE media SET state=?, error_code=? WHERE key=?",
+                        (state, error_code, self.regeneration.key))
+        self.db.commit()
+        self.regeneration = None
+
+    def _regenerate_chunk(self, task):
+        task.check_media()
+        try:
+            return translate_chunk(task.playback, task.index, self.chunk, self.recognizer, self.translator,
+                                   self.speech_translator, self.segmenter, self.translation_settings)
+        finally:
+            task.check_media()
 
     def _render(self, key, playback):
         suffix = BILINGUAL_SUFFIX if playback.bilingual else DISPLAY_SUFFIX
@@ -335,36 +442,19 @@ class Relay:
             return path, 0
         render_key = (key, playback.bilingual)
         if self.rendered.get(render_key) != revision or not path.exists():
-            rows = self.db.execute(
-                "SELECT entry.value FROM chunks JOIN json_each(chunks.cues) AS entry "
-                "WHERE chunks.key=? AND json_extract(entry.value, '$.status') IS NULL "
-                "ORDER BY json_extract(entry.value, '$.start'), json_extract(entry.value, '$.end'), chunks.idx",
-                (key,))
-            cues = merge_ordered_cues(Cue(**json.loads(value)) for (value,) in rows)
-            def content(cue):
-                translated = " ".join(cue.text.splitlines())
-                original = " ".join((cue.original or "").splitlines())
-                if playback.bilingual and original:
-                    source = subtitle_label(cue.source_language or playback.source, "原文")
-                    target = subtitle_label(playback.target, "译文")
-                    return f"[{source}] {original}\n[{target}] {translated}"
-                return translated
-
-            temp = path.with_suffix(f".{os.getpid()}.tmp")
-            visible = (cue for cue in cues if clear_dialogue(cue.text) and clear_dialogue(cue.original or cue.text))
-            with temp.open("w", encoding="utf-8", newline="\r\n") as output:
-                for index, cue in enumerate(display_cues(visible, playback.duration), 1):
-                    output.write(f"{index}\n{srt_time(cue.start)} --> {srt_time(cue.end)}\n{content(cue)}\n\n")
-            os.replace(temp, path)
+            render_srt(self.db, key, path, playback.duration, playback.source, playback.target,
+                       bilingual=playback.bilingual)
             self.rendered[render_key] = revision
         return path, revision
 
     def update(self, identifier, playback):
-        key = self._identity(playback)
+        info = playback.path.stat()
+        key = self._identity(playback, info)
         with self.lock:
             previous = self.sessions.get(identifier)
-            if previous is None or previous.key != key:
-                remember_media(self.db, key, playback, self.speech_translator is None)
+            if (previous is None or previous.key != key
+                    or playback.duration is not None and playback.duration != previous.playback.duration):
+                remember_media(self.db, key, playback, self.speech_translator is None, info, self.chunk)
             self.sessions[identifier] = Session(playback, key, time.monotonic())
             path, revision = self._render(key, playback)
             index = int(playback.position // self.chunk)
@@ -417,6 +507,16 @@ class Relay:
         self.errors = {job: detail for job, detail in self.errors.items() if job[0] in active}
         if self.recognition_cache and not active:
             self.recognition_cache.clear_completed()
+        if not active and not self.inflight and self.regeneration is not None:
+            task = self.regeneration
+            if task.index == 0:
+                self.db.execute("UPDATE media SET state='running' WHERE key=?", (task.key,))
+                self.db.commit()
+            job = (task.key, task.index)
+            self.inflight.add(job)
+            future = self.pool.submit(self._regenerate_chunk, task)
+            future.add_done_callback(lambda result: self._finish(job, result, regeneration=task))
+            return
         candidates = {}
         for session in self.sessions.values():
             playback, key = session.playback, session.key
@@ -444,7 +544,7 @@ class Relay:
                                       self.translation_settings, self.recognition_cache)
             future.add_done_callback(lambda result, job=job: self._finish(job, result))
 
-    def _finish(self, job, future):
+    def _finish(self, job, future, *, regeneration=None):
         with self.lock:
             try:
                 cues = future.result()
@@ -453,6 +553,10 @@ class Relay:
                 self.db.execute("DELETE FROM failed_cues WHERE key=? AND idx=?", job)
                 self.db.commit()
                 self.errors.pop(job, None)
+                if regeneration is not None:
+                    regeneration.index += 1
+                    if regeneration.index == regeneration.count:
+                        self._end_regeneration("complete")
                 logging.getLogger(__name__).info("Processed media=%s start=%.1fs cues=%d",
                                                  job[0][:10], job[1] * self.chunk, len(cues))
             except Exception as exc:
@@ -462,8 +566,11 @@ class Relay:
                     error = provider_error(exc, default="translation_failed")
                     remember_failed_cues(self.db, job, [replace(cue, status=error.kind) for cue in exc.cues])
                 detail = f"{error}（{error.http_status}）" if error.http_status else str(error)
-                retry_at = math.inf if error.kind == "content_blocked" else time.monotonic() + 15
-                self.errors[job] = (retry_at, detail, error.kind)
+                if regeneration is not None:
+                    self._end_regeneration("failed", str(exc) if isinstance(exc, InspectionError) else error.kind)
+                else:
+                    retry_at = math.inf if error.kind == "content_blocked" else time.monotonic() + 15
+                    self.errors[job] = (retry_at, detail, error.kind)
                 logging.getLogger(__name__).warning("Chunk failed media=%s start=%.1fs error=%s type=%s status=%s",
                                                     job[0][:10], job[1] * self.chunk, error.kind,
                                                     type(exc).__name__, error.http_status)

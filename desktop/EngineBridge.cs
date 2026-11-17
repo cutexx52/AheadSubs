@@ -4,6 +4,8 @@ using System.Text.Json.Nodes;
 
 namespace LocalVideoSubtitleTranslator;
 
+internal sealed class InspectionBridgeException(string message) : InvalidOperationException(message);
+
 /// <summary>The desktop never imports engine code or reads secrets. Commands use one JSON response.</summary>
 internal sealed class EngineBridge
 {
@@ -58,8 +60,13 @@ internal sealed class EngineBridge
         catch (System.Text.Json.JsonException)
         { throw new InvalidOperationException("后台没有返回有效结果。请在高级设置中打开诊断日志后重试。"); }
         if (data is null || data["ok"]?.GetValue<bool>() != true)
-            throw new InvalidOperationException(SetupText.Error(data?["error_code"]?.ToString())
+        {
+            string? code = data?["error_code"]?.ToString();
+            if (command.StartsWith("inspect-", StringComparison.Ordinal) && InspectionText.Error(code) is { } message)
+                throw new InspectionBridgeException(message);
+            throw new InvalidOperationException(SetupText.Error(code)
                 ?? data?["error"]?.ToString() ?? "后台操作失败，请查看诊断日志。");
+        }
         return data;
     }
 }

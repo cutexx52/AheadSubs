@@ -1,4 +1,4 @@
-# Windows setup presets
+# Windows desktop guide
 
 [简体中文](../desktop.md)
 
@@ -6,9 +6,11 @@
 
 Open **Subtitle inspection** to search by file name or path and filter by primary source language. History groups records by their stored path and opens the newest version by default. You can switch to an older version. Moving a file creates a new entry. Older records with only a file name stay separate until a playback with the same cache settings records their path.
 
-Coverage is the share of the selected version's media duration that has been processed, including silence. It is unknown when duration is unavailable. The primary source language comes from recognition results when the provider supplies it. The listed subtitle languages reflect the available target subtitles across versions of the file.
+Coverage is the share of the selected version's media duration that has been processed, including silence. It is unknown when duration is unavailable. The primary source language is based on the duration of the recognized cues with a reported language. The filter uses the most recent version with a reported language for each file. The listed subtitle languages reflect the available target subtitles across versions of the file.
 
-**Regenerate** creates a fresh version using the selected version's audio track and languages and the running service's models. The service processes one chunk at a time while playback sessions are idle. Previous versions stay available. You can open or save an SRT for the selected version, including partial results.
+**Regenerate** creates a fresh version using the selected version's audio track and languages and the running service's models. The service accepts one regeneration at a time and starts the next chunk only while playback sessions are idle. If generation stops or the service exits, previously saved chunks and versions remain available. Refresh to check the status and retry. Play moved or replaced media to record it again.
+
+**Open SRT** opens the selected version's target subtitles in Notepad. **Save SRT** exports all generated target subtitles for that version, including partial results. Recorded paths, generation state, and subtitles are kept in the local cache.
 
 ## Setup presets
 
