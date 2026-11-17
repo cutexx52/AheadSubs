@@ -11,7 +11,7 @@
    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Expander">
     <Border Background="White" BorderBrush="#E3E7ED" BorderThickness="1" CornerRadius="6">
      <StackPanel>
-      <ToggleButton Content="{TemplateBinding Header}" IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+      <ToggleButton Content="{TemplateBinding Header}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
        <ToggleButton.Template><ControlTemplate TargetType="ToggleButton">
         <Border x:Name="HeaderFrame" CornerRadius="5" Padding="12,7" Background="Transparent" BorderThickness="1" BorderBrush="Transparent">
          <DockPanel><Path x:Name="Chevron" Data="M 0,0 L 4,4 L 8,0" Stroke="#526076" StrokeThickness="1.25" VerticalAlignment="Center" DockPanel.Dock="Right" Margin="8,0,0,0"/><ContentPresenter VerticalAlignment="Center"/></DockPanel>

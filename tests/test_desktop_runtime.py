@@ -26,7 +26,7 @@ class DiagnosticsTest(unittest.TestCase):
                 self.assertEqual(bridge.check_requirements("dashscope", "https://example.org"), {"missing": ["dashscope"]})
 
     def test_qwen_model_uninstall_protects_running_route_and_shared_assets(self):
-        from subtitle_relay.desktop import assets, bridge, runtime
+        from subtitle_relay.desktop import assets, bridge
         from subtitle_relay.inference.qwen import paths
 
         with tempfile.TemporaryDirectory() as directory:
@@ -37,16 +37,19 @@ class DiagnosticsTest(unittest.TestCase):
             for path in (executable, model, aligner, smaller):
                 path.touch()
             with patch.object(assets, "DATA", root), patch.object(assets, "QWEN", root), \
-                    patch.object(assets, "config", return_value={**runtime.DEFAULTS, "asr": "qwen"}), \
-                    patch.object(assets, "healthy", side_effect=[True, False]):
-                with self.assertRaises(ValueError):
-                    assets.uninstall_model("qwen-1.7b", bridge.MODELS["qwen-1.7b"])
+                    patch.object(assets, "service_health", side_effect=[{}, {"local_models": ["qwen-1.7b"]},
+                                                                       {"local_models": ["qwen-0.6b"]}]):
+                for _ in range(2):
+                    with self.assertRaises(assets.ModelRemovalError) as error:
+                        assets.uninstall_model("qwen-1.7b", bridge.MODELS["qwen-1.7b"])
+                    self.assertEqual(error.exception.code, "uninstall-active")
                 self.assertTrue(model.exists())
                 assets.uninstall_model("qwen-1.7b", bridge.MODELS["qwen-1.7b"])
             self.assertFalse(model.exists())
             self.assertTrue(all(path.exists() for path in (executable, aligner, smaller)))
 
     def test_uninstall_targets_only_the_selected_hugging_face_repository(self):
+        from huggingface_hub.utils import DeleteCacheStrategy
         from subtitle_relay.desktop import assets, bridge
 
         with tempfile.TemporaryDirectory() as directory:
@@ -57,7 +60,10 @@ class DiagnosticsTest(unittest.TestCase):
                 model.parent.mkdir(parents=True)
                 model.touch()
             with patch.object(assets, "DATA", root), patch.object(assets, "model_hub", return_value=hub), \
-                    patch.object(assets, "healthy", return_value=False):
+                    patch.object(assets, "service_health", return_value=None):
+                with patch.object(DeleteCacheStrategy, "execute"), self.assertRaises(assets.ModelRemovalError) as error:
+                    assets.uninstall_model("whisper-small", bridge.MODELS["whisper-small"])
+                self.assertEqual(error.exception.code, "uninstall-failed")
                 assets.uninstall_model("whisper-small", bridge.MODELS["whisper-small"])
             self.assertFalse((hub / "models--Systran--faster-whisper-small").exists())
             self.assertTrue((hub / "models--Adom4600--nllb-200-distilled-600M-ct2-int8").exists())

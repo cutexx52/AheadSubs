@@ -34,6 +34,7 @@ internal static class SetupText
         ["applied"] = ("Preset applied.", "已应用方案。"),
         ["downloading"] = ("Downloading {0}…", "正在下载 {0}…"),
         ["downloaded"] = ("Download complete.", "下载完成。"),
+        ["download-failed"] = ("Download failed. Check your connection and available disk space, then retry.", "下载失败。请检查网络连接和剩余磁盘空间，再重试。"),
         ["needed"] = ("Required by the selected preset", "所选方案需要"),
         ["model-page"] = ("Local models", "本地模型"),
         ["model-asr"] = ("Speech recognition", "语音识别"),
@@ -47,6 +48,9 @@ internal static class SetupText
         ["uninstall-ask"] = ("Uninstall {0}? Models in the shared Hugging Face cache may also be used by other apps.", "卸载 {0}？其他应用也可能在使用 Hugging Face 共享缓存里的模型。"),
         ["uninstall-ask-local"] = ("Uninstall {0}?", "卸载 {0}？"),
         ["uninstall-active"] = ("Switch to another model or stop the subtitle service before uninstalling this model.", "请先切换模型或停止字幕服务，再卸载这个模型。"),
+        ["uninstall-incomplete"] = ("This model's cache is incomplete and could not be removed.", "缓存不完整，无法卸载这个模型。"),
+        ["uninstall-location"] = ("The cache path is outside this model's repository.", "缓存位置不属于这个模型，无法卸载。"),
+        ["uninstall-failed"] = ("Could not remove the model cache. Close other apps using it and try again.", "模型缓存未能完全删除，请关闭其他正在使用它的应用后重试。"),
         ["uninstalling"] = ("Uninstalling {0}…", "正在卸载 {0}…"),
         ["uninstalled"] = ("Model uninstalled.", "已卸载模型。"),
         ["model-info"] = ("{0} · about {1:0.00} GB", "{0} · 约 {1:0.00} GB"),
@@ -60,6 +64,8 @@ internal static class SetupText
     };
 
     internal static string Get(string key, params object[] args) => Format(CultureInfo.CurrentUICulture, key, args);
+
+    internal static string? Error(string? key) => key is not null && Resources.ContainsKey(key) ? Get(key) : null;
 
     internal static string Format(CultureInfo culture, string key, params object[] args)
     {

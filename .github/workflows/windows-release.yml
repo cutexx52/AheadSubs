@@ -35,7 +35,7 @@ jobs:
       - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
         with:
           dotnet-version: '10.0.x'
-      - run: python -m pip install .
+      - run: python -m pip install . huggingface-hub
       - run: python -m unittest discover -s tests -v
       - name: Stage and verify the distribution
         env:

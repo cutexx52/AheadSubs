@@ -4,7 +4,14 @@ import winreg
 from dataclasses import replace
 from pathlib import Path
 
-from .runtime import DATA, LAUNCHER, PORT, PYTHON, ROOT, QWEN, config, healthy, lock_service, save_config
+from .runtime import DATA, LAUNCHER, PORT, PYTHON, ROOT, QWEN, config, lock_service, save_config, service_health
+
+MODELS = {
+    "qwen-0.6b": "[本地] Qwen3-ASR 0.6B",
+    "qwen-1.7b": "[本地] Qwen3-ASR 1.7B",
+    "whisper-small": "[本地] Whisper Small",
+    "nllb": "[本地] NLLB-200 600M INT8",
+}
 
 LOCAL_MODELS = {
     "[本地] Whisper Small": "Systran/faster-whisper-small",
@@ -15,6 +22,12 @@ MODEL_ASSETS = {
     "[本地] NLLB-200 600M INT8": ("config.json", "model.bin", "tokenizer.json", "shared_vocabulary.json"),
 }
 QWEN_LABELS = {"[本地] Qwen3-ASR 0.6B": "0.6b", "[本地] Qwen3-ASR 1.7B": "1.7b"}
+
+
+class ModelRemovalError(ValueError):
+    def __init__(self, code, message):
+        super().__init__(message)
+        self.code = code
 
 
 def model_hub():
@@ -45,19 +58,22 @@ def install_model(label):
         snapshot_download(LOCAL_MODELS[label])
 
 
-def active_models(settings):
-    if settings["route"] != "asr+mt":
+def active_models(health):
+    if health is None:
         return set()
-    speech = {"qwen": "qwen-" + settings["qwen_size"], "local": "whisper-small"}.get(settings["asr"])
-    return {speech, "nllb" if settings["mt"] == "local" else None} - {None}
+    active = health.get("local_models")
+    if isinstance(active, list) and all(isinstance(model, str) for model in active):
+        return set(active) & MODELS.keys()
+    # An older service cannot report its loaded models.
+    return set(MODELS)
 
 
 def uninstall_model(model_id, label):
     DATA.mkdir(parents=True, exist_ok=True)
     with (DATA / "starting.lock").open("a+b") as startup:
         lock_service(startup, wait=True)
-        if healthy() and model_id in active_models(config()):
-            raise ValueError("请先切换模型或停止字幕服务，再卸载这个模型。")
+        if model_id in active_models(service_health()):
+            raise ModelRemovalError("uninstall-active", "请先切换模型或停止字幕服务，再卸载这个模型。")
         if label in QWEN_LABELS:
             from ..inference.qwen import paths
 
@@ -75,12 +91,17 @@ def uninstall_model(model_id, label):
         cache = replace(cache, repos=repos)
         commits = {revision.commit_hash for repo in repos for revision in repo.revisions}
         if not commits:
-            raise ValueError("缓存不完整，无法卸载这个模型。")
+            raise ModelRemovalError("uninstall-incomplete", "缓存不完整，无法卸载这个模型。")
         removal = cache.delete_revisions(*commits)
         for path in removal.repos | removal.snapshots | removal.refs | removal.blobs:
             if not path.resolve().is_relative_to(repository) or not path.resolve().is_relative_to(hub):
-                raise ValueError("缓存位置不属于这个模型，无法卸载。")
+                raise ModelRemovalError("uninstall-location", "缓存位置不属于这个模型，无法卸载。")
+        for path in getattr(removal, "files", ()):
+            if not path.parent.resolve().is_relative_to(repository):
+                raise ModelRemovalError("uninstall-location", "缓存位置不属于这个模型，无法卸载。")
         removal.execute()
+        if repository.exists():
+            raise ModelRemovalError("uninstall-failed", "模型缓存未能完全删除，请关闭其他正在使用它的应用后重试。")
 
 
 def mpv_directory():

@@ -40,14 +40,14 @@ def playback_from_json(data, defaults=None):
                     source or None, target, ahead, bilingual)
 
 
-def serve(relay, port, control_token=None, playback_defaults=None):
+def serve(relay, port, control_token=None, playback_defaults=None, *, local_models=None):
     text_slots = BoundedSemaphore(2)
 
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
             if self.path == "/v1/health":
                 self.reply(200, {"service": "subtitle-relay", "pid": os.getpid(),
-                                 "active_sessions": relay.active_sessions()})
+                                 "active_sessions": relay.active_sessions(), "local_models": local_models})
             else:
                 self.reply(404, {"error": "unknown route"})
 

@@ -7,19 +7,12 @@ import sys
 from contextlib import redirect_stdout
 
 from . import assets, credentials, hardware, runtime
+from .assets import MODELS
 from ..inference.chatgpt_auth import ChatGPTAccounts
 from ..inference.dashscope import DASHSCOPE_ASR_MODELS
 from ..inference.providers import MINIMAX_MODEL, QWEN_MT_MODELS, qwen_mt_credentials
 from ..server.engine import TranslationSettings
 from ..server.history import inspect_cache
-
-
-MODELS = {
-    "qwen-0.6b": "[本地] Qwen3-ASR 0.6B",
-    "qwen-1.7b": "[本地] Qwen3-ASR 1.7B",
-    "whisper-small": "[本地] Whisper Small",
-    "nllb": "[本地] NLLB-200 600M INT8",
-}
 
 
 def status():
@@ -35,7 +28,7 @@ def status():
             "credentials": credentials.public_state(settings),
             "chatgpt_accounts": accounts, "minimax_model": MINIMAX_MODEL,
             "models": {model: assets.model_ready(label) for model, label in MODELS.items()},
-            "active_models": sorted(assets.active_models(settings)) if health else [],
+            "active_models": sorted(assets.active_models(health)),
             "potplayer_detected": integrations["potplayer"]["detected"], "integrations": integrations,
             "ffmpeg_detected": bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))}
 
@@ -229,10 +222,14 @@ def main():
     try:
         with redirect_stdout(sys.stderr):
             result.update(run_command(args.command, args.item, args.folder))
+    except assets.ModelRemovalError as exc:
+        result = {"ok": False, "error": str(exc), "error_code": exc.code}
     except (ValueError, RuntimeError) as exc:
         result = {"ok": False, "error": str(exc)}
     except Exception as exc:
         result = {"ok": False, "error": f"操作失败（{type(exc).__name__}）。请检查网络、文件和运行环境。"}
+        if args.command in {"uninstall", "install"}:
+            result["error_code"] = "uninstall-failed" if args.command == "uninstall" else "download-failed"
     print(json.dumps(result, ensure_ascii=True))
     return 0 if result["ok"] else 1
 

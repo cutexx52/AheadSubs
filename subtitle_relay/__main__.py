@@ -216,8 +216,16 @@ def main():
 
                 start_hotkey(args.pot_hotkey_launcher)
             token = args.control_token_file.read_text(encoding="ascii").strip() if args.control_token_file else None
+            local_models = []
+            if not args.ast:
+                if args.asr == "local":
+                    local_models.append("whisper-small")
+                elif args.asr == "qwen":
+                    local_models.append(f"qwen-{args.qwen_size}")
+                if args.mt == "local":
+                    local_models.append("nllb")
             serve(relay, args.port, token, {"source": args.default_source, "target": args.default_target,
-                                          "bilingual": args.default_bilingual})
+                                          "bilingual": args.default_bilingual}, local_models=local_models)
         return
     if args.interval <= 0:
         parser.error("--interval must be positive")
