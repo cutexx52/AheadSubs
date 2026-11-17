@@ -31,7 +31,8 @@ local function request(route, payload, callback)
     mp.command_native_async({
         name = "subprocess", playback_only = false, capture_stdout = true, capture_stderr = true,
         args = { "curl.exe", "--silent", "--show-error", "--fail-with-body", "--noproxy", "*", "--max-time", "3",
-                 "-H", "Content-Type: application/json", "--data-binary", utils.format_json(payload),
+                 "-H", "Content-Type: application/json", "-H", "X-AheadSubs-Entry: mpv",
+                 "--data-binary", utils.format_json(payload),
                  "http://127.0.0.1:" .. config.port .. "/v1/" .. route },
     }, callback)
 end

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="Title" xml:space="preserve"><value>Status</value></data>
+  <data name="Refresh" xml:space="preserve"><value>Refresh now</value></data>
+  <data name="Checking" xml:space="preserve"><value>Checking status…</value></data>
+  <data name="Offline" xml:space="preserve"><value>Service unavailable</value></data>
+  <data name="Unsupported" xml:space="preserve"><value>Status unavailable</value></data>
+  <data name="Checked" xml:space="preserve"><value>Checked at {0} · refreshes every 3 seconds</value></data>
+  <data name="Preview" xml:space="preserve"><value>Sample data</value></data>
+  <data name="Service" xml:space="preserve"><value>Subtitle service</value></data>
+  <data name="Ready" xml:space="preserve"><value>Ready</value></data>
+  <data name="Degraded" xml:space="preserve"><value>Model unavailable</value></data>
+  <data name="ServiceHint" xml:space="preserve"><value>Start or restart the service in Translation settings.</value></data>
+  <data name="Workers" xml:space="preserve"><value>Processing slots in use: {0:N0} / {1:N0}</value></data>
+  <data name="Connections" xml:space="preserve"><value>{0:N0} active playback connections</value></data>
+  <data name="Sources" xml:space="preserve"><value>Playback connections</value></data>
+  <data name="Unavailable" xml:space="preserve"><value>Waiting for the service.</value></data>
+  <data name="NoConnections" xml:space="preserve"><value>Start playback with an integration to see its activity here.</value></data>
+  <data name="SourcePlayback" xml:space="preserve"><value>{0} · {1:N0} playback</value></data>
+  <data name="SourceText" xml:space="preserve"><value>{0} · {2:N0} text requests in progress</value></data>
+  <data name="SourceBoth" xml:space="preserve"><value>{0} · {1:N0} playback, {2:N0} text in progress</value></data>
+  <data name="Source_potplayer" xml:space="preserve"><value>PotPlayer</value></data>
+  <data name="Source_mpv" xml:space="preserve"><value>mpv</value></data>
+  <data name="Source_cli" xml:space="preserve"><value>Command line</value></data>
+  <data name="Source_mcp" xml:space="preserve"><value>MCP</value></data>
+  <data name="Source_http" xml:space="preserve"><value>Other HTTP clients</value></data>
+  <data name="ModelsAndResources" xml:space="preserve"><value>Models and local resources</value></data>
+  <data name="Models" xml:space="preserve"><value>Active models</value></data>
+  <data name="NoModels" xml:space="preserve"><value>No active models reported.</value></data>
+  <data name="ResourceScope" xml:space="preserve"><value>Subtitle service and child processes</value></data>
+  <data name="ModelTitle" xml:space="preserve"><value>{0} · {1}</value></data>
+  <data name="ModelState" xml:space="preserve"><value>{0} · {1}</value></data>
+  <data name="Role_asr" xml:space="preserve"><value>Speech recognition</value></data>
+  <data name="Role_ast" xml:space="preserve"><value>Speech translation</value></data>
+  <data name="Role_mt" xml:space="preserve"><value>Text translation</value></data>
+  <data name="Role_vad" xml:space="preserve"><value>Voice activity detection</value></data>
+  <data name="Device_cpu" xml:space="preserve"><value>CPU</value></data>
+  <data name="Device_cuda" xml:space="preserve"><value>NVIDIA CUDA</value></data>
+  <data name="Device_vulkan" xml:space="preserve"><value>Vulkan GPU</value></data>
+  <data name="Device_cloud" xml:space="preserve"><value>Cloud</value></data>
+  <data name="Device_external" xml:space="preserve"><value>External local service</value></data>
+  <data name="State_loaded" xml:space="preserve"><value>Loaded</value></data>
+  <data name="State_unavailable" xml:space="preserve"><value>Unreachable</value></data>
+  <data name="State_unverified" xml:space="preserve"><value>Load state unknown</value></data>
+  <data name="State_configured" xml:space="preserve"><value>Configured</value></data>
+  <data name="Vram" xml:space="preserve"><value>Dedicated GPU memory</value></data>
+  <data name="Percent" xml:space="preserve"><value>{0:N1}%</value></data>
+  <data name="GiB" xml:space="preserve"><value>{0:N2} GiB</value></data>
+  <data name="MiB" xml:space="preserve"><value>{0:N1} MiB</value></data>
+  <data name="Ratio" xml:space="preserve"><value>{0:N2}×</value></data>
+  <data name="Seconds" xml:space="preserve"><value>{0:N2} s</value></data>
+  <data name="Missing" xml:space="preserve"><value>—</value></data>
+  <data name="Performance" xml:space="preserve"><value>Subtitle performance</value></data>
+  <data name="Rtf" xml:space="preserve"><value>Median RTF</value></data>
+  <data name="NoSamples" xml:space="preserve"><value>Waiting for new subtitle processing samples.</value></data>
+  <data name="Samples" xml:space="preserve"><value>Last 15 minutes · {0:N0} RTF samples · {1:N0} latency samples</value></data>
+  <data name="PerformanceHint" xml:space="preserve"><value>RTF below 1× means processing is faster than playback. P50 / P95 / P99 measure the wait from a playback update to usable subtitles.</value></data>
+  <data name="Cloud" xml:space="preserve"><value>Cloud usage</value></data>
+  <data name="Week" xml:space="preserve"><value>UTC week</value></data>
+  <data name="ThisWeek" xml:space="preserve"><value>This week · {0} – {1}</value></data>
+  <data name="WeekRange" xml:space="preserve"><value>{0} – {1}</value></data>
+  <data name="CloudHint" xml:space="preserve"><value>This installation · weeks start Monday (UTC). USD estimates use known usage and list prices before taxes and discounts.</value></data>
+  <data name="Model" xml:space="preserve"><value>Model</value></data>
+  <data name="Calls" xml:space="preserve"><value>Calls</value></data>
+  <data name="Usage" xml:space="preserve"><value>Known usage</value></data>
+  <data name="Estimate" xml:space="preserve"><value>Estimate</value></data>
+  <data name="CallTotal" xml:space="preserve"><value>{0:N0} calls</value></data>
+  <data name="CostTotal" xml:space="preserve"><value>{0:N0} calls · estimated {1}</value></data>
+  <data name="PartialTotal" xml:space="preserve"><value>{0:N0} calls · partial estimate {1}</value></data>
+  <data name="PartialCost" xml:space="preserve"><value>{0} · {1:N0}/{2:N0} priced</value></data>
+  <data name="HistoryUnavailable" xml:space="preserve"><value>Cloud usage could not be read. Try refreshing.</value></data>
+  <data name="HistoryIncomplete" xml:space="preserve"><value>Some usage could not be recorded or read. Totals may be incomplete.</value></data>
+  <data name="NoUsage" xml:space="preserve"><value>No cloud model calls recorded for this week.</value></data>
+  <data name="NoEstimate" xml:space="preserve"><value>Estimate unavailable</value></data>
+  <data name="Subscription" xml:space="preserve"><value>Subscription</value></data>
+  <data name="Tokens" xml:space="preserve"><value>{0:N0} in / {1:N0} out tokens</value></data>
+  <data name="Minutes" xml:space="preserve"><value>{0:N2} audio min</value></data>
+  <data name="Failures" xml:space="preserve"><value>{0:N0} failed</value></data>
+  <data name="USD" xml:space="preserve"><value>US${0:N4}</value></data>
+  <data name="SmallCost" xml:space="preserve"><value>Under US$0.0001</value></data>
+  <data name="CustomModel" xml:space="preserve"><value>Custom model</value></data>
+  <data name="ProviderRole" xml:space="preserve"><value>{0} · {1}</value></data>
+  <data name="Provider_openai" xml:space="preserve"><value>OpenAI</value></data>
+  <data name="Provider_dashscope" xml:space="preserve"><value>Alibaba Cloud Model Studio</value></data>
+  <data name="Provider_chatgpt" xml:space="preserve"><value>ChatGPT</value></data>
+  <data name="Provider_minimax" xml:space="preserve"><value>MiniMax</value></data>
+  <data name="Provider_minimax_plan" xml:space="preserve"><value>MiniMax M Plan</value></data>
+  <data name="Provider_compatible" xml:space="preserve"><value>Compatible endpoint</value></data>
+</root>

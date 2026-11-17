@@ -25,6 +25,19 @@ Context enhancement (上下文增强) is saved per translator: 0–8 previous re
 
 Settings are single-instance. Closing hides the window; double-click the tray to reopen. Stop subtitle service (停止字幕服务) releases models but retains the helper. Stop and exit (停止并退出) closes both. Relaunch/start the service for new playback work. Disk caches remain reusable.
 
+## Status
+
+Open **Status** in the sidebar. It updates immediately and every three seconds while the page and window are visible. **Refresh now** checks on demand.
+
+| Section | What it shows |
+| --- | --- |
+| Subtitle service | Readiness, active playback connections and in-flight text requests by PotPlayer, mpv, CLI, MCP and other HTTP clients. |
+| Models and local resources | Active recognition, translation and voice activity detection models, their devices and load states. CPU, RAM, GPU and dedicated GPU memory cover the service and sampled child processes. Unsupported readings are blank. |
+| Subtitle performance | Median RTF and subtitle-ready latency (P50, P95 and P99), with sample counts. An RTF below 1 means processing takes less time than the corresponding audio plays. Performance samples stay in memory for up to 15 minutes and reset on restart. |
+| Cloud usage | Calls, failures, known usage and estimated USD cost by provider, model and operation. Select this week or one of the previous seven UTC weeks. Subscriptions and calls with missing prices or quantities are identified in the table. |
+
+Start playback in a supported player to populate the live view. When the service is stopped or unreachable, existing weekly totals can still be read from `cloud-usage.sqlite3` in the desktop cache. Old weeks are removed when the service starts or writes new usage. Status metrics store no media paths, subtitles, accounts, credentials, session IDs or request bodies. See [status metrics](server.md#status-metrics) for the measurements and billing limits.
+
 ## Diagnostics
 
 Logs are off by default. Under Advanced settings (高级设置), enable diagnostics (启用诊断日志), apply and reproduce. Restart look-ahead to capture a whole session. Use Open logs directory (打开日志目录), or `python -m subtitle_relay serve --diagnostics`.
@@ -38,6 +51,7 @@ The launcher starts `UI/AheadSubs.exe`. WPF uses `python -m subtitle_relay.deskt
 | Command | Behavior |
 | --- | --- |
 | `status` | Returns `settings`, `models`, `active_models`, `credentials`, `integrations`, `chatgpt_accounts` and service status. Key status includes only mode, file path and whether a direct key exists. |
+| `cloud-usage` | Reads UTC weekly totals from the default cache without starting the service. |
 | `preset-check [requirements]` | Checks FFmpeg and comma-separated `vulkan`, `cuda`, `dashscope` requirements; returns `missing` codes. stdin may provide a candidate `qwen_mt_url`; keys use saved settings. |
 | `install <model>` / `uninstall <model>` | Downloads/removes a model; identifiers are in `MODELS`. |
 | `apply` | Reads JSON settings and optional `credentials` from stdin, validates and restarts. |
