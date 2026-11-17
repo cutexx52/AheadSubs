@@ -38,8 +38,8 @@ public partial class MainWindow
 
     private static string UpdateText(string key, params object[] args)
     {
-        string text = UpdateResources.GetString(key)!;
-        return args.Length == 0 ? text : string.Format(CultureInfo.CurrentCulture, text, args);
+        string text = UpdateResources.GetString(key, AutomationText.Culture)!;
+        return args.Length == 0 ? text : string.Format(AutomationText.Culture, text, args);
     }
 
     private void InitializeUpdates()
@@ -53,6 +53,7 @@ public partial class MainWindow
         if (updatePackage?.IsSupported != true) return;
 
         installedUpdateRoot = FindInstalledUpdateRoot();
+        UpdateCard.Language = System.Windows.Markup.XmlLanguage.GetLanguage(AutomationText.Culture.Name);
         UpdateTitle.Text = UpdateText("Title");
         InstalledVersion.Text = UpdateText("CurrentVersion", updatePackage.Version);
         AutomaticUpdates.Content = UpdateText("Automatic");

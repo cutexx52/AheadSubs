@@ -136,6 +136,9 @@ def stage_app(stage, dotnet, version, cuda):
     compiler = Path(os.environ["SystemRoot"]) / "Microsoft.NET" / "Framework64" / "v4.0.30319" / "csc.exe"
     run(compiler, "/nologo", "/target:winexe", "/platform:x64", "/reference:System.Windows.Forms.dll",
         f"/win32icon:{ROOT / 'assets' / 'aheadsubs.ico'}", f"/out:{stage / (APP + '.exe')}", SCRIPTS / "launcher.cs")
+    (stage / "cli").mkdir()
+    run(compiler, "/nologo", "/target:exe", "/platform:x64", f"/out:{stage / 'cli' / 'aheadsubs.exe'}",
+        SCRIPTS / "cli-launcher.cs")
     if dotnet:
         run(dotnet, "publish", WPF_PROJECT, "-c", "Release", "-r", "win-x64", "--self-contained", "true",
             "-p:DebugType=None", "-p:DebugSymbols=false", "-o", stage / "UI", cwd=ROOT)
@@ -167,12 +170,33 @@ def smoke_test(stage, cuda):
     )
     run(python, "-c", code, env=env, cwd=stage.parent)
     run(python, "-m", "subtitle_relay", "--help", env=env, cwd=stage.parent)
+    run(stage / "cli" / "aheadsubs.exe", "--help", env=env, cwd=stage.parent)
     with tempfile.TemporaryDirectory(dir=stage.parent) as data:
+        env["LOCALAPPDATA"] = data
         reply = subprocess.check_output([python, "-m", "subtitle_relay.desktop.bridge", "status"],
-                                        env={**env, "LOCALAPPDATA": data}, cwd=stage.parent)
+                                        env=env, cwd=stage.parent)
         state = json.loads(reply)
         if not state.get("ok") or not state.get("ffmpeg_detected") or "credentials" not in state:
             raise RuntimeError("Bundled desktop control bridge failed its smoke check")
+        reply = subprocess.check_output([python, "-m", "subtitle_relay.desktop.bridge", "automation", "mcp-enable"],
+                                        env=env, cwd=stage.parent)
+        config = json.loads(reply)["mcp_config"]["mcpServers"]["aheadsubs"]
+        check_mcp = (
+            "import anyio, os, sys; from mcp import ClientSession, StdioServerParameters; "
+            "from mcp.client.stdio import stdio_client\n"
+            "async def check():\n"
+            "    params = StdioServerParameters(command=sys.executable, args=sys.argv[1:], env=dict(os.environ))\n"
+            "    async with stdio_client(params) as streams:\n"
+            "        async with ClientSession(*streams) as client:\n"
+            "            await client.initialize()\n"
+            "            tools = await client.list_tools()\n"
+            "            assert any(tool.name == 'aheadsubs_generate_subtitles' for tool in tools.tools)\n"
+            "            result = await client.call_tool('aheadsubs_status')\n"
+            "            assert not result.is_error and result.structured_content['ok']\n"
+            "anyio.run(check)"
+        )
+        run(config["command"], "-c", check_mcp, *config["args"], env={**env, **config["env"]},
+            cwd=stage.parent, timeout=30)
     for exe in ("ffmpeg.exe", "ffprobe.exe"):
         run(stage / "bin" / exe, "-version", env=env, cwd=stage.parent, stdout=subprocess.DEVNULL)
 
@@ -199,10 +223,21 @@ def smoke_installer(installer, directory, cuda, version, native):
             metadata = json.loads((target / "UI" / "aheadsubs-release.json").read_text(encoding="utf-8"))
             if metadata != {"Version": version, "Flavor": "cuda" if cuda else "standard"}:
                 raise RuntimeError("Installed update metadata does not match the bundle")
+        reply = subprocess.check_output([target / "runtime" / "python.exe", "-m",
+                                         "subtitle_relay.desktop.bridge", "automation", "cli-install"], cwd=target)
+        if not json.loads(reply).get("cli_installed"):
+            raise RuntimeError("Installer smoke could not register the bundled CLI on the user PATH")
     finally:
         uninstaller = target / "unins000.exe"
         if uninstaller.is_file():
             run(uninstaller, *silent)
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment") as key:
+            path, _ = winreg.QueryValueEx(key, "Path")
+    except FileNotFoundError:
+        path = ""
+    if os.path.normcase(str(target / "cli")) in map(os.path.normcase, path.split(";")):
+        raise RuntimeError("The uninstaller left the bundled CLI on the user PATH")
 
 
 def find_iscc(downloads):

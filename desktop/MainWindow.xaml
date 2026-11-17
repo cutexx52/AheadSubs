@@ -175,6 +175,22 @@
      <TextBlock x:Name="UpdateStatus" Style="{StaticResource Hint}" AutomationProperties.LiveSetting="Polite" Margin="0,8,0,0"/>
     </StackPanel></Border>
    </StackPanel></ScrollViewer></TabItem>
+   <TabItem x:Name="AutomationTab"><ScrollViewer Style="{StaticResource PageScroll}"><StackPanel>
+    <TextBlock x:Name="AutomationTitle" Style="{StaticResource PageTitle}"/>
+    <TextBlock x:Name="AutomationIntro" Style="{StaticResource Hint}" Margin="0,0,0,16"/>
+    <Border Style="{StaticResource Card}"><StackPanel>
+     <DockPanel><TextBlock x:Name="McpStatus" Style="{StaticResource Hint}" DockPanel.Dock="Right"/><TextBlock Text="MCP" Style="{StaticResource Section}"/></DockPanel>
+     <TextBlock x:Name="McpHint" Style="{StaticResource Hint}" Margin="0,8,0,12"/>
+     <WrapPanel Margin="0,0,0,8"><Button x:Name="McpToggle" IsEnabled="False" Click="ToggleMcp"/><Button x:Name="CopyMcpButton" IsEnabled="False" Click="CopyMcpConfig"/></WrapPanel>
+     <TextBox x:Name="McpConfiguration" IsReadOnly="True" FontFamily="Consolas" TextWrapping="Wrap" MaxHeight="174" VerticalScrollBarVisibility="Auto" Visibility="Collapsed"/>
+    </StackPanel></Border>
+    <Border Style="{StaticResource Card}"><StackPanel>
+     <DockPanel><TextBlock x:Name="CliStatus" Style="{StaticResource Hint}" DockPanel.Dock="Right"/><TextBlock x:Name="CliTitle" Style="{StaticResource Section}"/></DockPanel>
+     <TextBlock x:Name="CliHint" Style="{StaticResource Hint}" Margin="0,8,0,12"/>
+     <Button x:Name="CliToggle" IsEnabled="False" Click="ToggleCli" HorizontalAlignment="Left"/>
+    </StackPanel></Border>
+    <TextBlock x:Name="AutomationStatus" Style="{StaticResource Hint}" AutomationProperties.LiveSetting="Polite"/>
+   </StackPanel></ScrollViewer></TabItem>
   </TabControl>
   <Border Grid.Row="2" Background="White" BorderBrush="#E3E7ED" BorderThickness="0,1,0,0" Padding="28,14"><StackPanel>
    <TextBlock x:Name="ActionStatus" TextWrapping="Wrap" Margin="176,0,0,8" Visibility="Collapsed" AutomationProperties.LiveSetting="Assertive"/><ProgressBar x:Name="Progress" Height="3" IsIndeterminate="True" Visibility="Collapsed" Margin="176,0,0,10"/>
