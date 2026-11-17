@@ -58,7 +58,8 @@ internal sealed class EngineBridge
         catch (System.Text.Json.JsonException)
         { throw new InvalidOperationException("后台没有返回有效结果。请在高级设置中打开诊断日志后重试。"); }
         if (data is null || data["ok"]?.GetValue<bool>() != true)
-            throw new InvalidOperationException(data?["error"]?.ToString() ?? "后台操作失败，请查看诊断日志。");
+            throw new InvalidOperationException(SetupText.Error(data?["error_code"]?.ToString())
+                ?? data?["error"]?.ToString() ?? "后台操作失败，请查看诊断日志。");
         return data;
     }
 }

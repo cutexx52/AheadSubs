@@ -57,6 +57,7 @@ def gui(initial_media=None, show_request=None):
         else:
             widget = ttk.Entry(parent, textvariable=settings[key], width=38)
         widget.grid(row=row, column=1, sticky="ew")
+        return widget
 
     asr_models = {
         "[本地] Whisper Small": "local", **dict.fromkeys(QWEN_LABELS, "qwen"),
@@ -151,7 +152,13 @@ def gui(initial_media=None, show_request=None):
     field(advanced, 12, "key_file", "OpenAI key file")
     ttk.Button(advanced, text="Browse…", command=lambda: settings["key_file"].set(
         filedialog.askopenfilename() or settings["key_file"].get())).grid(row=12, column=2, padx=5)
-    field(advanced, 13, "device", "Local inference device", ["cuda", "cpu"])
+    device_box = field(advanced, 13, "device", "Local inference device", ["cuda", "cpu"])
+
+    def reset_device_overrides(_event):
+        settings["asr_device"].set("")
+        settings["mt_device"].set("")
+
+    device_box.bind("<<ComboboxSelected>>", reset_device_overrides)
     field(advanced, 14, "route", "Translation path", ["asr+mt", "OpenAI AST (English)"])
     field(advanced, 15, "qwen_mt_url", "Qwen-MT Base URL")
     field(advanced, 16, "qwen_mt_key_file", "Qwen-MT 密钥文件")

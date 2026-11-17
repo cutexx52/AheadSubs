@@ -1,8 +1,21 @@
 # Windows 桌面助手
 
+[English quick presets guide](en/desktop.md)
+
 ## 日常使用
 
-**本地模型**提供 Vulkan Qwen3-ASR + CPU NLLB 和 Whisper Small + NLLB 两套入门方案。下载列表显示每个模型的状态、硬件要求和大致磁盘占用。两款 Qwen3-ASR 共享约 0.63 GB 的对齐模型和运行库；首次下载时需要为压缩包额外预留临时空间。**翻译**首页显示当前组合的运行设备。
+在 **翻译** 首页展开 **快速预设**，检查所需的模型、运行库和密钥。缺少模型时可以 **立即下载**，也可以去 **管理模型** 查看标出的缺项。下载完成后点击 **应用方案**，字幕的源语言、目标语言和双语选项保留。预设默认折叠；手动搭配的设置显示为 **自定义**。
+
+| 预设 | 语音识别 | 字幕翻译 |
+| --- | --- | --- |
+| 纯本地 · CPU | Whisper Small · CPU | NLLB · CPU |
+| 纯本地 · 独显入门 | Qwen3-ASR 0.6B · Vulkan | NLLB · CPU |
+| 纯本地 · 高性能 GPU | Qwen3-ASR 1.7B · Vulkan | NLLB · NVIDIA CUDA |
+| 作者推荐 · 本地识别 + 云端翻译 | Qwen3-ASR 1.7B · Vulkan | Qwen-MT Flash · 百炼 API |
+
+独显方案检查 Vulkan 设备，高性能方案另外检查 CUDA 设备和运行库。推荐方案检查已保存的百炼密钥是否可读取以及地址格式；实际凭据是否有效由服务请求验证。配置并保存密钥后返回首页会重新检查。下载失败后可再次点击 **立即下载**，已完整下载的模型会被复用。
+
+**本地模型**分为语音识别、字幕翻译和语音检测。Whisper 和 NLLB 可独立选 CPU 或 NVIDIA CUDA，点 **保存并应用** 生效。旧配置沿用已有设备选项。运行中的模型要先切换或停止服务，再卸载。Whisper 和 NLLB 的下载放在 Hugging Face 共享缓存中，卸载会移除对应仓库的缓存。Qwen3-ASR 卸载会保留共享的约 0.63 GB 的对齐模型和运行库，其他版本可继续使用。Silero 随环境提供，FSMN 在 **高级设置** 中选用后准备。
 
 **云端模型**可按供应商选择 **密钥文件** 或 **直接填写**。直填内容用 Windows 当前用户的 [DPAPI](https://learn.microsoft.com/en-us/windows/win32/api/dpapi/nf-dpapi-cryptprotectdata) 加密保存。文件模式保存所选文件的路径。删除直填密钥时，切回 **默认（环境变量）** 并保存。百炼的识别和翻译共用密钥及区域地址，自定义识别和翻译可以各用一把。远程自定义接口发送密钥时使用 HTTPS，本机回环地址支持 HTTP。可以先 **保存密钥**，再应用翻译设置切换当前服务。
 
@@ -24,8 +37,9 @@
 
 | 命令 | 输入与行为 |
 | --- | --- |
-| `status` | 输出 `settings`、`models`、`credentials`、`integrations`、`chatgpt_accounts` 和服务状态。API Key 状态只包含模式、文件路径和是否已保存直填密钥。 |
-| `install <model>` | 准备指定本地模型。标识见控制模块中的 `MODELS`。 |
+| `status` | 输出 `settings`、`models`、`active_models`、`credentials`、`integrations`、`chatgpt_accounts` 和服务状态。凭据状态只包含模式、文件路径和是否已保存直填密钥。 |
+| `preset-check [requirements]` | 检查 FFmpeg 和逗号分隔的 `vulkan`、`cuda`、`dashscope` 条件，返回缺项代码 `missing`。stdin 可提供 `{"qwen_mt_url": "…"}` 检查候选地址，密钥使用已保存配置。 |
+| `install <model>` / `uninstall <model>` | 下载或卸载指定本地模型。标识见控制模块中的 `MODELS`。 |
 | `apply` | 从 stdin 读 JSON 设置，支持同时提交可选的 `credentials` 更新。验证后重启后台。 |
 | `save-credentials` | 从 stdin 接收 `{供应商标识: {mode, value}}`。`openai`、`dashscope`、`minimax`、`compatible-asr` 和 `compatible-mt` 支持 `direct`、`file` 和 `default`。保存后返回凭据状态，正在运行的服务继续用启动时加载的密钥。 |
 | `chatgpt-status` | 列出已保存的 ChatGPT 账号、授权状态及缓存的模型。 |

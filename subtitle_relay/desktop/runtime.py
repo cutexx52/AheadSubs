@@ -32,6 +32,7 @@ DEFAULTS = {
     "translation_enhancements": {},
     "asr_url": "http://127.0.0.1:8000/v1", "asr_model": "qwen3-asr",
     "asr": "local", "mt": "local", "device": "cpu", "whisper_model": "small",
+    "asr_device": "", "mt_device": "",
     "llm_model": "gpt-4.1-mini", "llm_url": "http://127.0.0.1:11434/v1", "key_file": "",
     "chatgpt_account": "", "chatgpt_model": "",
     "minimax_key_file": "",
