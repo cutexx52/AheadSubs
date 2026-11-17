@@ -25,6 +25,12 @@ Context enhancement (上下文增强) is saved per translator: 0–8 previous re
 
 Settings are single-instance. Closing hides the window; double-click the tray to reopen. Stop subtitle service (停止字幕服务) releases models but retains the helper. Stop and exit (停止并退出) closes both. Relaunch/start the service for new playback work. Disk caches remain reusable.
 
+## Automatic subtitle tasks
+
+Use **Automatic tasks** to watch multiple folders. Each rule chooses whether to include subfolders, filename regex, file extensions and size limits, and a subtitle configuration for the source language, target language, audio track and translated or bilingual SRT. Tasks use the recognition and translation models currently saved on the translation page. The default destination is beside the media; a rule can instead choose an output folder. The output uses the media stem and a configurable suffix followed by `.srt`. Existing subtitle files are preserved.
+
+Rules pick up new or modified files after they stabilize across scans. Enable **Include files already present** to also queue the initial contents. The desktop-managed subtitle service keeps one automatic job active while playback is idle. Playback takes priority; interrupted jobs resume from completed chunks when idle again. The task list shows waiting files and failures so you can retry.
+
 ## Diagnostics
 
 Logs are off by default. Under Advanced settings (高级设置), enable diagnostics (启用诊断日志), apply and reproduce. Restart look-ahead to capture a whole session. Use Open logs directory (打开日志目录), or `python -m subtitle_relay serve --diagnostics`.
