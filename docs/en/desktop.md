@@ -2,6 +2,16 @@
 
 [简体中文](../desktop.md)
 
+## Subtitle inspection
+
+Open **Subtitle inspection** to search by file name or path and filter by primary source language. History groups records by their stored path and opens the newest version by default. You can switch to an older version. Moving a file creates a new entry. Older records with only a file name stay separate until a playback with the same cache settings records their path.
+
+Coverage is the share of the selected version's media duration that has been processed, including silence. It is unknown when duration is unavailable. The primary source language comes from recognition results when the provider supplies it. The listed subtitle languages reflect the available target subtitles across versions of the file.
+
+**Regenerate** creates a fresh version using the selected version's audio track and languages and the running service's models. The service processes one chunk at a time while playback sessions are idle. Previous versions stay available. You can open or save an SRT for the selected version, including partial results.
+
+## Setup presets
+
 Open **Setup presets** on the translation home page. The control starts collapsed. Once you select a preset, **Download now** fetches the missing models. **Manage models** opens the library with the required downloads marked. When the preset is ready, select **Apply preset**. The audio language, subtitle language, and bilingual setting carry over. Manual model combinations appear as **Custom**.
 
 | Preset | Speech recognition | Translation |
