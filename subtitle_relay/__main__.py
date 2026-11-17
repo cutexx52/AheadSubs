@@ -6,7 +6,7 @@ from contextlib import ExitStack
 from dataclasses import asdict
 from pathlib import Path
 
-from .audio import Segmentation, Segmenter
+from .audio import Segmentation, Segmenter, VAD_THRESHOLDS
 from .engine import Relay
 from .players import Mpv, run_adapter
 from .protocol import RelayClient, serve
@@ -66,8 +66,10 @@ def make_relay(args):
         profile.extend([args.asr_url if args.asr == "compatible" else args.qwen_size, args.asr_model])
     if args.mt == "qwen-mt" and not args.ast:
         profile.extend([args.qwen_mt_model, args.qwen_mt_url.rstrip("/")])
+    if settings.enabled and args.vad_model != "silero":
+        profile.append(args.vad_model)
     return Relay(args.cache, recognizer, translator, profile, args.workers, args.chunk,
-                 OpenAIWhisper(cloud) if args.ast else None, Segmenter(settings))
+                 OpenAIWhisper(cloud) if args.ast else None, Segmenter(settings, args.vad_model))
 
 
 def main():
@@ -100,7 +102,8 @@ def main():
     server.add_argument("--max-speech", type=float, default=12)
     server.add_argument("--min-silence-ms", type=int, default=450)
     server.add_argument("--pad-ms", type=int, default=160)
-    server.add_argument("--vad-threshold", type=float, default=0.5)
+    server.add_argument("--vad-threshold", type=float)
+    server.add_argument("--vad-model", choices=VAD_THRESHOLDS, default="silero")
     server.add_argument("--backfill", type=float, default=4)
     server.add_argument("--no-vad", action="store_true")
     mpv = commands.add_parser("mpv")
@@ -109,10 +112,12 @@ def main():
     pot.add_argument("hwnd", type=lambda value: int(value, 0))
     pot.add_argument("path")
     pot.add_argument("--reload-command", type=lambda value: int(value, 0))
+    pot.add_argument("--stop-file", type=Path)
     pot_open = commands.add_parser("potplayer-open")
     pot_open.add_argument("executable", type=Path)
     pot_open.add_argument("path", type=Path)
     pot_open.add_argument("--muted", action="store_true")
+    pot_open.add_argument("--stop-file", type=Path)
     clock = commands.add_parser("clock")
     clock.add_argument("path")
     clock.add_argument("--position", type=float, default=0)
@@ -129,14 +134,16 @@ def main():
         command.add_argument("--audio", type=int, default=0)
     args = parser.parse_args()
     if args.mode == "serve":
+        if args.vad_threshold is None:
+            args.vad_threshold = VAD_THRESHOLDS[args.vad_model]
         logging.basicConfig(format="%(asctime)s %(levelname)s %(name)s %(message)s")
         logger = logging.getLogger("subtitle_relay")
         logger.setLevel(logging.INFO)
         logger.info(
-            "Starting service asr=%s mt=%s qwen_size=%s llm_model=%s ast=%s workers=%d",
+            "Starting service asr=%s mt=%s qwen_size=%s llm_model=%s ast=%s workers=%d vad=%s",
             args.asr, args.mt, args.qwen_size if args.asr == "qwen" else "-",
             {"openai": args.llm_model, "qwen-mt": args.qwen_mt_model}.get(args.mt, "-") if not args.ast else "-",
-            args.ast, args.workers)
+            args.ast, args.workers, "off" if args.no_vad else args.vad_model)
         if not (0 <= args.before <= 5 and 0 <= args.after <= 5 and
                 2 <= args.max_speech <= 20 and 40 <= args.min_silence_ms <= 2000 and
                 0 <= args.pad_ms <= 500 and 0 < args.vad_threshold < 1 and
@@ -166,12 +173,12 @@ def main():
     elif args.mode == "potplayer":
         from .potplayer import PotPlayer
 
-        run_adapter(PotPlayer(args.hwnd, args.path, args.audio, args.reload_command), *options)
+        run_adapter(PotPlayer(args.hwnd, args.path, args.audio, args.reload_command), *options, stop=args.stop_file)
     elif args.mode == "potplayer-open":
         from .potplayer import open_with_subtitles
 
         open_with_subtitles(args.executable, args.path, options[0], args.audio, args.source,
-                            args.target, args.ahead, args.muted)
+                            args.target, args.ahead, args.muted, stop=args.stop_file)
     else:
         run_adapter(ClockPlayer(args.path, args.position, args.duration, args.audio, args.realtime),
                     *options)

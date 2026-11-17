@@ -4,6 +4,8 @@
 
 ## Windows 图形入口
 
+设置窗口为单实例。点窗口右上角关闭会隐藏到通知区域；点击托盘图标可重新打开设置。右键托盘图标选 **退出 Subtitle Relay** 会停止字幕服务、释放推理资源并关闭助手。下次使用时打开助手后点 **保存并启动**。
+
 1. 准备 Python 3.11+、`ffmpeg` 和 `ffprobe`，并把它们放到 PATH。NVIDIA 模式需要支持 CUDA 12 的驱动。
 2. 双击 `Subtitle Relay.pyw`，在 **模型** 标签准备运行环境，按模型名选择语音识别与文本翻译。缺少的模型会列在 **安装本地模型**，下载成功后可选择。远程模型的密钥文件在 **高级设置** 配置。
    点击 **保存并启动** 会自动应用新配置。正在预读的窗口会从当前播放位置接续；有新配置的字幕后，播放器会更新显示。
@@ -21,7 +23,7 @@
 
 ```cmd
 python -m venv .venv
-.venv\Scripts\python -m pip install -e ".[local,cloud]" nvidia-cublas-cu12==12.8.4.1 nvidia-cudnn-cu12==9.10.2.21
+.venv\Scripts\python -m pip install -e ".[local,cloud,desktop]" nvidia-cublas-cu12==12.8.4.1 nvidia-cudnn-cu12==9.10.2.21
 .venv\Scripts\python -m subtitle_relay serve
 ```
 
@@ -60,10 +62,13 @@ mpv.exe --input-ipc-server=relay-window-1 D:\video\clip.mkv
 | `--chunk` | 8 秒 | 固定调度和缓存块。 |
 | `--before` / `--after` | 各 2 秒 | 每个块解码时额外读取的前后文。 |
 | `--backfill` | 4 秒 | 跳转后补算播放头前可能含有正在说的对白的块。 |
-| `--min-silence-ms` | 450 ms | Silero VAD 判定语音结束所需的静音。 |
+| `--min-silence-ms` | 450 ms | 两段语音之间用于分段的最短静音。 |
 | `--pad-ms` | 160 ms | VAD 切出的语音边缘保留。 |
 | `--max-speech` | 12 秒 | 送入识别的单段上限。长段优先在 VAD 找到的边界切分。 |
-| `--vad-threshold` | 0.5 | Silero VAD 的语音阈值。 |
+| `--vad-model` | `silero` | 语音活动检测模型。设为 `fsmn` 可选 FunASR FSMN-VAD。 |
+| `--vad-threshold` | Silero 0.50 / FSMN 0.80 | 对应模型的语音概率阈值。 |
+
+在 **高级设置 → 语音活动检测 (VAD)** 可以切换模型。首次使用 FSMN-VAD 时，后台会下载固定版本的 FunASR ONNX 权重及归一化数据，然后在 CPU 本地运行。旧版环境可先点击 **准备运行环境** 补齐依赖。命令行安装可用 `python -m pip install -e ".[fsmn-vad]"`。FSMN 使用 Relay 的离线分段参数。[FunASR FSMN-VAD ONNX](https://huggingface.co/funasr/fsmn-vad-onnx)
 
 同一个服务内的所有会话共享模型。任务先补离播放头近的缺口；播放位置跳变会改变下一轮任务优先级，已在运行的请求可以完成并写入缓存。SQLite 将媒体和音轨、模型及语言参数作为缓存键的一部分，原文与译文保留在同一条记录。SRT 用原视频时间保存，每批原子替换。首次打开或跳到未处理的位置时，可以暂停到菜单中显示已有缓冲再继续。
 

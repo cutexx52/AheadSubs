@@ -25,6 +25,7 @@ PYTHON = ROOT / ".venv" / "Scripts" / "pythonw.exe"
 LOG = DATA / "service.log"
 PORT = 8769
 CONTROL = DATA / "control-token"
+PAUSED = DATA / "service-stopped"
 DEFAULTS = {
     "route": "asr+mt",
     "pot_hotkey": "1",
@@ -35,6 +36,7 @@ DEFAULTS = {
     "qwen_mt_model": "qwen-mt-flash", "qwen_mt_url": "", "qwen_mt_key_file": "",
     "chunk": "8", "before": "2", "after": "2", "max_speech": "12",
     "min_silence_ms": "450", "pad_ms": "160", "vad_threshold": "0.5", "backfill": "4",
+    "vad_model": "silero",
 }
 
 
@@ -68,20 +70,63 @@ def spawn(arguments, log=LOG):
                                 stdin=subprocess.DEVNULL, creationflags=subprocess.CREATE_NO_WINDOW)
 
 
+def lock_service(stream, wait=False):
+    deadline = time.monotonic() + 120
+    while True:
+        try:
+            msvcrt.locking(stream.fileno(), msvcrt.LK_NBLCK, 1)
+            return True
+        except OSError:
+            if not wait:
+                return False
+            if time.monotonic() >= deadline:
+                raise RuntimeError("等待上一项服务操作超时。")
+            time.sleep(0.25)
+
+
+def background_stop():
+    from subtitle_relay.protocol import RelayClient
+
+    DATA.mkdir(parents=True, exist_ok=True)
+    PAUSED.touch()
+    with (DATA / "starting.lock").open("a+b") as startup:
+        lock_service(startup, wait=True)
+        for lock in DATA.glob("pot-*-*.lock"):
+            lock.with_suffix(".stop").touch()
+        health = service_health()
+        if not health:
+            return
+        if not CONTROL.is_file():
+            raise RuntimeError("当前字幕服务由另一个程序启动，请从原来的启动方式关闭。")
+        import psutil
+
+        try:
+            process = psutil.Process(health["pid"]) if health.get("pid") else None
+            RelayClient(PORT).send("shutdown", {"token": CONTROL.read_text(encoding="ascii")})
+            if process:
+                try:
+                    process.wait(timeout=10)
+                except psutil.TimeoutExpired:
+                    # The authenticated service can be stuck on an upstream request.
+                    children = process.children(recursive=True)
+                    for child in reversed(children):
+                        try:
+                            child.terminate()
+                        except psutil.NoSuchProcess:
+                            pass
+                    process.terminate()
+                    process.wait(timeout=5)
+        except psutil.NoSuchProcess:
+            pass
+        if healthy():
+            raise RuntimeError("字幕服务尚未退出，请查看后台日志。")
+
+
 def background_start(on_wait=None, restart=False):
     DATA.mkdir(parents=True, exist_ok=True)
     with (DATA / "starting.lock").open("a+b") as startup:
-        deadline = time.monotonic() + 120
-        while True:
-            try:
-                msvcrt.locking(startup.fileno(), msvcrt.LK_NBLCK, 1)
-                break
-            except OSError:
-                if not restart:
-                    return
-                if time.monotonic() >= deadline:
-                    raise RuntimeError("等待上一项服务操作超时。")
-                time.sleep(0.25)
+        if not lock_service(startup, wait=restart) or PAUSED.exists():
+            return
         health = service_health()
         if health:
             if not restart:
@@ -139,7 +184,7 @@ def prepare():
         if not PYTHON.is_file():
             subprocess.run([sys._base_executable, "-m", "venv", ".venv"], **options)
         subprocess.run([str(PYTHON.with_name("python.exe")), "-m", "pip", "install", "-e",
-                        ".[local,cloud]", "nvidia-cublas-cu12==12.8.4.1",
+                        ".[local,cloud,desktop,fsmn-vad]", "nvidia-cublas-cu12==12.8.4.1",
                         "nvidia-cudnn-cu12==9.10.2.21"], **options)
 
 
@@ -356,6 +401,8 @@ def run_native_adapter(hwnd, media, stop, report, resolve_media):
         report("starting", "正在启动字幕服务与识别模型…")
 
     if not healthy():
+        if PAUSED.exists():
+            raise RuntimeError("字幕服务已停止。打开设置，点击「保存并启动」。")
         starting()
         background_start(starting)
     deadline = time.monotonic() + 65
@@ -377,8 +424,11 @@ def run_native_adapter(hwnd, media, stop, report, resolve_media):
                     report=report)
 
 
-def gui(initial_media=None):
+def gui(initial_media=None, show_request=None):
+    from queue import Empty
+
     from subtitle_relay.potplayer import list_windows
+    from subtitle_relay.tray import SettingsTray
     from subtitle_relay.providers import QWEN_MT_MODELS, openai_key, qwen_mt_credentials
 
     root = tk.Tk()
@@ -401,6 +451,8 @@ def gui(initial_media=None):
     status = tk.StringVar(value="Checking service…")
     pot_status = tk.StringVar(value="Select a playing window and its local file.")
     starter_process = None
+    stop_process = None
+    quit_after_stop = False
     setup_process = None
     model_process = None
     installing = None
@@ -508,6 +560,22 @@ def gui(initial_media=None):
     field(advanced, 16, "qwen_mt_key_file", "Qwen-MT 密钥文件")
     ttk.Button(advanced, text="Browse…", command=lambda: settings["qwen_mt_key_file"].set(
         filedialog.askopenfilename() or settings["qwen_mt_key_file"].get())).grid(row=16, column=2, padx=5)
+    vad_names = {"silero": "Silero VAD v6", "fsmn": "FunASR FSMN-VAD"}
+    vad_choice = tk.StringVar(value=vad_names.get(settings["vad_model"].get(), vad_names["silero"]))
+    ttk.Label(advanced, text="语音活动检测 (VAD)").grid(row=17, column=0, sticky="w", padx=(0, 12), pady=3)
+    vad_box = ttk.Combobox(advanced, textvariable=vad_choice, values=list(vad_names.values()), state="readonly")
+    vad_box.grid(row=17, column=1, sticky="ew")
+
+    def choose_vad(_):
+        from subtitle_relay.audio import VAD_THRESHOLDS
+
+        selected = tuple(vad_names)[vad_box.current()]
+        previous = settings["vad_model"].get()
+        if settings["vad_threshold"].get() == str(VAD_THRESHOLDS.get(previous)):
+            settings["vad_threshold"].set(str(VAD_THRESHOLDS[selected]))
+        settings["vad_model"].set(selected)
+
+    vad_box.bind("<<ComboboxSelected>>", choose_vad)
 
     def save():
         DATA.mkdir(parents=True, exist_ok=True)
@@ -518,7 +586,7 @@ def gui(initial_media=None):
 
     def start():
         nonlocal starter_process
-        if starter_process and starter_process.poll() is None:
+        if stop_process or (starter_process and starter_process.poll() is None):
             return
         if speech.get() not in asr_models or translation.get() not in mt_models:
             model_status.set("先选择已安装的本地模型或远程模型。")
@@ -546,22 +614,24 @@ def gui(initial_media=None):
             return
         model_status.set("")
         save()
+        PAUSED.unlink(missing_ok=True)
         with LOG.open("ab") as output:
             starter_process = subprocess.Popen([str(PYTHON), str(Path(__file__).resolve()), "--restart"],
                                                stdout=output, stderr=output,
                                                creationflags=subprocess.CREATE_NO_WINDOW)
         status.set("正在应用设置，已启用的播放窗口会自动接续…")
 
-    def stop():
-        from subtitle_relay.protocol import RelayClient
-
-        if starter_process and starter_process.poll() is None:
+    def stop(quit_app=False):
+        nonlocal stop_process, quit_after_stop
+        quit_after_stop = quit_after_stop or quit_app
+        if stop_process:
             return
-        if CONTROL.is_file() and healthy():
-            try:
-                RelayClient(PORT).send("shutdown", {"token": CONTROL.read_text(encoding="ascii")})
-            except (OSError, RuntimeError):
-                messagebox.showerror("Subtitle Relay", "This running service is not owned by the settings app.")
+        PAUSED.touch()
+        with LOG.open("ab") as output:
+            stop_process = subprocess.Popen(
+                [str(PYTHON) if PYTHON.is_file() else sys.executable, str(Path(__file__).resolve()), "--stop-service"],
+                stdout=output, stderr=output, creationflags=subprocess.CREATE_NO_WINDOW)
+        status.set("正在停止后台服务…")
 
     def mpv_install():
         selection = filedialog.askdirectory(title="Choose mpv config directory (Cancel uses AppData)")
@@ -627,7 +697,7 @@ def gui(initial_media=None):
             if not executable:
                 return
         pot_jobs.append(spawn(["potplayer-open", str(executable), selected, "--target", target.get(),
-                                "--audio", audio.get(), "--ahead", ahead.get()], pot_log))
+                                "--audio", audio.get(), "--ahead", ahead.get(), "--stop-file", str(PAUSED)], pot_log))
         pot_status.set("Preparing subtitles. PotPlayer will open when the initial buffer is ready.")
 
     ttk.Button(pot, text="Open video with translated subtitles…", command=open_video).pack(anchor="w", pady=5)
@@ -665,7 +735,7 @@ def gui(initial_media=None):
 
         reload_command = find_reload_command(potplayer_directory() / "PotPlayerMini64.exe")
         arguments = ["potplayer", hwnd, selected, "--target", target.get(),
-                     "--audio", audio.get(), "--ahead", ahead.get()]
+                     "--audio", audio.get(), "--ahead", ahead.get(), "--stop-file", str(PAUSED)]
         if reload_command:
             arguments.extend(["--reload-command", str(reload_command)])
         pot_jobs.append(spawn(arguments, pot_log))
@@ -684,7 +754,17 @@ def gui(initial_media=None):
     ttk.Button(footer, text="播放器日志", command=lambda: os.startfile(pot_log) if pot_log.exists() else None).pack(side="right")
 
     def tick():
-        nonlocal model_process
+        nonlocal model_process, stop_process, quit_after_stop
+        if stop_process and stop_process.poll() is not None:
+            code = stop_process.returncode
+            stop_process = None
+            if code:
+                show_window()
+                messagebox.showerror("Subtitle Relay", "无法停止字幕服务，请查看后台日志。")
+            elif quit_after_stop:
+                root.destroy()
+                return
+            quit_after_stop = False
         if model_process and model_process.poll() is not None:
             if model_process.returncode == 0:
                 refresh_models()
@@ -702,12 +782,42 @@ def gui(initial_media=None):
         if setup_process and setup_process.poll() is not None:
             setup_status.set("Engine dependencies ready" if setup_process.returncode == 0 else
                              f"Setup failed. See {DATA / 'setup.log'}")
-        status.set("正在应用设置，已启用的播放窗口会自动接续…" if starter_process and starter_process.poll() is None
+        status.set("正在停止后台服务…" if stop_process
+                   else "正在应用设置，已启用的播放窗口会自动接续…" if starter_process and starter_process.poll() is None
                    else "设置应用失败，点击右侧查看服务日志。" if starter_process and starter_process.returncode
                    else "字幕服务就绪" if healthy() else "字幕服务已停止")
         root.after(1500, tick)
 
+    def show_window():
+        root.deiconify()
+        root.lift()
+        root.focus_force()
+
+    try:
+        tray = SettingsTray()
+    except ImportError:
+        tray = None
+    root.protocol("WM_DELETE_WINDOW", root.withdraw if tray else lambda: stop(quit_app=True))
+    if tray is None:
+        ttk.Button(footer, text="退出", command=lambda: stop(quit_app=True)).pack(side="right")
+
+    def poll_tray():
+        if show_request and show_request.exists():
+            show_request.unlink(missing_ok=True)
+            show_window()
+        if tray:
+            try:
+                while True:
+                    if tray.actions.get_nowait() == "quit":
+                        stop(quit_app=True)
+                    else:
+                        show_window()
+            except Empty:
+                pass
+        root.after(150, poll_tray)
+
     root.after(50, tick)
+    root.after(150, poll_tray)
     if initial_media:
         tabs.select(pot)
         refresh()
@@ -716,7 +826,28 @@ def gui(initial_media=None):
                 window.current(index)
                 break
         pot_status.set(f"Current file: {Path(initial_media).name}")
-    root.mainloop()
+    try:
+        root.mainloop()
+    finally:
+        if tray:
+            tray.close()
+
+
+def open_settings():
+    if PYTHON.is_file() and Path(sys.prefix).resolve() != PYTHON.parents[1]:
+        subprocess.Popen([str(PYTHON), str(Path(__file__).resolve())], cwd=ROOT,
+                         creationflags=subprocess.CREATE_NO_WINDOW)
+        return
+    DATA.mkdir(parents=True, exist_ok=True)
+    show_request = DATA / "show-settings"
+    with (DATA / "settings-window.lock").open("a+b") as instance:
+        try:
+            msvcrt.locking(instance.fileno(), msvcrt.LK_NBLCK, 1)
+        except OSError:
+            show_request.touch()
+            return
+        show_request.unlink(missing_ok=True)
+        gui(show_request=show_request)
 
 
 if __name__ == "__main__":
@@ -724,6 +855,8 @@ if __name__ == "__main__":
         install_model(sys.argv[2])
     elif "--prepare" in sys.argv:
         prepare()
+    elif "--stop-service" in sys.argv:
+        background_stop()
     elif "--background" in sys.argv or "--restart" in sys.argv:
         background_start(restart="--restart" in sys.argv)
     elif len(sys.argv) >= 3 and sys.argv[1] in {"--pot-toggle", "--pot-hwnd", "--pot-stop-hwnd"}:
@@ -738,4 +871,4 @@ if __name__ == "__main__":
             pot_event("launch-failed", str(exc))
             ctypes.windll.user32.MessageBoxW(None, str(exc), "Subtitle Relay", 0x10)
     else:
-        gui()
+        open_settings()

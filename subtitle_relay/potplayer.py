@@ -298,7 +298,7 @@ class PotPlayer:
         raise ct.WinError(error)
 
 
-def open_with_subtitles(executable, path, client, audio, source, target, ahead, muted=False):
+def open_with_subtitles(executable, path, client, audio, source, target, ahead, muted=False, stop=None):
     from .players import run_adapter
 
     path = Path(path).resolve(strict=True)
@@ -315,6 +315,8 @@ def open_with_subtitles(executable, path, client, audio, source, target, ahead, 
     try:
         deadline = time.monotonic() + 45
         while time.monotonic() < deadline:
+            if stop and stop.exists():
+                return
             response = client.send("playback", {**hints, "position": 0})
             if response["error"]:
                 raise RuntimeError(response["error"])
@@ -323,6 +325,8 @@ def open_with_subtitles(executable, path, client, audio, source, target, ahead, 
             time.sleep(0.25)
         if not response or not response["subtitle"]:
             raise TimeoutError("The backend did not produce a subtitle file")
+        if stop and stop.exists():
+            return
         cache_srt = Path(response["subtitle"])
         # A private external track prevents independent windows from resetting each other's subtitle.
         subtitle = cache_srt.with_name(f"{cache_srt.stem}-{session}.srt")
@@ -349,7 +353,7 @@ def open_with_subtitles(executable, path, client, audio, source, target, ahead, 
         print(json.dumps({"window": hex(player.hwnd), "subtitle": str(subtitle),
                           "reload_command": reload_command}), flush=True)
         player.subtitle, player.revision = str(cache_srt), response["revision"]
-        run_adapter(player, client, source, target, ahead, 0.6, session=session)
+        run_adapter(player, client, source, target, ahead, 0.6, stop=stop, session=session)
     finally:
         try:
             client.send("close", {"session": session})
