@@ -74,9 +74,11 @@ class TranslationSettings:
 
 
 def extract_audio(path, audio, start, duration):
+    # Keep leading audio gaps on the media clock when writing timestamp-less PCM.
     result = subprocess.run(
         ["ffmpeg", "-nostdin", "-v", "error", "-ss", str(start), "-i", str(path),
-         "-map", f"0:a:{audio}", "-t", str(duration), "-ac", "1", "-ar", "16000",
+         "-map", f"0:a:{audio}", "-t", str(duration), "-ac", "1",
+         "-af", "aresample=16000:async=1:first_pts=0",
          "-c:a", "pcm_s16le", "-f", "s16le", "pipe:1"],
         capture_output=True, timeout=30, check=True,
         creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
@@ -241,7 +243,11 @@ def merge_ordered_cues(cues):
                 if len(next_text) > len(previous_text) or cue.end - cue.start > previous.end - previous.start:
                     previous = cue
                 continue
-            yield previous
+            # Across independent read windows, two aligned cues can still overlap.
+            # Keep the later onset and retire the earlier cue at that boundary.
+            stop = min(previous.end, cue.start)
+            if round(stop * 1000) > round(previous.start * 1000):
+                yield replace(previous, end=stop) if stop < previous.end else previous
         previous = cue
     if previous is not None:
         yield previous
@@ -314,7 +320,7 @@ class Relay:
 
             temp = path.with_suffix(f".{os.getpid()}.tmp")
             visible = (cue for cue in cues if clear_dialogue(cue.text) and clear_dialogue(cue.original or cue.text))
-            with temp.open("w", encoding="utf-8") as output:
+            with temp.open("w", encoding="utf-8", newline="\r\n") as output:
                 for index, cue in enumerate(visible, 1):
                     output.write(f"{index}\n{srt_time(cue.start)} --> {srt_time(cue.end)}\n{content(cue)}\n\n")
             os.replace(temp, path)

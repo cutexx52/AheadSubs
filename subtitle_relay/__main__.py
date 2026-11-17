@@ -61,7 +61,7 @@ def make_relay(args):
             client = cloud if args.mt == "openai" else openai_client(endpoint=args.llm_url)
             effort = "none" if args.mt == "openai" and args.llm_model.startswith("gpt-6-luna") else None
             translator = ChatTranslation(client, args.llm_model, reasoning_effort=effort)
-    profile = ["v2", args.asr, args.mt, args.ast, args.whisper_model, args.nllb_model,
+    profile = ["v3-media-clock", args.asr, args.mt, args.ast, args.whisper_model, args.nllb_model,
                args.llm_model, args.llm_url, args.device, asdict(settings)]
     if settings.enabled:
         profile.append("pause-planner-v1")

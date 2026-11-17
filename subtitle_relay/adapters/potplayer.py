@@ -221,24 +221,33 @@ class PotPlayer:
             raise OSError("PotPlayer did not respond")
         return value.value
 
+    def _title(self):
+        title = ct.create_unicode_buffer(1024)
+        self.user.GetWindowTextW(self.hwnd, title, len(title))
+        return title.value
+
+    def _matches_media(self, title):
+        hint = Path(title.removesuffix(" - PotPlayer"))
+        if not title.endswith(" - PotPlayer") or not hint.suffix:
+            return not self.resolve_media and self.path.stem.casefold() in title.casefold()
+        expected = self.path if hint.is_absolute() else self.path.name
+        return str(hint).casefold() == str(expected).casefold()
+
     def state(self):
         if self._pid() != self.pid:
             raise EOFError("PotPlayer window closed")
-        title = ct.create_unicode_buffer(1024)
-        self.user.GetWindowTextW(self.hwnd, title, len(title))
-        filename = title.value.removesuffix(" - PotPlayer")
+        title = self._title()
+        filename = title.removesuffix(" - PotPlayer")
         if self.resolve_media:
-            if not title.value.endswith(" - PotPlayer") or not Path(filename).suffix:
+            if not title.endswith(" - PotPlayer") or not Path(filename).suffix:
                 return None
-        elif self.path.stem.casefold() not in title.value.casefold():
+        elif not self._matches_media(title):
             return None
         duration = self._send(0x400, 0x5002) / 1000
         position = self._send(0x400, 0x5004) / 1000
-        if not 0 < duration <= 10_000_000 or not 0 <= position <= duration:
+        if self._title() != title or not 0 < duration <= 10_000_000 or not 0 <= position <= duration:
             return None
-        hint = Path(filename)
-        current = str(self.path) if hint.is_absolute() else self.path.name
-        if self.resolve_media and str(hint).casefold() != current.casefold():
+        if self.resolve_media and not self._matches_media(title):
             media = self.resolve_media(filename)
             if media is None:
                 raise EOFError("Pre-read stopped after file selection was cancelled")
@@ -249,15 +258,16 @@ class PotPlayer:
         return {"path": str(self.path), "position": position, "duration": duration, "audio": self.audio}
 
     def publish(self, path, revision):
+        if (path, revision) == (self.subtitle, self.revision) or not self._matches_media(self._title()):
+            return
         if self.track is not None:
-            if (path, revision) != (self.subtitle, self.revision):
-                try:
-                    write_potplayer_track(self.track, Path(path))
-                except PermissionError:
-                    return
-                if self.reload_command:
-                    self._send(0x111, self.reload_command)
-                self.subtitle, self.revision = path, revision
+            try:
+                write_potplayer_track(self.track, Path(path))
+            except PermissionError:
+                return
+            if self.reload_command:
+                self._send(0x111, self.reload_command)
+            self.subtitle, self.revision = path, revision
             return
         if self.subtitle != path:
             with Path(path).open("r", encoding="utf-8-sig") as subtitle:

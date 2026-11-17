@@ -1,16 +1,23 @@
+import io
 import os
+import shutil
+import subprocess
 import tempfile
 import time
 import unittest
+import wave
 from dataclasses import replace
 from concurrent.futures import Future
 from types import SimpleNamespace
 from pathlib import Path
+from struct import iter_unpack
 from unittest.mock import Mock, patch
 
 from subtitle_relay.inference.audio import Segmentation, Segmenter, make_wav
 from subtitle_relay.inference.errors import provider_error
-from subtitle_relay.server.engine import Playback, Relay, TranslationFailure, _translate_cues, clear_dialogue, merge_cues
+from subtitle_relay.server.engine import (
+    Playback, Relay, TranslationFailure, _translate_cues, clear_dialogue, extract_audio, merge_cues,
+)
 from subtitle_relay.server.history import inspect_cache
 from subtitle_relay.adapters.players import run_adapter
 from subtitle_relay.server.protocol import playback_from_json
@@ -106,7 +113,7 @@ class RelayTest(unittest.TestCase):
                 dual = Path(relay.update("test", bilingual)["subtitle"])
                 self.assertNotEqual(single, dual)
                 self.assertNotIn("こんにちは", single.read_text(encoding="utf-8"))
-                self.assertIn("[JP] こんにちは\n[CN] 你好", dual.read_text(encoding="utf-8"))
+                self.assertIn("[JP] こんにちは\r\n[CN] 你好".encode("utf-8"), dual.read_bytes())
                 inspected = inspect_cache(root / "cache.sqlite3")
                 self.assertEqual(inspected["media"][0]["display_name"], "movie.mp4")
                 self.assertEqual(inspected["rows"][0]["original"], "こんにちは")
@@ -180,6 +187,10 @@ class RelayTest(unittest.TestCase):
 
         player = PotPlayer.__new__(PotPlayer)
         player.subtitle = player.track = None
+        player.revision = 0
+        player.path = Path("episode 1.mp4")
+        player.resolve_media = True
+        player._title = Mock(return_value="episode 1.mp4 - PotPlayer")
         player.load_subtitle = Mock()
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "subtitle.srt"
@@ -189,6 +200,12 @@ class RelayTest(unittest.TestCase):
             path.write_text("1\n00:00:00,100 --> 00:00:01,000\nHello\n", encoding="utf-8")
             player.publish(str(path), 2)
             player.load_subtitle.assert_called_once_with(path)
+            player._title.return_value = "episode 2.mp4 - PotPlayer"
+            player._send = Mock()
+            player.reload_command = 123
+            player.publish(str(path), 3)
+            player._send.assert_not_called()
+            self.assertEqual(player.revision, 2)
 
     @unittest.skipUnless(os.name == "nt", "PotPlayer requires Windows")
     def test_potplayer_path_access_denied_offers_manual_resolution(self):
@@ -234,6 +251,30 @@ class RelayTest(unittest.TestCase):
     def test_dialogue_filter_preserves_normal_repetition(self):
         self.assertTrue(clear_dialogue("はい、はい、わかりました。"))
         self.assertFalse(clear_dialogue("ありがとう、" * 7))
+
+    def test_subtitle_overlap_preserves_the_second_onset_without_flashing_back(self):
+        early = Cue(1, 6, "earlier sentence")
+        late = Cue(3, 4, "new sentence")
+        final = Cue(7, 8, "last sentence")
+        self.assertEqual(merge_cues([late, final, early]), [replace(early, end=3), late, final])
+
+    @unittest.skipUnless(shutil.which("ffmpeg"), "FFmpeg required for media clock test")
+    def test_audio_seek_preserves_track_start_offset(self):
+        with tempfile.TemporaryDirectory() as directory:
+            media = Path(directory) / "offset.mkv"
+            subprocess.run([
+                "ffmpeg", "-v", "error", "-f", "lavfi", "-i", "color=s=160x120:r=20:d=4",
+                "-itsoffset", "1.2", "-f", "lavfi", "-i", "sine=440:16000:duration=2",
+                "-c:v", "ffv1", "-c:a", "pcm_s16le", str(media),
+            ], capture_output=True, check=True, timeout=20)
+            for position, expected in ((0, 1.2), (0.5, 0.7), (2.0, 0)):
+                with self.subTest(position=position):
+                    wav = extract_audio(media, 0, position, 3)
+                    with wave.open(io.BytesIO(wav), "rb") as sound:
+                        pcm = sound.readframes(sound.getnframes())
+                    actual = next(i / 16000 for i, (sample,) in enumerate(iter_unpack("<h", pcm))
+                                  if abs(sample) > 500)
+                    self.assertAlmostEqual(actual, expected, delta=0.002)
 
     def test_compatible_asr_requests_segment_timestamps_in_auto_language_mode(self):
         def transcribe(**request):
