@@ -1,0 +1,13 @@
+AheadSubs original project code is licensed under the MIT License in LICENSE.
+Third-party software, model weights and services retain their own terms.
+
+This package uses FFmpeg and may include LGPL components, including pystray
+and FFmpeg libraries inside PyAV. CUDA variants include proprietary NVIDIA
+runtime components. NLLB model weights are separately downloaded and subject
+to the original model's noncommercial terms. The project MIT license does
+not override any of these licenses or grant additional model/service rights.
+
+See docs/licenses.md and docs/licenses.zh-CN.md for the dated inventory,
+source links, scope and outstanding binary redistribution requirements.
+This notice is not a replacement for third-party license texts or source
+delivery obligations and does not certify binary redistribution compliance.

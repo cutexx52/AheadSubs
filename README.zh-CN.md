@@ -1,3 +1,4 @@
+<!-- wiki:intro:start -->
 # AheadSubs
 
 [English](README.md) | [简体中文](README.zh-CN.md)
@@ -9,6 +10,8 @@ AheadSubs 提前读取即将播放的音频，识别语音、翻译对白，再�
 ![AheadSubs 工作流程：播放器提供进度，后台提前读取有限音频，使用本地或云端模型识别翻译，再将按原媒体时间对齐的字幕送回播放器。](docs/images/aheadsubs-overview.zh-CN.png)
 
 *播放器提供播放头；AheadSubs 处理前方有界区间，将字幕按原媒体时间加载。配图用于解释流程，不是界面截图，也不代表零延迟承诺。*
+
+<!-- wiki:intro:end -->
 
 ## 可以做什么
 
@@ -79,7 +82,10 @@ python -m subtitle_relay clock D:\video\clip.mkv --source ja --target en --ahead
 
 先用自己的设备和素材测试一路。RTX 4090 搭配 Qwen3-ASR 1.7B Q4_K、NLLB 600M INT8 的测试中，四路模拟播放持续 45 秒，无缓冲耗尽采样，最低已译余量 18.17 秒。素材是同一公开日语样本的独立副本，不代表长期混合内容负载。[实测、CPU 结果和复测方式](docs/performance.zh-CN.md)。
 
+<!-- wiki:navigation:start -->
 ## 文档
+
+[快速开始：本地与云端](README.zh-CN.md#快速开始)
 
 仓库每篇 Markdown 文档均可切换英文和简体中文，默认入口为英文。
 
@@ -94,5 +100,15 @@ python -m subtitle_relay clock D:\video\clip.mkv --source ja --target en --ahead
 | [HTTP 协议](docs/server.zh-CN.md) / [架构](docs/architecture.zh-CN.md) | API、会话、时间轴与模块边界 |
 | [开发与贡献](docs/contributing.zh-CN.md) | 开发、测试和 Agent PR 到合并流程 |
 | [发布与预算](docs/releases.zh-CN.md) | 自动预览版、构建验证和成本控制 |
+| [性能](docs/performance.zh-CN.md) | 实测结果与设备限制 |
+| [Windows 打包](packaging/README.zh-CN.md) | 安装包与便携版构建 |
+| [Wiki 发布](docs/wiki.zh-CN.md) | 自动同步双语导航与图片引用 |
+| [许可证](docs/licenses.zh-CN.md) | MIT 源码许可、模型限制与再分发审计 |
+
+<!-- wiki:navigation:end -->
 
 [Wiki](https://github.com/cutexx52/AheadSubs/wiki) 为导航入口，维护中的文档保存在仓库。概览图使用内置图像生成工具制作，[提示词与无障碍说明](docs/images/README.zh-CN.md)随项目保存。
+
+## 许可证
+
+项目自有代码采用 [MIT](LICENSE)。第三方组件遵守各自条款。尤其是 NLLB 权重限非商业使用，CUDA 运行库为专有软件；商用或再分发二进制前请查看[依赖与模型审计](docs/licenses.zh-CN.md)。

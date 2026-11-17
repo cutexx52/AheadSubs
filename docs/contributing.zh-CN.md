@@ -13,7 +13,7 @@ python -m venv .venv
 
 NVIDIA 本地后端的额外运行库及 Windows 支持情况见[安装指南](windows.zh-CN.md)。使用 CPU 排查时，启动后台用 `--device cpu`。
 
-项目文档正文保存在 `docs/`，通过主仓库的 Pull Request 审查。新增、重命名或移除文档时，请同时检查 README 和 [Wiki 首页](https://github.com/cutexx52/AheadSubs/wiki)上的链接。Wiki 首页可在 GitHub 上编辑，也可通过独立的 Wiki Git 仓库维护。
+项目文档正文保存在 `docs/`，通过主仓库的 Pull Request 审查。新增、重命名或移除文档时，请更新两版 README 的导航入口；[Wiki 首页](https://github.com/cutexx52/AheadSubs/wiki)由工作流自动同步，不再手动编辑。
 
 提交前覆盖改动对应的边界：
 
@@ -86,3 +86,7 @@ NVIDIA 本地后端的额外运行库及 Windows 支持情况见[安装指南](w
 - [Claude Code：最佳实践](https://code.claude.com/docs/en/best-practices)、[共享项目规则](https://code.claude.com/docs/en/memory)：精简常驻上下文、提供可执行验证、共享规则入口。
 - [GitHub：创建 Draft PR](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request)、[分支保护](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches)、[自动合并](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-auto-merge-for-pull-requests-in-your-repository)：提前共享工作与强制合并条件。
 - [GitHub：Copilot 仓库指令](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions)：专用入口与审查指导。
+
+## Wiki 与许可证维护
+
+Wiki 首页从 README 标记区段生成，主分支更新后自动发布，参见 [Wiki 发布](wiki.zh-CN.md)。请修改两版 README 导航表，不要手改生成的 Wiki 首页。依赖或模型变更必须更新[许可证清单与再分发评估](licenses.zh-CN.md)，保留上游声明并区分源码、二进制和模型条款。
