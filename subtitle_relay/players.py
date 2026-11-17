@@ -88,7 +88,7 @@ class Mpv:
         self.subtitle, self.revision = path, revision
 
 
-def run_adapter(player, client, source, target, ahead, interval, stop=None, idle_limit=None):
+def run_adapter(player, client, source, target, ahead, interval, stop=None, idle_limit=None, report=None):
     session = uuid4().hex
     previous_error = None
     last_active = time.monotonic()
@@ -105,8 +105,19 @@ def run_adapter(player, client, source, target, ahead, interval, stop=None, idle
                 if response["error"] and response["error"] != previous_error:
                     print(response["error"], flush=True)
                 previous_error = response["error"]
+                if report:
+                    if response["error"]:
+                        report("error", f"这一段处理失败，稍后重试：{response['error']}")
+                    elif response["ready_ahead"] <= 0:
+                        report("buffering", "正在识别和缓冲…")
+                    elif player.subtitle and response.get("nearby_cues"):
+                        report("ready", f"字幕已加载 · 已处理后续 {response['ready_ahead']:.0f} 秒")
+                    else:
+                        report("silence", "这一段已处理，暂未生成字幕")
             else:
                 client.send("close", {"session": session})
+                if report:
+                    report("waiting", "等待活动音轨或播放位置…")
                 if idle_limit is not None and time.monotonic() - last_active >= idle_limit:
                     return
             time.sleep(interval)

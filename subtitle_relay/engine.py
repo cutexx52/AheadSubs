@@ -58,7 +58,7 @@ def translate_chunk(playback, index, chunk, recognizer, translator, speech_trans
         # Assign overlapping context to a single chunk by the cue midpoint.
         cues = [Cue(max(base, base + cue.start), min(end, base + cue.end), cue.text) for cue in cues
                 if start <= base + (cue.start + cue.end) / 2 < start + chunk]
-        cues = [cue for cue in cues if cue.end > cue.start]
+        cues = [cue for cue in cues if cue.end > cue.start and clear_dialogue(cue.text)]
         source = NLLB_LANGUAGES.get(language, language)
         target = NLLB_LANGUAGES.get(playback.target, playback.target)
         if cues and not speech_translator and source != target:
@@ -76,6 +76,19 @@ def srt_time(seconds):
     minutes, seconds = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
     return f"{hours:02}:{minutes:02}:{seconds:02},{ms:03}"
+
+
+def clear_dialogue(text):
+    """Keep normal repetitions, drop pathological runs of the same text."""
+    compact = "".join(char for char in text.casefold() if char.isalnum())
+    if len(compact) < 14:
+        return True
+    for size in range(1, min(12, len(compact) // 7) + 1):
+        repeat = compact[:size]
+        count = len(compact) // size
+        if compact[:count * size] == repeat * count:
+            return False
+    return True
 
 
 @dataclass
@@ -151,6 +164,7 @@ class Relay:
         revision = len(rows)
         if self.rendered.get(key) != revision or not path.exists():
             cues = merge_cues(Cue(**cue) for _, data in rows for cue in json.loads(data))
+            cues = [cue for cue in cues if clear_dialogue(cue.text) and clear_dialogue(cue.original or cue.text)]
             body = "\n\n".join(f"{index}\n{srt_time(cue.start)} --> {srt_time(cue.end)}\n"
                                + " ".join(cue.text.splitlines())
                                for index, cue in enumerate(cues, 1))
@@ -172,8 +186,14 @@ class Relay:
             while index in completed:
                 index += 1
             end = min(index * self.chunk, playback.duration or math.inf)
+            nearby = any(cue["end"] > playback.position and cue["start"] < end
+                         and clear_dialogue(cue["text"]) and clear_dialogue(cue.get("original") or cue["text"])
+                         for idx, encoded in rows
+                         if playback.position // self.chunk - 1 <= idx < index
+                         for cue in json.loads(encoded))
             return {"revision": revision, "subtitle": str(path) if revision else None,
                     "ready_ahead": max(0, end - playback.position),
+                    "nearby_cues": nearby,
                     "error": error[1] if error else None}
 
     def drop(self, identifier):

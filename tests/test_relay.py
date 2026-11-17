@@ -6,12 +6,16 @@ from pathlib import Path
 from unittest.mock import patch
 
 from subtitle_relay.audio import Segmentation, Segmenter, make_wav
-from subtitle_relay.engine import Playback, Relay, merge_cues
+from subtitle_relay.engine import Playback, Relay, clear_dialogue, merge_cues
 from subtitle_relay.protocol import playback_from_json
 from subtitle_relay.providers import Cue, OpenAIWhisper
 
 
 class RelayTest(unittest.TestCase):
+    def test_dialogue_filter_preserves_normal_repetition(self):
+        self.assertTrue(clear_dialogue("はい、はい、わかりました。"))
+        self.assertFalse(clear_dialogue("ありがとう、" * 7))
+
     def test_compatible_asr_requests_segment_timestamps_in_auto_language_mode(self):
         def transcribe(**request):
             self.assertEqual(request["model"], "qwen3-asr")
@@ -62,6 +66,7 @@ class RelayTest(unittest.TestCase):
                         time.sleep(0.05)
                         result = relay.update("second", playback)
                     self.assertEqual(result["ready_ahead"], 8)
+                    self.assertTrue(result["nearby_cues"])
                     self.assertIn("00:00:08,250 --> 00:00:09,500", Path(result["subtitle"]).read_text("utf8"))
                 finally:
                     relay.close()

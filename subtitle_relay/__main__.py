@@ -1,6 +1,7 @@
 import argparse
 import json
 import time
+from contextlib import ExitStack
 from dataclasses import asdict
 from pathlib import Path
 
@@ -44,7 +45,7 @@ def make_relay(args):
     if not args.ast:
         if args.asr == "local":
             recognizer = FasterWhisper(args.whisper_model, args.device, min(args.workers, 2))
-        elif args.asr == "compatible":
+        elif args.asr in {"compatible", "qwen"}:
             client = openai_client(endpoint=args.asr_url, endpoint_key="RELAY_ASR_API_KEY")
             recognizer = OpenAIWhisper(client, args.asr_model)
         else:
@@ -56,8 +57,8 @@ def make_relay(args):
             translator = ChatTranslation(client, args.llm_model)
     profile = ["v2", args.asr, args.mt, args.ast, args.whisper_model, args.nllb_model,
                args.llm_model, args.llm_url, args.device, asdict(settings)]
-    if args.asr == "compatible" and not args.ast:
-        profile.extend([args.asr_url, args.asr_model])
+    if args.asr in {"compatible", "qwen"} and not args.ast:
+        profile.extend([args.asr_url if args.asr == "compatible" else args.qwen_size, args.asr_model])
     return Relay(args.cache, recognizer, translator, profile, args.workers, args.chunk,
                  OpenAIWhisper(cloud) if args.ast else None, Segmenter(settings))
 
@@ -66,7 +67,9 @@ def main():
     parser = argparse.ArgumentParser(prog="python -m subtitle_relay")
     commands = parser.add_subparsers(dest="mode", required=True)
     server = commands.add_parser("serve")
-    server.add_argument("--asr", choices=["local", "openai", "compatible"], default="local")
+    server.add_argument("--asr", choices=["local", "openai", "compatible", "qwen"], default="local")
+    server.add_argument("--qwen-size", choices=["0.6b", "1.7b"], default="1.7b")
+    server.add_argument("--qwen-root", type=Path)
     server.add_argument("--asr-url", default="http://127.0.0.1:8000/v1")
     server.add_argument("--asr-model", default="qwen3-asr")
     server.add_argument("--mt", choices=["local", "openai", "compatible"], default="local")
@@ -121,16 +124,20 @@ def main():
                 0 <= args.pad_ms <= 500 and 0 < args.vad_threshold < 1 and
                 0 <= args.backfill <= 30):
             parser.error("invalid VAD parameters or audio context")
-        relay = make_relay(args)
-        try:
+        with ExitStack() as resources:
+            if args.asr == "qwen" and not args.ast:
+                from .qwen import run as run_qwen
+
+                args.asr_url = resources.enter_context(run_qwen(args.qwen_root, args.qwen_size))
+                args.asr_model = "qwen3-asr"
+            relay = make_relay(args)
+            resources.callback(relay.close)
             if args.pot_hotkey_launcher:
                 from .potplayer import start_hotkey
 
                 start_hotkey(args.pot_hotkey_launcher)
             token = args.control_token_file.read_text(encoding="ascii").strip() if args.control_token_file else None
             serve(relay, args.port, token)
-        finally:
-            relay.close()
         return
     if args.interval <= 0:
         parser.error("--interval must be positive")

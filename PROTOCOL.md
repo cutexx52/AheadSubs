@@ -29,11 +29,12 @@ Reply:
   "revision": 5,
   "subtitle": "E:/relay/cache/example.srt",
   "ready_ahead": 16.8,
+  "nearby_cues": true,
   "error": null
 }
 ```
 
-Before any coverage is available, `revision` is zero and `subtitle` is null. Treat the version as the tuple of subtitle path and revision. A nonzero revision may initially describe only silence. Load once text exists, then reload on revision changes. Preserve player time and avoid changing focus. `ready_ahead` measures continuous completed media coverage starting at the supplied position, including silence. It can shrink when the window seeks or changes file.
+Before any coverage is available, `revision` is zero and `subtitle` is null. Treat the version as the tuple of subtitle path and revision. A nonzero revision may initially describe only silence. Load once text exists, then reload on revision changes. Preserve player time and avoid changing focus. `ready_ahead` measures continuous completed media coverage starting at the supplied position, including silence. It can shrink when the window seeks or changes file. `nearby_cues` indicates whether that coverage contains a subtitle cue that has not ended at the supplied position.
 
 `POST /v1/close` with `{"session":"player-window-unique-id"}` releases a session. `GET /v1/health` checks service readiness.
 

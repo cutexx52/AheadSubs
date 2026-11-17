@@ -5,8 +5,8 @@
 ## Windows 图形入口
 
 1. 准备 Python 3.11+、`ffmpeg` 和 `ffprobe`，并把它们放到 PATH。NVIDIA 模式需要支持 CUDA 12 的驱动。
-2. 双击 `Subtitle Relay.pyw`。选择本地或 OpenAI provider，可以从窗口准备项目环境。首次运行本地 provider 会下载模型。
-3. 在 **Setup** 点击 **Install mpv menu…**，选择现有配置目录。使用默认目录时可以按取消。用便携 mpv 时选择其 `portable_config`。重开 mpv 0.42+，在视频窗口右键打开 **Subtitle Relay**，启用字幕即可。可以在同一菜单切换源语言、目标语言和预读时长。服务未启动时会按保存的配置启动。
+2. 双击 `Subtitle Relay.pyw`，在 **模型** 标签准备运行环境，按模型名选择语音识别与文本翻译。缺少的模型会列在 **安装本地模型**，下载成功后可选择。远程模型的密钥文件在 **高级设置** 配置。
+3. 在 **模型** 点击 **安装 mpv 菜单…**，选择现有配置目录。使用默认目录时可以按取消。用便携 mpv 时选择其 `portable_config`。重开 mpv 0.42+，在视频窗口右键打开 **Subtitle Relay**，启用字幕即可。可以在同一菜单切换源语言、目标语言和预读时长。服务未启动时会按保存的配置启动。
 
 **PotPlayer** 标签提供两个入口：
 
@@ -35,7 +35,9 @@ python -m venv .venv
 
 云端 ASR 默认用能返回起止时间的 `whisper-1`。默认小型文本模型为 `gpt-4.1-mini`。OpenAI 音频直译模式的目标选 `en`。使用 OpenAI ASR / AST 时会发送处理过的语音段，使用云端文本翻译时会发送该段的字幕文本。凭据从环境变量 `OPENAI_API_KEY` 或本地密钥文件读取。兼容文本接口的可选密钥读取 `RELAY_LLM_API_KEY`。
 
-对 Qwen3-ASR 等兼容服务，选择 **Speech recognition → compatible**，在 **VAD and timing** 设置 ASR URL 和模型名。服务需支持带片段时间戳的 `verbose_json`。例如 [Qwen3-ASR-STT](https://github.com/hangry-labs/Qwen3-ASR-STT#openai-compatible-api) 会在请求片段时间戳时加载独立的强制对齐模型。兼容语音接口的可选密钥读取 `RELAY_ASR_API_KEY`。Qwen 权重与部署由该服务管理。
+本地 Qwen3-ASR 可选 0.6B 和 1.7B。安装器下载 CrispASR Windows Vulkan 运行时、Q4_K 量化权重和共享的 Qwen3 ForcedAligner。Relay 为所有窗口启动一个共享的推理进程。独立运行时使用 `serve --asr qwen --qwen-size 0.6b`。
+
+连接自己的识别服务时，选择 **[自定义] 语音识别 API**，在 **高级设置** 填写 ASR URL 和模型名。服务需支持带片段时间戳的 `verbose_json`，可选密钥读取 `RELAY_ASR_API_KEY`。例如 [Qwen3-ASR-STT](https://github.com/hangry-labs/Qwen3-ASR-STT#openai-compatible-api) 会在请求片段时间戳时加载独立的强制对齐模型。
 
 ## 单独运行适配器
 
