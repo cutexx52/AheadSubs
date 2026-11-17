@@ -25,7 +25,8 @@ PotPlayer / mpv                 Windows desktop helper
 | `subtitle_relay/inference/` | Segmentation, recognition and translation | [Provider interfaces](providers.md#provider-interfaces) |
 | `subtitle_relay/desktop/` | Control bridge, service lifecycle, PotPlayer callbacks and source fallback UI | [Desktop guide](desktop.md) |
 | `desktop/` | WPF settings UI and Windows tray | Python runtime through the desktop bridge |
-| `subtitle_relay/client.py` | Shared loopback HTTP client | `RelayClient(port).send(route, data)` |
+| `subtitle_relay/automation.py` | Shared MCP/CLI operations and argument models | [Automation](automation.md) |
+| `subtitle_relay/client.py` | Shared desktop/player/automation loopback client | `RelayClient(port).send(route, data)` |
 | `integrations/` | Player-hosted Lua / AngelScript | [Player integrations](adapters.md) |
 | `subtitle_relay/__main__.py` | CLI commands and runtime assembly | `python -m subtitle_relay --help` |
 
@@ -33,4 +34,4 @@ Players supply media position and audio track. The service reads the file as nee
 
 One service shares model instances and bounds in-flight chunks. Each window owns a session. Identical media, audio track and processing configuration can share cached results. Sessions expire after stopping or disconnecting; completed disk caches remain reusable. Service shutdown also stops local inference processes it owns.
 
-Add players through the existing protocol and models through provider interfaces. Players need not know about models, VAD or credentials. Browser and other non-file sources first need a media-input and timestamp contract before reusing segmentation and translation. CLI and HTTP are available integration surfaces; an MCP server is not currently included.
+Add players through the existing protocol and models through provider interfaces. Players need not know about models, VAD or credentials. Browser and other non-file sources first need a media-input and timestamp contract before reusing segmentation and translation. MCP and CLI share operation models in `automation.py`; HTTP remains available for direct integrations.

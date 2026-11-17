@@ -64,7 +64,7 @@ Example response:
 | `POST /v1/close` | JSON `{"session":"window-1"}` releases a session; success returns `{}`. |
 | `POST /v1/shutdown` | JSON `{"token":"…"}` stops the service, requiring the startup control token. |
 
-POST requests with `Origin` are rejected. Bodies are limited to 32 KiB. Common statuses: invalid input `400`, unauthorized `403`, temporarily busy `503`.
+POST requests with `Origin` are rejected. Ordinary bodies are limited to 32 KiB; text translation allows 50 KiB for URL-encoded Unicode. Common statuses: invalid input `400`, unauthorized `403`, temporarily busy `503`.
 
 <a id="文本翻译"></a>
 

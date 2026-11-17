@@ -13,7 +13,7 @@ python packaging\windows\build.py --native --version 0.1.0
 python packaging\windows\build.py --native --cuda --version 0.1.0
 ```
 
-`--dotnet`、`--iscc` 可指定程序路径；不带 `--native` 构建 Tk 备用版；`--portable-only` 跳过安装包。每次在 `dist` 临时目录构建，校验固定 FFmpeg/Inno 哈希，在只有系统路径的 `PATH` 下测试私有运行时。打包前检查原生 Python 依赖、Tcl/Tk、CLI 导入、桌面桥 JSON、FFmpeg/FFprobe。`--verify-install` 在未安装程序的用户环境中安装、验证和卸载测试副本。
+`--dotnet`、`--iscc` 可指定程序路径；不带 `--native` 构建 Tk 备用版；`--portable-only` 跳过安装包。每次在 `dist` 临时目录构建，校验固定 FFmpeg/Inno 哈希，在只有系统路径的 `PATH` 下测试私有运行时。打包前检查原生 Python 依赖、Tcl/Tk、`aheadsubs.exe` 启动器、MCP 初始化及工具调用、桌面桥 JSON、FFmpeg/FFprobe。`--verify-install` 在未安装程序的用户环境中安装、验证和卸载测试副本。
 
 仅当 Python 二进制及固定依赖输入匹配时复用 `.relay/packaging-tools` 私有运行时；播放器集成、UI 和 Python 源码每次重新放入。全部验证成功才替换输出文件。
 

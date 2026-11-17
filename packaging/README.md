@@ -13,7 +13,7 @@ python packaging\windows\build.py --native --version 0.1.0
 python packaging\windows\build.py --native --cuda --version 0.1.0
 ```
 
-`--dotnet` and `--iscc` accept explicit executable paths. Omit `--native` for the Tk fallback build. Use `--portable-only` to skip the Inno toolchain. Each build stages in a temporary directory inside `dist`, checks the pinned FFmpeg and Inno hashes and tests the private runtime with a system-only `PATH`. Native Python dependencies, Tcl/Tk, CLI imports, desktop bridge JSON, and FFmpeg/FFprobe are checked before archiving. `--verify-install` additionally installs, verifies and uninstalls a test copy in a profile without an installed app.
+`--dotnet` and `--iscc` accept explicit executable paths. Omit `--native` for the Tk fallback build. Use `--portable-only` to skip the Inno toolchain. Each build stages in a temporary directory inside `dist`, checks the pinned FFmpeg and Inno hashes and tests the private runtime with a system-only `PATH`. Smoke checks cover native Python dependencies, Tcl/Tk, the `aheadsubs.exe` launcher, MCP initialization and a tool call, desktop bridge JSON, and FFmpeg/FFprobe. `--verify-install` additionally installs, verifies and uninstalls a test copy in a profile without an installed app.
 
 Repeat builds reuse the private Python runtime under `.relay/packaging-tools` only when the Python binary and pinned dependency inputs match. Player integrations, UI and Python application sources are staged anew on every build. The builder replaces release files only after its verification steps pass.
 

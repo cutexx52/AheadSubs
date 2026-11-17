@@ -40,6 +40,7 @@ The launcher starts `UI/AheadSubs.exe`. WPF uses `python -m subtitle_relay.deskt
 | `pot-windows` | Lists controllable PotPlayer windows. |
 | `pot-start <window>` / `pot-stop <window>` | Starts/stops that window's look-ahead. |
 | `logs` | Returns log paths. |
+| `automation [mcp-enable\|mcp-disable\|cli-install\|cli-remove]` | Reads or updates MCP access, client configuration and CLI user-PATH registration. See [integrations](automation.md). |
 
 Each invocation writes one JSON object with `ok` to stdout. Failure adds `error` and a nonzero exit code. External adapters should use HTTP v1 rather than this internal desktop interface.
 

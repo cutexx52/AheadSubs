@@ -25,6 +25,7 @@ PotPlayer / mpv                    Windows 桌面助手
 | `subtitle_relay/inference/` | 音频分段、识别与翻译 | [Recognizer、Translator、SpeechTranslator](providers.zh-CN.md#后端接口) |
 | `subtitle_relay/desktop/` | 控制桥、服务生命周期、PotPlayer 回调和源码备用界面 | [桌面助手](desktop.zh-CN.md) |
 | `desktop/` | WPF 设置界面和 Windows 托盘 | 通过桌面控制桥调用 Python 运行时 |
+| `subtitle_relay/automation.py` | MCP/CLI 共用操作及参数模型 | [自动化](automation.zh-CN.md) |
 | `subtitle_relay/client.py` | 桌面和播放器共用的 loopback HTTP 客户端 | `RelayClient(port).send(route, data)` |
 | `integrations/` | 由播放器宿主装载的 Lua / AngelScript 脚本 | [播放器适配](adapters.zh-CN.md) |
 | `subtitle_relay/__main__.py` | CLI 命令和运行时组装 | `python -m subtitle_relay --help` |
@@ -35,4 +36,4 @@ PotPlayer / mpv                    Windows 桌面助手
 
 新播放器优先实现已有协议，新增模型优先实现 provider 接口。播放器无需了解模型、VAD 或云端凭据。新增浏览器或其他非文件媒体来源时，需要先定义媒体输入与时间坐标契约，再复用现有的分段和翻译流程。
 
-目前提供 CLI 和 HTTP 接入，尚未内置 MCP server。
+MCP 和 CLI 通过 `automation.py` 共用操作模型，HTTP 继续支持直接接入。

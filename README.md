@@ -16,7 +16,7 @@ AheadSubs reads upcoming audio, transcribes speech, translates dialogue, and sen
 - **Local, cloud, or hybrid processing.** Choose recognition and translation separately. Fully local models keep processing on your computer after downloads; cloud text translation sends subtitle text, while cloud recognition sends audio segments.
 - **Readable, synchronized captions.** Speech detection finds natural boundaries. Translated text keeps the source segment's timing; optional bilingual SRT puts the original above the translation.
 - **Reusable results.** Completed cues persist to disk. Compatible sessions reuse results instead of repeatedly recognizing and translating the same material. Temporary audio buffers are bounded and released after work completes.
-- **Player integration and automation.** Use desktop setup and player controls, or integrate through the CLI, HTTP playback API and desktop control bridge. Each playback window has its own session; the background service shares models.
+- **Player integration and automation.** Use desktop setup and player controls, or integrate through MCP, the CLI, HTTP playback API and desktop control bridge. Each playback window has its own session; the background service shares models.
 
 ## Quick start
 
@@ -58,7 +58,7 @@ Wait for initial buffering before expecting captions; processing speed, network 
 | Local recognition | Qwen3-ASR 0.6B / 1.7B through Vulkan; faster-whisper Small through CPU / supported CUDA |
 | Local translation | NLLB 600M INT8 through CTranslate2 |
 | Cloud processing | Alibaba Cloud ASR / Qwen-MT, OpenAI audio/text APIs, ChatGPT OAuth text translation, MiniMax text translation, compatible endpoints |
-| Automation | CLI commands, HTTP v1 playback/text API, JSON desktop control bridge |
+| Automation | Shared MCP/CLI operations for status, text translation, whole-file SRT generation and playback sessions; HTTP v1 and JSON desktop bridge |
 | New integrations | Implement a player adapter or provider contract without changing the other layers |
 
 For a source checkout with the [development environment](docs/contributing.md) installed:
@@ -69,7 +69,7 @@ python -m subtitle_relay serve --asr local --whisper-model small --mt local --de
 python -m subtitle_relay clock D:\video\clip.mkv --source ja --target en --ahead 20
 ```
 
-Run the service and the simulated playhead in separate terminals. For cloud CLI configurations, see the [provider examples](docs/providers.md). The project does **not yet ship an MCP server**; agents and other tools can currently integrate through the CLI and HTTP API. An MCP adapter can build on those contracts.
+Run the service and the simulated playhead in separate terminals. For cloud CLI configurations, see the [provider examples](docs/providers.md). For Agent access, open **Integrations (接入) → Enable MCP access (开启 MCP 接入) → Copy MCP configuration (复制 MCP 配置)** and add it to a trusted local client. **Install CLI (安装 CLI)** exposes `aheadsubs` after reopening your terminal. MCP and CLI share operation schemas and errors. See [Agent and CLI integrations](docs/automation.md) for configuration, tools and examples.
 
 ## Current support and performance
 
@@ -87,6 +87,7 @@ Every repository Markdown page offers an English / Simplified Chinese switch. En
 | [Desktop guide](docs/desktop.md) | Models, credentials, tray controls and diagnostics |
 | [Subtitle tuning](docs/tuning.md) | Recognition, boundaries, look-ahead and bilingual display |
 | [Providers](docs/providers.md) | Local/cloud choices, authorization and provider contracts |
+| [Agent / CLI integrations](docs/automation.md) | MCP setup, text translation, whole-file SRT and automation |
 | [Player integrations](docs/adapters.md) | PotPlayer, mpv and new adapters |
 | [HTTP protocol](docs/server.md) / [Architecture](docs/architecture.md) | APIs, sessions, timeline and module boundaries |
 | [Contributing](docs/contributing.md) | Development, tests and Agent PR-to-merge workflow |

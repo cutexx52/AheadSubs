@@ -146,6 +146,13 @@ def run_command(command, item=None, folder=None):
         return result
     if command == "status":
         return status()
+    if command == "automation":
+        from ..automation_text import text
+        from .automation import configure
+
+        if item not in (None, "mcp-enable", "mcp-disable", "cli-install", "cli-remove"):
+            raise ValueError(text("error.integration_action"))
+        return configure(item)
     if command == "inspect":
         return inspect_cache(runtime.DATA / "cache" / "cache.sqlite3", item)
     if command == "install":
@@ -187,7 +194,7 @@ def run_command(command, item=None, folder=None):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("status", "install", "apply", "save-credentials", "stop",
+    parser.add_argument("command", choices=("status", "automation", "install", "apply", "save-credentials", "stop",
                                            "integrate", "unintegrate", "logs", "inspect",
                                            "pot-windows", "pot-start", "pot-stop", "chatgpt-status", "chatgpt-login",
                                            "chatgpt-models", "chatgpt-logout"))
