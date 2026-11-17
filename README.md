@@ -20,6 +20,8 @@ Generate translated SRT subtitles for local videos ahead of playback, using on-d
 2. 在 **翻译** 首页展开 **快速预设**。选择方案并下载缺少的模型，然后点击 **应用方案**。没有可用 Vulkan GPU 时可选 **纯本地 · CPU**。[查看预设和模型管理](docs/desktop.md#日常使用)
 3. 在 PotPlayer 打开本地视频，按 **Ctrl+Alt+J** 开启预读，按 **Ctrl+Alt+K** 停止当前窗口的预读。mpv 可以从助手安装右键菜单，详见[播放器适配](docs/adapters.md)。
 
+在 **接入** 页开启 MCP 或安装 CLI，可让本机 Agent 和脚本翻译文本、生成 SRT 或控制预读。详见[Agent 与命令行接入](docs/automation.md)。
+
 关闭设置窗口会隐藏到系统托盘。右键托盘图标选 **停止并退出** 会停止后台并释放模型资源。升级保留已有设置、模型和字幕缓存。
 
 ## 使用与扩展
@@ -32,6 +34,7 @@ Generate translated SRT subtitles for local videos ahead of playback, using on-d
 | [识别与字幕调校](docs/tuning.md) | 原文检查、停顿分段、翻译上下文与双语字幕 |
 | [桌面助手](docs/desktop.md) | 配置、托盘、模型下载与诊断 |
 | [播放器适配](docs/adapters.md) | PotPlayer、mpv 及新播放器接口 |
+| [Agent 与命令行接入](docs/automation.md) | MCP 配置、CLI、字幕生成及自动化接口 |
 | [后台协议](docs/server.md) | HTTP 请求、响应、会话、时间轴与缓存 |
 | [推理与翻译后端](docs/providers.md) | 本地与云端配置、VAD、provider 接口 |
 | [架构与模块边界](docs/architecture.md) | 包分层、数据流和扩展位置 |

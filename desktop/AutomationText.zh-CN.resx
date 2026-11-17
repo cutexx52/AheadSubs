@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="Title" xml:space="preserve"><value>接入</value></data>
+  <data name="Intro" xml:space="preserve"><value>让本机 Agent 和脚本使用 AheadSubs 翻译文本、生成 SRT 或控制字幕预读。请先在翻译页启动字幕服务。</value></data>
+  <data name="Loading" xml:space="preserve"><value>正在读取</value></data>
+  <data name="Enabled" xml:space="preserve"><value>已开启</value></data>
+  <data name="Disabled" xml:space="preserve"><value>已关闭</value></data>
+  <data name="McpHint" xml:space="preserve"><value>将配置添加到支持 stdio 的本机客户端。客户端连接时会启动 MCP。使用云端模型时，任务会调用已配置的服务商。</value></data>
+  <data name="Enable" xml:space="preserve"><value>开启 MCP 接入</value></data>
+  <data name="Disable" xml:space="preserve"><value>关闭 MCP 接入</value></data>
+  <data name="Copy" xml:space="preserve"><value>复制 MCP 配置</value></data>
+  <data name="Configuration" xml:space="preserve"><value>MCP 客户端配置</value></data>
+  <data name="CliTitle" xml:space="preserve"><value>命令行 CLI</value></data>
+  <data name="CliHint" xml:space="preserve"><value>安装后，重新打开终端并运行 aheadsubs status。用 aheadsubs --help 查看命令。</value></data>
+  <data name="SourceHint" xml:space="preserve"><value>源码运行时，在项目目录执行 python -m pip install . 安装 CLI。</value></data>
+  <data name="Install" xml:space="preserve"><value>安装 CLI</value></data>
+  <data name="Remove" xml:space="preserve"><value>从 PATH 移除</value></data>
+  <data name="Installed" xml:space="preserve"><value>已添加到 PATH</value></data>
+  <data name="NotInstalled" xml:space="preserve"><value>未安装</value></data>
+  <data name="DisabledNotice" xml:space="preserve"><value>已关闭 MCP 接入。</value></data>
+  <data name="EnabledNotice" xml:space="preserve"><value>已开启。复制配置后重新连接客户端。</value></data>
+  <data name="RemovedNotice" xml:space="preserve"><value>已从用户 PATH 移除。</value></data>
+  <data name="InstalledNotice" xml:space="preserve"><value>已添加到用户 PATH。请重新打开终端。</value></data>
+  <data name="Copied" xml:space="preserve"><value>已复制 MCP 配置。</value></data>
+  <data name="ClipboardUnavailable" xml:space="preserve"><value>暂时无法访问剪贴板，可以选择配置文本手动复制。</value></data>
+  <data name="Failed" xml:space="preserve"><value>无法更新接入设置。请检查应用后重试。</value></data>
+</root>

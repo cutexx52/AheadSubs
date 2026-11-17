@@ -23,9 +23,10 @@ PotPlayer / mpv                    Windows 桌面助手
 | `subtitle_relay/inference/` | 音频分段、识别与翻译 | [Recognizer、Translator、SpeechTranslator](providers.md#后端接口) |
 | `subtitle_relay/desktop/` | 控制桥、服务生命周期、PotPlayer 回调和源码备用界面 | [桌面助手](desktop.md) |
 | `desktop/` | WPF 设置界面和 Windows 托盘 | 通过桌面控制桥调用 Python 运行时 |
-| `subtitle_relay/client.py` | 桌面和播放器共用的 loopback HTTP 客户端 | `RelayClient(port).send(route, data)` |
+| `subtitle_relay/client.py` | 桌面、播放器和自动化共用的 loopback HTTP 客户端 | `RelayClient(port).send(route, data)` |
+| `subtitle_relay/automation.py` | CLI 和 MCP 共用的操作、输入模型和输出 | [Agent 与命令行接入](automation.md) |
 | `integrations/` | 由播放器宿主装载的 Lua / AngelScript 脚本 | [播放器适配](adapters.md) |
-| `subtitle_relay/__main__.py` | CLI 命令和运行时组装 | `python -m subtitle_relay --help` |
+| `subtitle_relay/__main__.py` | 服务和播放器进程组装 | `python -m subtitle_relay --help` |
 
 播放器提供媒体位置和音轨。服务按需读文件，以原媒体时间输出 SRT。适配器与服务可由命令行独立启动，测试可以用模拟播放头代替真实播放器。
 

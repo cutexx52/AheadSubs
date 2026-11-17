@@ -59,7 +59,8 @@ def serve(relay, port, control_token=None, playback_defaults=None, *, local_mode
                     self.reply(403, {"error": "JSON loopback clients only"})
                     return
                 size = int(self.headers.get("Content-Length", 0))
-                if not 1 <= size <= 32_768:
+                limit = 51_200 if self.path == "/v1/text" else 32_768
+                if not 1 <= size <= limit:
                     raise ValueError("invalid request size")
                 body = self.rfile.read(size)
                 if self.path == "/v1/text":
