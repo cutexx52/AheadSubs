@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="Title" xml:space="preserve"><value>Software updates</value></data>
+  <data name="CurrentVersion" xml:space="preserve"><value>Current version {0}</value></data>
+  <data name="Automatic" xml:space="preserve"><value>Check GitHub for updates automatically</value></data>
+  <data name="Check" xml:space="preserve"><value>Check for updates</value></data>
+  <data name="Notes" xml:space="preserve"><value>Release notes</value></data>
+  <data name="Portable" xml:space="preserve"><value>Download portable ZIP</value></data>
+  <data name="Install" xml:space="preserve"><value>Download and install…</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Cancel download</value></data>
+  <data name="Checking" xml:space="preserve"><value>Checking for updates…</value></data>
+  <data name="Available" xml:space="preserve"><value>AheadSubs {0} is available</value></data>
+  <data name="Notification" xml:space="preserve"><value>Open Advanced settings to see the update.</value></data>
+  <data name="UpToDate" xml:space="preserve"><value>No newer stable release is available.</value></data>
+  <data name="CheckFailed" xml:space="preserve"><value>Could not check for updates. Try again later.</value></data>
+  <data name="PreferenceFailed" xml:space="preserve"><value>Could not save your update preference.</value></data>
+  <data name="BrowserFailed" xml:space="preserve"><value>Could not open the browser. Check your default browser and try again.</value></data>
+  <data name="Confirm" xml:space="preserve"><value>Download AheadSubs {0} ({1:N0} MiB)? After verification, AheadSubs will stop the subtitle service and close to run Setup. Save any pending settings first.</value></data>
+  <data name="Downloading" xml:space="preserve"><value>Downloading and verifying the installer…</value></data>
+  <data name="Stopping" xml:space="preserve"><value>Stopping the subtitle service before installation…</value></data>
+  <data name="Canceled" xml:space="preserve"><value>Download canceled.</value></data>
+  <data name="Busy" xml:space="preserve"><value>Wait for the current operation to finish, then try updating again.</value></data>
+  <data name="DownloadFailed" xml:space="preserve"><value>Could not download or verify the installer for this copy. Try again or open the release notes.</value></data>
+  <data name="InstallFailed" xml:space="preserve"><value>Could not prepare the upgrade. Check the subtitle service and try again or open the release notes.</value></data>
+  <data name="SetupFailed" xml:space="preserve"><value>Setup could not complete the update. Reopen AheadSubs or download the installer from GitHub Releases.</value></data>
+</root>

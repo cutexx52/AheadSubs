@@ -7,4 +7,6 @@ __pycache__/
 *.wav
 /desktop/bin/
 /desktop/obj/
+/tests/desktop/bin/
+/tests/desktop/obj/
 /dist/

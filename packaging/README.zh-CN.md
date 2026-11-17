@@ -21,6 +21,8 @@ python packaging\windows\build.py --native --cuda --version 0.1.0
 
 ## 发布与支持边界
 
+原生桌面包带版本/类型元数据。更新器通过 Inno Setup 注册识别安装版，选择匹配的最新稳定版附件；保留附件命名及安装器 ID。下载器通过 HTTPS 对照 GitHub 附件元数据核对大小与 SHA-256。见 [Windows 更新](../docs/windows.zh-CN.md#检查更新)。
+
 - Windows bundles 每日检查预览版资格：72 小时间隔、有效程序改动、当前 head CI。手工 `mode=verify` 仅验证两版，不发布或保留产物；`mode=preview` 检查默认分支资格。推送 `v*` 标签显式发布。文件直接上传草稿 Release，四个二进制与两个清单齐全才公开；含 `-` 标签标记预发布。详见[发布与预算](../docs/releases.zh-CN.md)。
 - Windows 11 x64 是主要验证目标。Windows 10 22H2 x64 是安装最低版本，各受支持版本仍需独立验证。已结束支持的 Windows 10 版本不在微软支持周期。ARM、32 位、Windows 7/8.1、S 模式不在已验证路径。[.NET 10 支持矩阵](https://learn.microsoft.com/en-us/dotnet/core/install/windows#supported-versions) · [FFmpeg 构建说明](https://github.com/FFmpeg-Builds/FFmpeg-Builds)。
 - 按用户安装；设置/模型仍在 `%LOCALAPPDATA%\Subtitle Relay`。标准和 CUDA 更新同一应用安装。模型与凭据独立获取。

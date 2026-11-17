@@ -101,6 +101,7 @@ public partial class MainWindow : Window
         tray.ContextMenuStrip.Items.Add(new Forms.ToolStripSeparator());
         tray.ContextMenuStrip.Items.Add("停止并退出", null, (_, _) => Dispatcher.Invoke(() => Exit(this, new RoutedEventArgs())));
         tray.DoubleClick += (_, _) => Dispatcher.Invoke(ShowSettings);
+        InitializeUpdates();
         Loaded += async (_, _) => await Refresh(loadSettings: true);
     }
 
@@ -1006,8 +1007,8 @@ public partial class MainWindow : Window
         busy = true; SetBusy(true); ActionStatus.Text = "正在停止服务并退出…";
         try
         {
-            await bridge.Run("stop"); exiting = true; tray.Dispose();
-            System.Windows.Application.Current.Shutdown();
+            await bridge.Run("stop");
+            ExitDesktop();
         }
         catch (Exception ex)
         {
@@ -1016,7 +1017,15 @@ public partial class MainWindow : Window
             if (System.Windows.MessageBox.Show(this,
                 "无法确认后台已经停止。只退出设置界面？后台进程可能仍在运行。", "退出字幕翻译",
                 MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
-            { exiting = true; tray.Dispose(); System.Windows.Application.Current.Shutdown(); }
+                ExitDesktop();
         }
+    }
+
+    private void ExitDesktop()
+    {
+        StopUpdateChecks();
+        exiting = true;
+        tray.Dispose();
+        System.Windows.Application.Current.Shutdown();
     }
 }
