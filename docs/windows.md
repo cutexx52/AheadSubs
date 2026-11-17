@@ -11,6 +11,16 @@
 
 发布包自带 Python 运行时、FFmpeg 和 FFprobe。模型需要首次下载，Windows GPU 驱动由系统或厂商安装。完全本地的配置在模型准备好后无需配置 API 密钥。如果启动时提示缺少 Visual C++ 运行库，请安装微软的 x64 Redistributable。维护者构建和发布步骤见[打包文档](../packaging/README.md)。[微软运行库下载](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist)
 
+## 检查更新
+
+[English](en/windows.md)
+
+Windows 桌面版默认在启动后从 GitHub 检查正式版本，常驻托盘期间也会检查，最多每 24 小时自动检查一次。在 **高级设置 → 软件更新** 可以关闭自动检查，或随时选择 **检查更新**。GitHub 不可用时可以稍后手动重试，字幕服务仍可使用。
+
+发现新版本后可查看发行说明。安装版选择 **下载并安装**，确认后会下载与当前标准版或 CUDA 版匹配的安装程序。下载期间可以取消。通过下载大小和 SHA-256 校验后，AheadSubs 会停止字幕服务并退出，再启动安装程序。下载校验失败时可重试，或从发行页面手动下载安装。升级完成后，从开始菜单打开 AheadSubs，按需重新启动字幕服务。
+
+便携版可选择 **下载便携版 ZIP**，在浏览器下载同一版本类型的压缩包。先从托盘停止并退出 AheadSubs，再将 ZIP 解压到新目录，从新目录运行 AheadSubs。设置、模型和字幕缓存仍从原有用户数据目录读取。早期没有 **软件更新** 入口的版本，可从 [GitHub Releases](https://github.com/cutexx52/AheadSubs/releases) 手动升级一次。
+
 ## 支持范围
 
 | 系统 | 范围 |

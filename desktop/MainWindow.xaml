@@ -205,6 +205,18 @@
      <Grid Margin="0,16,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="20"/><ColumnDefinition/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="向前额外找停顿（0–5 秒）" Margin="0,0,0,8"/><TextBox x:Name="BeforeSeconds" AutomationProperties.Name="向前额外找停顿秒数"/></StackPanel><StackPanel Grid.Column="2"><TextBlock Text="向后额外找停顿（0–5 秒）" Margin="0,0,0,8"/><TextBox x:Name="AfterSeconds" AutomationProperties.Name="向后额外找停顿秒数"/></StackPanel></Grid><TextBlock Text="在候选音频范围之外额外搜索停顿，优先沿自然边界切分。" Style="{StaticResource Hint}" Margin="0,10,0,0"/>
     </StackPanel></Border>
     <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="诊断" Style="{StaticResource Section}"/><CheckBox x:Name="Diagnostics" Content="记录详细诊断日志" Margin="0,8,0,10"/><TextBlock Text="仅排查问题时开启。关闭诊断不会隐藏必要的错误提示。" Style="{StaticResource Hint}"/><Button Content="打开日志目录" Click="OpenLogs" HorizontalAlignment="Left" Margin="0,18,0,0"/></StackPanel></Border>
+    <Border x:Name="UpdateCard" Style="{StaticResource Card}" Visibility="Collapsed"><StackPanel>
+     <TextBlock x:Name="UpdateTitle" Style="{StaticResource Section}"/>
+     <TextBlock x:Name="InstalledVersion" Style="{StaticResource Hint}"/>
+     <CheckBox x:Name="AutomaticUpdates" Click="SetAutomaticUpdates" Margin="0,10,0,8"/>
+     <WrapPanel>
+      <Button x:Name="CheckUpdateButton" Click="CheckForUpdate"/>
+      <Button x:Name="ReleaseNotesButton" Click="OpenUpdateNotes" Visibility="Collapsed"/>
+      <Button x:Name="GetUpdateButton" Click="GetUpdate" Visibility="Collapsed"/>
+      <Button x:Name="CancelUpdateButton" Click="CancelUpdate" Visibility="Collapsed"/>
+     </WrapPanel>
+     <TextBlock x:Name="UpdateStatus" Style="{StaticResource Hint}" AutomationProperties.LiveSetting="Polite" Margin="0,8,0,0"/>
+    </StackPanel></Border>
    </StackPanel></ScrollViewer></TabItem>
    <TabItem x:Name="AutomationTab"><ScrollViewer Style="{StaticResource PageScroll}"><StackPanel>
     <TextBlock x:Name="AutomationTitle" Style="{StaticResource PageTitle}"/>
