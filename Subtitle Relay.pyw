@@ -341,7 +341,7 @@ def native_potplayer(encoded=None, foreground=None, disable=False):
         try:
             stop.unlink(missing_ok=True)
             pot_event("launch", "快捷键" if foreground else "PotPlayer 扩展", hwnd)
-            report("on", "正在定位当前视频并启动预读…")
+            report("locating", "正在定位当前视频并启动预读…")
             folder = None
             try:
                 folder = Path(folder_hint.read_text(encoding="utf-8"))
@@ -376,18 +376,13 @@ def native_potplayer(encoded=None, foreground=None, disable=False):
 
             media = resolve_media(filename)
             if media is None:
-                feedback.close(2)
+                feedback.close()
                 return
             run_native_adapter(hwnd, media, stop, report, resolve_media)
         except EOFError:
             pot_event("closed", "当前窗口的预读会话已结束", hwnd)
-            if previous_state == "cancelled":
-                feedback.close(2)
-                return
         except Exception as exc:
             report("failed", str(exc))
-            feedback.close(2.7)
-            return
         feedback.close()
 
 
@@ -420,6 +415,9 @@ def run_native_adapter(hwnd, media, stop, report, resolve_media):
     reload = find_reload_command(executable)
     with (DATA / "potplayer.log").open("a", encoding="utf-8") as log, redirect_stdout(log):
         player = PotPlayer(hwnd, media, 0, reload, resolve_media=resolve_media)
+        if stop.exists():
+            return
+        report("on", "预读已开启")
         run_adapter(player, RelayClient(PORT), lambda: config()["source"] or None, "zh", 20, 0.6, stop,
                     report=report)
 

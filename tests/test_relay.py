@@ -15,6 +15,18 @@ from subtitle_relay.providers import Cue, OpenAIWhisper
 
 class RelayTest(unittest.TestCase):
     @unittest.skipUnless(os.name == "nt", "PotPlayer requires Windows")
+    def test_potplayer_playback_status_does_not_open_an_overlay(self):
+        from subtitle_relay.feedback import PotFeedback
+
+        feedback = PotFeedback.__new__(PotFeedback)
+        feedback.root = Mock()
+        feedback.latest = "on"
+        for state in ("buffering", "ready", "silence", "waiting", "reconnecting", "error"):
+            feedback.report(state, "Playback status")
+        feedback.root.deiconify.assert_not_called()
+        self.assertEqual(feedback.latest, "on")
+
+    @unittest.skipUnless(os.name == "nt", "PotPlayer requires Windows")
     def test_potplayer_first_load_waits_for_a_real_subtitle_cue(self):
         from subtitle_relay.potplayer import PotPlayer
 

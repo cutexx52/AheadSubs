@@ -30,7 +30,7 @@ class PotFeedback:
 
     def report(self, state, message):
         self.root.update()
-        if state == self.latest:
+        if state not in {"on", "off", "already-active", "already-off"} or state == self.latest:
             return
         self.latest = state
         self.text.configure(text=f"Subtitle Relay · {message}")
