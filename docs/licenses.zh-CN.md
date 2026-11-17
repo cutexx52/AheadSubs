@@ -17,11 +17,11 @@
 | pystray 0.19.5 | LGPLv3；wheel 包含 `COPYING` 和 `COPYING.LGPL` | 保留声明，提供适用源码，允许替换和修改该库。不能将该组件称为 MIT。[包信息](https://pypi.org/project/pystray/0.19.5/) |
 | certifi / tqdm | MPL-2.0；tqdm 另有 MIT | 保留许可证，履行受覆盖文件及其修改的适用源码义务；不会自动把无关应用文件改成相同许可。[certifi](https://github.com/certifi/python-certifi)、[tqdm](https://github.com/tqdm/tqdm/blob/master/LICENCE) |
 | FFmpeg 命令行包 | 构建脚本选择 LGPL shared 包，保留顶层声明与上游源码、构建链接 | 核对实际构建配置，按适用 LGPL 版本提供对应源码、构建材料和声明。校验和或上游链接本身不是完整合规证明。[FFmpeg 指南](https://ffmpeg.org/legal.html) |
-| PyAV 18.1.0 Windows wheel | PyAV 自身是 BSD-3-Clause，但内嵌 `avcodec`、`avutil` DLL 字符串标明 LGPLv3 或更新版本 | 与命令行 FFmpeg 分开审计；仍需满足其源码、构建和声明义务。[确切 wheel 元数据](https://pypi.org/pypi/av/18.1.0/json) |
+| PyAV 18.1.0 Windows wheel | BSD-3-Clause 元数据适用于 PyAV 源码。内嵌 `avcodec` 报告 LGPL v3 或更新版本，同时提供 `libx264` 和 `libx265` 编码器。 | 与命令行 FFmpeg 分开核实下游再分发条款和对应源码。FFmpeg 将这两个库的开源版本列为 GPL 依赖。[PyAV 维护者讨论](https://github.com/PyAV-Org/PyAV/issues/2270) · [FFmpeg 许可证](https://github.com/FFmpeg/FFmpeg/blob/8dca1586f4/LICENSE.md) |
 | CTranslate2 4.9.0 Windows wheel | 元数据为 MIT，但检查的 wheel 没有文件名包含 LICENSE/COPYING/NOTICE 的文件 | 在分发材料中补齐确切上游版本许可证及相关原生组件声明。pip 保留元数据不能弥补缺失文件。[上游](https://github.com/OpenNMT/CTranslate2/blob/v4.9.0/LICENSE) |
 | NVIDIA cuBLAS 12.8.4.1 / cuDNN 9.10.2.21 | 专有运行库条款，不是开源许可证 | 仅分发允许的文件，保留声明并满足下游条款。不能宣称整个 CUDA 安装包都是 MIT 或完全开源。[CUDA 12.8 条款](https://docs.nvidia.com/cuda/archive/12.8.0/eula/index.html)、[cuDNN 9.10.2 条款](https://docs.nvidia.com/deeplearning/cudnn/backend/v9.10.2/reference/eula.html) |
 
-实际检查的 wheel：`av-18.1.0-cp311-abi3-win_amd64.whl`，SHA256 为 `ea1480b7a8d5405cb5f382b344731bf125fd2c1c6fae3964f6c48595628387ff`；`pystray-0.19.5-py2.py3-none-any.whl`；`ctranslate2-4.9.0-cp311-cp311-win_amd64.whl`。DLL 许可字符串通过读取获得，未执行 DLL；未逐项穷举编解码器或验证对应源码完整性。
+实际检查的 wheel 包括 `av-18.1.0-cp311-abi3-win_amd64.whl`（SHA256 为 `ea1480b7a8d5405cb5f382b344731bf125fd2c1c6fae3964f6c48595628387ff`）、`pystray-0.19.5-py2.py3-none-any.whl` 和 `ctranslate2-4.9.0-cp311-cp311-win_amd64.whl`。Windows 运行时测试调用了 `avcodec_license()` 和 `avcodec_configuration()`，并以写模式通过 PyAV 的 `Codec` 查询确认上述两个编码器可用。其他编解码器和对应源码的完整性仍待审计。
 
 Python 使用 PSF 及第三方许可，打包器会复制 Python 许可证。独立部署的 [.NET](https://github.com/dotnet/runtime/blob/main/LICENSE.TXT)、Windows 运行库组件及其声明也需在最终包内检查。[Inno Setup 7.1.1](https://github.com/jrsoftware/issrc/blob/is-7_1_1/license.txt)允许商用，但要求保留声明、不得虚假标示来源；官网另有商业购买请求。保留已有声明。下载的 [CrispASR v0.8.54](https://github.com/CrispStrobe/CrispASR/blob/v0.8.54/LICENSE)项目级许可为 MIT，压缩包中的第三方声明也需保留。播放器适配不授予 PotPlayer 或 mpv 的分发权；当前打包器不包含这两个播放器。
 
