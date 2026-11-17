@@ -1,6 +1,6 @@
 # Windows 桌面助手
 
-[English](desktop.md) | [简体中文](desktop.zh-CN.zh-CN.md)
+[English](desktop.md) | [简体中文](desktop.zh-CN.md)
 
 ## 日常使用
 
