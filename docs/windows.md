@@ -11,7 +11,7 @@ Files start with `aheadsubs-v<version>-windows-x64`. `-setup.exe` is the install
 - **Standard:** includes CPU dependencies and supports Qwen3-ASR on compatible Vulkan hardware.
 - **CUDA:** includes `-cuda` in its filename and adds NVIDIA runtime libraries for faster-whisper and NLLB. A compatible NVIDIA driver is still required.
 
-Packages include Python, FFmpeg and FFprobe. Local models download on first setup; cloud processing instead needs provider credentials. Neither package includes GPU drivers. If prompted for Visual C++ components, install the [Microsoft x64 Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist). See [build instructions](../packaging/README.md).
+Packages include Python and a single LGPL FFmpeg/FFprobe build for probing and extracting audio from local media. Its corresponding source and rebuild instructions are available beside the binary release. Local speech recognition and translation models download during setup. Cloud processing uses provider credentials. Install the compatible GPU driver separately for GPU inference and the [Microsoft x64 Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist) if prompted. See [build instructions](../packaging/README.md).
 
 ## Check for updates
 

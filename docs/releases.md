@@ -19,7 +19,7 @@ A preview uses `v<project-version>-preview.<12-character-commit>`, for example `
 
 The workflow fixes one source SHA, then builds standard and CUDA x64 variants in parallel on standard `windows-2025` runners. Each runs unit tests, WPF packaging, private-runtime checks and `--verify-install` (install, smoke-test, uninstall in a clean profile). These checks do not prove real GPU inference or all Windows editions.
 
-A draft release is prepared before build uploads. Each successful variant checks its local SHA256 manifest and uploads its installer, ZIP and manifest directly to that draft. Publication requires both jobs, exactly six expected uploaded/nonempty files under 2 GiB each, and any existing tag still matching the built SHA. Only then does the draft become public. No long-lived Actions artifacts or model/dependency caches are created by this workflow.
+A draft release is prepared before build uploads. Each successful variant verifies its installer, ZIP and FFmpeg source ZIP against its local SHA256 manifest. The standard job uploads the shared corresponding-source ZIP once. Publication requires both jobs, four binaries, two manifests and the source ZIP, all uploaded and nonempty under 2 GiB each, and any existing tag still matching the built SHA. The release notes link to the LGPL source and build materials. No long-lived Actions artifacts or model/dependency caches are created by this workflow.
 
 The same workflow performs planning, building and publication; it does not rely on a `GITHUB_TOKEN`-created tag triggering another workflow. Release notes use GitHub's generated notes with the source SHA recorded in a hidden marker.
 

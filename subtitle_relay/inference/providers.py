@@ -3,11 +3,13 @@ import json
 import os
 import re
 import site
+import wave
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 from urllib.parse import urlsplit
 
+from .audio import SAMPLE_RATE, pcm16_samples
 from .errors import completion_text
 from .usage import measured_call
 
@@ -54,7 +56,12 @@ class FasterWhisper:
                                   compute_type="int8_float16" if device == "cuda" else "int8")
 
     def recognize(self, wav, source):
-        segments, info = self.model.transcribe(io.BytesIO(wav), language=source,
+        # Media extraction and segmentation already normalize the audio for Whisper.
+        with wave.open(io.BytesIO(wav), "rb") as audio:
+            if (audio.getnchannels(), audio.getsampwidth(), audio.getframerate()) != (1, 2, SAMPLE_RATE):
+                raise wave.Error("Expected 16 kHz mono PCM with 16-bit samples")
+            samples = pcm16_samples(audio.readframes(audio.getnframes()))
+        segments, info = self.model.transcribe(samples, language=source,
                                                vad_filter=False, beam_size=1,
                                                condition_on_previous_text=False)
         return info.language, [Cue(s.start, s.end, s.text.strip()) for s in segments if s.text.strip()]

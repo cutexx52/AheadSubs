@@ -24,9 +24,15 @@ class Segmentation:
 def make_wav(pcm):
     output = io.BytesIO()
     with wave.open(output, "wb") as wav:
-        wav.setparams((1, 2, 16000, 0, "NONE", "not compressed"))
+        wav.setparams((1, 2, SAMPLE_RATE, 0, "NONE", "not compressed"))
         wav.writeframes(pcm)
     return output.getvalue()
+
+
+def pcm16_samples(pcm):
+    import numpy as np
+
+    return np.frombuffer(pcm, dtype="<i2").astype(np.float32) / 32768
 
 
 class Segmenter:
@@ -71,9 +77,7 @@ class Segmenter:
     def _plan(self, pcm):
         maximum = max(1, round(self.settings.max_speech * SAMPLE_RATE))
         if self.settings.enabled:
-            import numpy as np
-
-            waveform = np.frombuffer(pcm, dtype="<i2").astype(np.float32) / 32768
+            waveform = pcm16_samples(pcm)
             if self.fsmn is not None:
                 ranges = self.fsmn.ranges(waveform, replace(self.settings, min_silence_ms=64, pad_ms=0))
             else:

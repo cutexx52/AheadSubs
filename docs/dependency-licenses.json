@@ -29,14 +29,6 @@
       "classifiers": []
     },
     {
-      "name": "av",
-      "version": "18.1.0",
-      "source": "https://pypi.org/pypi/av/18.1.0/json",
-      "expression": "BSD-3-Clause",
-      "license": null,
-      "classifiers": []
-    },
-    {
       "name": "certifi",
       "version": "2026.10.23",
       "source": "https://pypi.org/pypi/certifi/2026.10.23/json",
