@@ -10,9 +10,14 @@ using System.Windows.Forms;
 internal static class Launcher
 {
     [STAThread]
-    private static void Main()
+    private static void Main(string[] args)
     {
         string root = AppDomain.CurrentDomain.BaseDirectory;
+        if (args.Length == 5 && args[0] == "--finish-update")
+        {
+            FinishUpdate(root, args);
+            return;
+        }
         string desktop = Path.Combine(root, "UI", "AheadSubs.exe");
         string python = Path.Combine(root, "runtime", "pythonw.exe");
         string settings = Path.Combine(root, "Subtitle Relay.pyw");
@@ -42,6 +47,47 @@ internal static class Launcher
         catch (Exception error)
         {
             MessageBox.Show(error.Message, "AheadSubs", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    private static void FinishUpdate(string root, string[] args)
+    {
+        string installer = Path.Combine(root, "setup.exe");
+        try
+        {
+            // This copy of the launcher runs outside the installation being replaced.
+            Process desktop = null;
+            int pid = int.Parse(args[1], System.Globalization.CultureInfo.InvariantCulture);
+            long started = long.Parse(args[2], System.Globalization.CultureInfo.InvariantCulture);
+            try { desktop = Process.GetProcessById(pid); }
+            catch (ArgumentException) { }
+            using (desktop)
+            {
+                if (desktop != null && !desktop.HasExited && desktop.StartTime.ToFileTimeUtc() == started &&
+                    !desktop.WaitForExit(30000))
+                    throw new TimeoutException();
+            }
+            using (var setup = Process.Start(new ProcessStartInfo(installer)
+            {
+                WorkingDirectory = root,
+                UseShellExecute = false
+            }))
+            {
+                if (setup == null) throw new IOException();
+                setup.WaitForExit();
+                if (setup.ExitCode != 0 && setup.ExitCode != 2 && setup.ExitCode != 5)
+                    throw new IOException();
+            }
+        }
+        catch (Exception)
+        {
+            MessageBox.Show(args[4], args[3], MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+        finally
+        {
+            try { File.Delete(installer); }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
         }
     }
 }

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="Title" xml:space="preserve"><value>软件更新</value></data>
+  <data name="CurrentVersion" xml:space="preserve"><value>当前版本 {0}</value></data>
+  <data name="Automatic" xml:space="preserve"><value>自动在 GitHub 上检查更新</value></data>
+  <data name="Check" xml:space="preserve"><value>检查更新</value></data>
+  <data name="Notes" xml:space="preserve"><value>发行说明</value></data>
+  <data name="Portable" xml:space="preserve"><value>下载便携版 ZIP</value></data>
+  <data name="Install" xml:space="preserve"><value>下载并安装…</value></data>
+  <data name="Cancel" xml:space="preserve"><value>取消下载</value></data>
+  <data name="Checking" xml:space="preserve"><value>正在检查更新…</value></data>
+  <data name="Available" xml:space="preserve"><value>AheadSubs {0} 已发布</value></data>
+  <data name="Notification" xml:space="preserve"><value>打开高级设置查看更新。</value></data>
+  <data name="UpToDate" xml:space="preserve"><value>暂无更新的正式版本。</value></data>
+  <data name="CheckFailed" xml:space="preserve"><value>暂时无法检查更新，请稍后重试。</value></data>
+  <data name="PreferenceFailed" xml:space="preserve"><value>无法保存自动检查更新设置。</value></data>
+  <data name="BrowserFailed" xml:space="preserve"><value>无法打开浏览器，请检查默认浏览器后重试。</value></data>
+  <data name="Confirm" xml:space="preserve"><value>下载 AheadSubs {0}（{1:N0} MiB）？校验通过后，AheadSubs 将停止字幕服务并退出以运行安装程序。请先保存尚未应用的设置。</value></data>
+  <data name="Downloading" xml:space="preserve"><value>正在下载并校验安装程序…</value></data>
+  <data name="Stopping" xml:space="preserve"><value>正在停止字幕服务以准备安装…</value></data>
+  <data name="Canceled" xml:space="preserve"><value>已取消下载。</value></data>
+  <data name="Busy" xml:space="preserve"><value>请等待当前操作完成后再尝试更新。</value></data>
+  <data name="DownloadFailed" xml:space="preserve"><value>无法为此副本下载或校验安装程序。请重试或打开发行说明。</value></data>
+  <data name="InstallFailed" xml:space="preserve"><value>无法准备升级。请检查字幕服务后重试，或打开发行说明。</value></data>
+  <data name="SetupFailed" xml:space="preserve"><value>安装程序未能完成更新。请重开 AheadSubs，或从 GitHub Releases 下载安装程序。</value></data>
+</root>

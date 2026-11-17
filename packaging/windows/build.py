@@ -122,7 +122,7 @@ def stage_ffmpeg(stage, downloads):
         raise RuntimeError("Unexpected upstream FFmpeg archive layout")
 
 
-def stage_app(stage, dotnet):
+def stage_app(stage, dotnet, version, cuda):
     for directory, extensions in {"subtitle_relay": {".py"}, "integrations": {".as", ".lua"}, "docs": {".md"}}.items():
         for source in (ROOT / directory).rglob("*"):
             if source.is_file() and source.suffix in extensions:
@@ -141,6 +141,10 @@ def stage_app(stage, dotnet):
             "-p:DebugType=None", "-p:DebugSymbols=false", "-o", stage / "UI", cwd=ROOT)
         if not (stage / "UI" / "AheadSubs.exe").is_file():
             raise RuntimeError("Native desktop entry point is absent from publish output")
+        (stage / "UI" / "aheadsubs-release.json").write_text(
+            json.dumps({"Version": version, "Flavor": "cuda" if cuda else "standard"}),
+            encoding="utf-8",
+        )
 
 
 def smoke_test(stage, cuda):
@@ -173,12 +177,12 @@ def smoke_test(stage, cuda):
         run(stage / "bin" / exe, "-version", env=env, cwd=stage.parent, stdout=subprocess.DEVNULL)
 
 
-def smoke_installer(installer, directory, cuda):
+def smoke_installer(installer, directory, cuda, version, native):
     import winreg
 
     uninstall_key = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\LocalVideoSubtitleTranslator_is1"
     try:
-        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, uninstall_key):
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, uninstall_key, access=winreg.KEY_READ | winreg.KEY_WOW64_64KEY):
             raise RuntimeError("Installer smoke requires a user profile without an existing app installation")
     except FileNotFoundError:
         pass
@@ -187,6 +191,14 @@ def smoke_installer(installer, directory, cuda):
     try:
         run(installer, *silent, "/NOICONS", f"/DIR={target}")
         smoke_test(target, cuda)
+        if native:
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, uninstall_key, access=winreg.KEY_READ | winreg.KEY_WOW64_64KEY) as key:
+                location, _ = winreg.QueryValueEx(key, "InstallLocation")
+            if Path(location).resolve() != target.resolve():
+                raise RuntimeError("The install location must match the update detection path")
+            metadata = json.loads((target / "UI" / "aheadsubs-release.json").read_text(encoding="utf-8"))
+            if metadata != {"Version": version, "Flavor": "cuda" if cuda else "standard"}:
+                raise RuntimeError("Installed update metadata does not match the bundle")
     finally:
         uninstaller = target / "unins000.exe"
         if uninstaller.is_file():
@@ -224,7 +236,7 @@ def build(args):
         stage.mkdir()
         shutil.copytree(private_runtime(downloads, args.cuda), stage / "runtime")
         stage_ffmpeg(stage, downloads)
-        stage_app(stage, dotnet)
+        stage_app(stage, dotnet, args.version, args.cuda)
         smoke_test(stage, args.cuda)
         archive = work / (name + "-portable.zip")
         with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=3) as zipped:
@@ -239,7 +251,7 @@ def build(args):
                 SCRIPTS / "setup.iss")
             installer = work / (name + "-setup.exe")
             if args.verify_install:
-                smoke_installer(installer, work, args.cuda)
+                smoke_installer(installer, work, args.cuda, args.version, args.native)
             files.append(installer)
         checksums = work / (name + "-SHA256.txt")
         checksums.write_text(
