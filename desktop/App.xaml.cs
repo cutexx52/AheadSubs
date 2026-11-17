@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Threading;
 
 namespace LocalVideoSubtitleTranslator;
@@ -11,8 +12,9 @@ public partial class App : System.Windows.Application
     protected override void OnStartup(System.Windows.StartupEventArgs e)
     {
         base.OnStartup(e);
-        if (e.Args.Length == 2 && e.Args[0] == "--render-preview")
+        if (e.Args.Length is 2 or 3 && e.Args[0] == "--render-preview")
         {
+            if (e.Args.Length == 3) CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(e.Args[2]);
             new MainWindow(preview: true).RenderPreviews(e.Args[1]);
             Shutdown(); return;
         }

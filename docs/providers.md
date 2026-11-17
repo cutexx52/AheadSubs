@@ -28,7 +28,7 @@ python -m subtitle_relay serve --asr qwen --qwen-size 0.6b --mt qwen-mt --qwen-m
 python -m subtitle_relay serve --asr dashscope --dashscope-asr-model qwen-audio-3.1-asr-flash --mt qwen-mt --default-source ja
 ```
 
-The third command is hybrid; the fourth uses cloud recognition and translation with `DASHSCOPE_API_KEY`. Set the regional endpoint appropriate to your key; do not put keys in commands or Git. Qwen3-ASR runs in a shared service-managed process using its own Vulkan runtime; `--device` selects CPU/CUDA for CTranslate2. [CrispASR](https://github.com/CrispStrobe/CrispASR) · [NLLB model card](https://huggingface.co/facebook/nllb-200-distilled-600M) · [Qwen-MT API](https://www.alibabacloud.com/help/en/model-studio/qwen-mt-api).
+The third command is hybrid; the fourth uses cloud recognition and translation with `DASHSCOPE_API_KEY`. Set the regional endpoint appropriate to your key; do not put keys in commands or Git. Qwen3-ASR runs in a shared service-managed process using its own Vulkan runtime; `--device` sets the CTranslate2 fallback device; `--asr-device` overrides it for local Whisper and `--mt-device` for NLLB. [CrispASR](https://github.com/CrispStrobe/CrispASR) · [NLLB model card](https://huggingface.co/facebook/nllb-200-distilled-600M) · [Qwen-MT API](https://www.alibabacloud.com/help/en/model-studio/qwen-mt-api).
 
 Alibaba ASR may omit language codes. When pairing it with NLLB, which needs an explicit input language, select the source language. [Short-audio API](https://help.aliyun.com/zh/model-studio/qwen-audio-asr-http-api).
 

@@ -22,15 +22,17 @@ AheadSubs reads upcoming audio, transcribes speech, translates dialogue, and sen
 
 Download a package from [Releases](https://github.com/cutexx52/AheadSubs/releases), install it or extract the entire portable archive, and open `AheadSubs.exe`. Choose a stable release for regular use; scheduled builds are marked **Pre-release**. [Windows requirements and package selection](docs/windows.md).
 
-The current desktop uses Chinese labels; English descriptions below include the labels you will see. English documentation does not imply an already fully localized UI.
+Setup presets and integrations have English/Chinese labels; some existing screens remain Chinese. The instructions include both where helpful. Documentation localization does not imply every UI string is already localized.
 
 ### Route A — fully local, no API key
 
-1. In **Local models (本地模型)**, install the Qwen3-ASR + NLLB starter preset with **Install local models and start (安装本地模型并启动)**. Without a compatible Vulkan GPU, choose **No available GPU: install CPU setup (无可用显卡：安装 CPU 方案)** for Whisper Small + NLLB.
-2. On **Translation (翻译)**, select the video's source language and your subtitle target language. Keep the preset's recognition and translation models, then save/apply and wait for the service to become ready.
+1. On the **Translation (翻译)** home page, expand **Setup presets (快速预设)**. Choose **Local · Entry GPU (纯本地 · 独显入门)** for Qwen3-ASR 0.6B + CPU NLLB, or **Local · CPU (纯本地 · CPU)** for Whisper Small + NLLB without a compatible Vulkan GPU. Select **Download now (立即下载)** for missing models, then **Apply preset (应用方案)**.
+2. Select the video's source language and your subtitle target language. Keep the preset's models, save/apply any changes and wait for service readiness.
 3. Configure your player below and start look-ahead. The first model download requires network access; subsequent fully local processing does not require a cloud API key.
 
 ### Route B — local recognition + cloud translation
+
+Shortcut on compatible Vulkan hardware: choose **Recommended · Local speech + cloud translation (作者推荐 · 本地识别 + 云端翻译)** in Setup presets. It pairs Qwen3-ASR 1.7B with Qwen-MT Flash, checks missing models/credentials, then lets you apply. For another local recognizer, use the steps below.
 
 1. Install a local recognition model: Qwen3-ASR on compatible Vulkan hardware, or Whisper Small on CPU. You do not need NLLB if all translation uses a cloud provider.
 2. In **Cloud models (云端模型)**, select a provider such as **Alibaba Cloud / Qwen-MT**, enter its API key or select a key file, and choose the matching regional endpoint. Save credentials.

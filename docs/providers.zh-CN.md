@@ -30,7 +30,7 @@ python -m subtitle_relay serve --asr dashscope --dashscope-asr-model qwen-audio-
 
 上面第三条命令为混合路线，第四条为云端识别及翻译，使用 `DASHSCOPE_API_KEY`。区域端点应匹配密钥，不把密钥写进命令或 Git。
 
-Qwen3-ASR 由服务管理一个共享的本地进程。CLI 的 `--device` 控制 CTranslate2 使用 CPU 或 CUDA。Qwen3-ASR 使用其自身的 Vulkan 运行时。[CrispASR](https://github.com/CrispStrobe/CrispASR) · [NLLB 模型卡](https://huggingface.co/facebook/nllb-200-distilled-600M) · [Qwen-MT 接口](https://www.alibabacloud.com/help/en/model-studio/qwen-mt-api)
+Qwen3-ASR 由服务管理一个共享的本地进程。CLI 的 `--device` 设置 CTranslate2 默认设备；`--asr-device` 可单独覆盖本地 Whisper，`--mt-device` 可覆盖 NLLB。Qwen3-ASR 使用其自身的 Vulkan 运行时。[CrispASR](https://github.com/CrispStrobe/CrispASR) · [NLLB 模型卡](https://huggingface.co/facebook/nllb-200-distilled-600M) · [Qwen-MT 接口](https://www.alibabacloud.com/help/en/model-studio/qwen-mt-api)
 
 百炼 ASR 原生接口可能不返回语种代码。与需要明确输入语言的 NLLB 搭配时，建议在首页选定源语言。[百炼短音频转录接口](https://help.aliyun.com/zh/model-studio/qwen-audio-asr-http-api)
 

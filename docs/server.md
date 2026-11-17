@@ -60,7 +60,7 @@ Example response:
 
 | Request | Contract |
 | --- | --- |
-| `GET /v1/health` | Returns `service`, `pid`, `active_sessions` for local readiness/status. |
+| `GET /v1/health` | Returns `service`, `pid`, `active_sessions`, `local_models`; local model IDs let the desktop protect models currently in use. |
 | `POST /v1/close` | JSON `{"session":"window-1"}` releases a session; success returns `{}`. |
 | `POST /v1/shutdown` | JSON `{"token":"…"}` stops the service, requiring the startup control token. |
 

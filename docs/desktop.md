@@ -4,7 +4,18 @@
 
 ## Everyday use
 
-Local models (本地模型) offers Vulkan Qwen3-ASR + CPU NLLB and Whisper Small + NLLB presets. Downloads show status, hardware requirements and disk estimates. Qwen3-ASR sizes share about 0.63 GB of alignment weights/runtime; leave temporary space for archives. Translation (翻译) shows the devices used by the combination.
+Open **Setup presets** on the translation home page. The control starts collapsed. Once you select a preset, **Download now** fetches the missing models. **Manage models** opens the library with the required downloads marked. When the preset is ready, select **Apply preset**. The audio language, subtitle language, and bilingual setting carry over. Manual model combinations appear as **Custom**.
+
+| Preset | Speech recognition | Translation |
+| --- | --- | --- |
+| Local · CPU | Whisper Small on CPU | NLLB on CPU |
+| Local · Entry GPU | Qwen3-ASR 0.6B on Vulkan | NLLB on CPU |
+| Local · High-performance GPU | Qwen3-ASR 1.7B on Vulkan | NLLB on NVIDIA CUDA |
+| Recommended · Local speech + cloud translation | Qwen3-ASR 1.7B on Vulkan | Qwen-MT Flash with a Bailian API key |
+
+The GPU presets check for a Vulkan device. The high-performance preset also checks for an NVIDIA CUDA device and its runtime libraries. The recommended preset checks whether the saved Bailian credential is readable and the service URL is supported. Save a missing key in the Bailian configuration and return to the home page to check again. The provider verifies the credential when a request is sent. If a download fails, retry to reuse any models that finished downloading.
+
+**Local models** groups speech recognition, translation, and voice activity detection. Whisper and NLLB have separate CPU/CUDA selectors. Use the main **Save and apply** action to apply device changes. Existing configurations use their previous device setting until a per-model setting is saved. Stop the subtitle service or switch models before uninstalling a model in use. Uninstalling Whisper or NLLB removes its repository from the shared Hugging Face cache. Uninstalling one Qwen3-ASR model keeps the shared aligner and Vulkan runtime. Silero is bundled, and FSMN is prepared when selected in Advanced settings.
 
 Under Cloud models (云端模型), select a provider and choose a key file (密钥文件) or direct entry (直接填写). Direct keys use current-user [DPAPI](https://learn.microsoft.com/en-us/windows/win32/api/dpapi/nf-dpapi-cryptprotectdata). File mode saves the path. To remove a direct key, switch to Default/environment (默认（环境变量）) and save. Alibaba recognition/translation share a key and regional endpoint; custom ASR/translation may use separate keys. Remote endpoints require HTTPS for credentials; loopback supports HTTP. Save credentials, then apply translation settings to change the service.
 
@@ -26,8 +37,9 @@ The launcher starts `UI/AheadSubs.exe`. WPF uses `python -m subtitle_relay.deskt
 
 | Command | Behavior |
 | --- | --- |
-| `status` | Returns `settings`, `models`, `credentials`, `integrations`, `chatgpt_accounts` and service status. Key status includes only mode, file path and whether a direct key exists. |
-| `install <model>` | Prepares a local model; identifiers are in `MODELS`. |
+| `status` | Returns `settings`, `models`, `active_models`, `credentials`, `integrations`, `chatgpt_accounts` and service status. Key status includes only mode, file path and whether a direct key exists. |
+| `preset-check [requirements]` | Checks FFmpeg and comma-separated `vulkan`, `cuda`, `dashscope` requirements; returns `missing` codes. stdin may provide a candidate `qwen_mt_url`; keys use saved settings. |
+| `install <model>` / `uninstall <model>` | Downloads/removes a model; identifiers are in `MODELS`. |
 | `apply` | Reads JSON settings and optional `credentials` from stdin, validates and restarts. |
 | `save-credentials` | Reads `{provider_id: {mode, value}}`. `openai`, `dashscope`, `minimax`, `compatible-asr`, `compatible-mt` support `direct`, `file`, `default`. Returns status; running services keep previously loaded keys. |
 | `chatgpt-status` | Lists accounts, authorization and cached models. |
