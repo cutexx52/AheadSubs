@@ -18,7 +18,7 @@ class DiagnosticsTest(unittest.TestCase):
             (player / "PotPlayerMini64.exe").touch()
             with patch.object(runtime, "DATA", root), patch.object(runtime, "CONFIG", root / "settings.json"):
                 assets.configure_player("potplayer", str(player))
-                self.assertEqual(assets.potplayer_directory(), player)
+                self.assertEqual(assets.potplayer_directory(), player.resolve())
                 self.assertTrue(assets.integration_status("potplayer")["configured"])
                 keep = player / "Extension" / "Subtitle" / "Translate" / "Other extension.as"
                 keep.touch()
@@ -36,7 +36,7 @@ class DiagnosticsTest(unittest.TestCase):
             (portable / "mpv.conf").touch()
             with patch.object(runtime, "DATA", root), patch.object(runtime, "CONFIG", root / "settings.json"):
                 assets.configure_player("mpv", str(root))
-                self.assertEqual(assets.mpv_directory(), portable)
+                self.assertEqual(assets.mpv_directory(), portable.resolve())
                 self.assertTrue(assets.integration_status("mpv")["configured"])
                 assets.unconfigure_player("mpv")
                 self.assertTrue((portable / "mpv.conf").is_file())
