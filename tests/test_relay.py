@@ -1,16 +1,30 @@
 import tempfile
 import time
 import unittest
+from types import SimpleNamespace
 from pathlib import Path
 from unittest.mock import patch
 
 from subtitle_relay.audio import Segmentation, Segmenter, make_wav
 from subtitle_relay.engine import Playback, Relay, merge_cues
 from subtitle_relay.protocol import playback_from_json
-from subtitle_relay.providers import Cue
+from subtitle_relay.providers import Cue, OpenAIWhisper
 
 
 class RelayTest(unittest.TestCase):
+    def test_compatible_asr_requests_segment_timestamps_in_auto_language_mode(self):
+        def transcribe(**request):
+            self.assertEqual(request["model"], "qwen3-asr")
+            self.assertEqual(request["timestamp_granularities"], ["segment"])
+            self.assertNotIn("language", request)
+            return SimpleNamespace(language="Japanese", text="こんにちは", segments=[
+                SimpleNamespace(start=0.3, end=1.2, text="こんにちは"),
+            ])
+
+        client = SimpleNamespace(audio=SimpleNamespace(transcriptions=SimpleNamespace(create=transcribe)))
+        language, cues = OpenAIWhisper(client, "qwen3-asr").recognize(b"audio", None)
+        self.assertEqual((language, cues), ("ja", [Cue(0.3, 1.2, "こんにちは")]))
+
     def test_playback_accepts_lua_integer_values_and_rejects_fractional_stream(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "file.mp4"

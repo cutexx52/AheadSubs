@@ -26,6 +26,8 @@ PORT = 8769
 CONTROL = DATA / "control-token"
 DEFAULTS = {
     "route": "asr+mt",
+    "pot_hotkey": "1",
+    "asr_url": "http://127.0.0.1:8000/v1", "asr_model": "qwen3-asr",
     "asr": "local", "mt": "local", "device": "cuda", "whisper_model": "small",
     "llm_model": "gpt-4.1-mini", "llm_url": "http://127.0.0.1:11434/v1", "key_file": "",
     "chunk": "8", "before": "2", "after": "2", "max_speech": "12",
@@ -71,6 +73,10 @@ def background_start():
         CONTROL.write_text(secrets.token_urlsafe(32), encoding="ascii")
         args = ["serve", "--cache", str(DATA / "cache"), "--control-token-file", str(CONTROL)]
         for name in DEFAULTS:
+            if name == "pot_hotkey":
+                if settings[name] == "1":
+                    args.extend(["--pot-hotkey-launcher", str(Path(__file__).resolve())])
+                continue
             if name == "route":
                 if settings[name] == "OpenAI AST (English)":
                     args.append("--ast")
@@ -126,13 +132,13 @@ def install_potplayer(destination):
         (destination / path.name).write_text(script, encoding="utf-8")
 
 
-def native_potplayer(encoded):
+def native_potplayer(encoded=None, foreground=None):
     from subtitle_relay.players import run_adapter
     from subtitle_relay.potplayer import (PotPlayer, caller_potplayer, current_media,
                                          find_reload_command, list_windows)
     from subtitle_relay.protocol import RelayClient
 
-    value = base64.b64decode(encoded)
+    value = base64.b64decode(encoded) if encoded else b""
     encodings = ("utf-16-le", "utf-8-sig", "mbcs") if b"\0" in value else ("utf-8-sig", "mbcs")
     filename = None
     for encoding in encodings:
@@ -143,12 +149,17 @@ def native_potplayer(encoded):
                 break
         except (UnicodeError, OSError, ValueError):
             continue
+    if foreground:
+        match = next((title for hwnd, title in list_windows() if hwnd == foreground), None)
+        if not match or not match.endswith(" - PotPlayer"):
+            raise RuntimeError("This PotPlayer window title does not identify the current file.")
+        filename = match.removesuffix(" - PotPlayer")
     if filename is None:
         raise RuntimeError("PotPlayer did not supply a filename.")
-    pid = caller_potplayer()
-    if pid is None:
+    pid = caller_potplayer() if not foreground else None
+    if pid is None and not foreground:
         raise RuntimeError("Subtitle Relay could not identify the PotPlayer process that opened it.")
-    windows = list_windows(pid)
+    windows = [(foreground, match)] if foreground else list_windows(pid)
     matching = [window for window in windows if Path(filename).stem.casefold() in window[1].casefold()]
     if matching:
         windows = matching
@@ -236,7 +247,7 @@ def gui(initial_media=None):
 
     for row, (key, label, choices) in enumerate([
         ("route", "Translation path", ["asr+mt", "OpenAI AST (English)"]),
-        ("asr", "Speech recognition", ["local", "openai"]),
+        ("asr", "Speech recognition", ["local", "openai", "compatible"]),
         ("mt", "Text translation", ["local", "openai", "compatible"]),
         ("device", "Local inference", ["cuda", "cpu"]),
         ("whisper_model", "Whisper model", None),
@@ -255,8 +266,10 @@ def gui(initial_media=None):
         ("backfill", "Backfill before playhead (seconds)"),
     ]):
         field(advanced, row, key, label)
+    field(advanced, 8, "asr_url", "Compatible ASR URL")
+    field(advanced, 9, "asr_model", "Compatible ASR model")
     ttk.Label(advanced, text="Set the playback look-ahead from the mpv menu or the PotPlayer tab.").grid(
-        row=8, columnspan=2, pady=12, sticky="w")
+        row=10, columnspan=2, pady=12, sticky="w")
 
     def save():
         DATA.mkdir(parents=True, exist_ok=True)
@@ -329,6 +342,9 @@ def gui(initial_media=None):
     ttk.Label(setup, textvariable=setup_status).grid(row=11, column=1, columnspan=2, sticky="w")
 
     ttk.Button(pot, text="Install PotPlayer translation menu", command=pot_install).pack(anchor="w")
+    ttk.Checkbutton(pot, text="Ctrl+Alt+J toggles pre-read in the active PotPlayer window",
+                    variable=settings["pot_hotkey"], onvalue="1", offvalue="0",
+                    command=save).pack(anchor="w", pady=(8, 0))
     ttk.Label(pot, text="Open a local video in a new PotPlayer window with a live translated subtitle track.",
               wraplength=550).pack(anchor="w", pady=10)
     pot_log = DATA / "potplayer.log"
@@ -435,9 +451,12 @@ if __name__ == "__main__":
         prepare()
     elif "--background" in sys.argv:
         background_start()
-    elif len(sys.argv) >= 3 and sys.argv[1] == "--pot-toggle":
+    elif len(sys.argv) >= 3 and sys.argv[1] in {"--pot-toggle", "--pot-hwnd"}:
         try:
-            native_potplayer("".join(sys.argv[2:]).strip('"'))
+            if sys.argv[1] == "--pot-hwnd":
+                native_potplayer(foreground=int(sys.argv[2]))
+            else:
+                native_potplayer("".join(sys.argv[2:]).strip('"'))
         except EOFError:
             pass
         except Exception as exc:

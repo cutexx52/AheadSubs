@@ -32,6 +32,7 @@ def extract_audio(path, audio, start, duration):
          "-map", f"0:a:{audio}", "-t", str(duration), "-ac", "1", "-ar", "16000",
          "-c:a", "pcm_s16le", "-f", "s16le", "pipe:1"],
         capture_output=True, timeout=30, check=True,
+        creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
     )
     return make_wav(result.stdout)
 

@@ -3,9 +3,11 @@ import json
 import os
 import struct
 import subprocess
+import sys
 import time
 from ctypes import wintypes as win
 from pathlib import Path
+from threading import Thread
 from uuid import uuid4
 
 
@@ -137,6 +139,33 @@ def current_media(pid, filename):
                        "Use the Subtitle Relay helper to attach this file.")
 
 
+def start_hotkey(launcher):
+    """Listen for Ctrl+Alt+J while the server is running."""
+    def listen():
+        user = ct.WinDLL("user32", use_last_error=True)
+        user.GetForegroundWindow.restype = win.HWND
+        user.GetMessageW.argtypes = [ct.POINTER(win.MSG), win.HWND, win.UINT, win.UINT]
+        if not user.RegisterHotKey(None, 1, 0x4003, ord("J")):
+            print("PotPlayer hotkey Ctrl+Alt+J is already in use.", flush=True)
+            return
+        message = win.MSG()
+        previous = 0.0
+        try:
+            while user.GetMessageW(ct.byref(message), None, 0, 0) > 0:
+                if message.message != 0x312:
+                    continue
+                foreground = user.GetForegroundWindow()
+                now = time.monotonic()
+                if now - previous >= 0.65 and any(hwnd == foreground for hwnd, _ in list_windows()):
+                    previous = now
+                    subprocess.Popen([sys.executable, str(launcher), "--pot-hwnd", str(foreground)],
+                                     creationflags=subprocess.CREATE_NO_WINDOW)
+        finally:
+            user.UnregisterHotKey(None, 1)
+
+    Thread(target=listen, daemon=True).start()
+
+
 class PotPlayer:
     """Poll one explicitly bound window and local file."""
 
@@ -227,7 +256,7 @@ def open_with_subtitles(executable, path, client, audio, source, target, ahead, 
     duration = float(subprocess.check_output([
         "ffprobe", "-v", "error", "-show_entries", "format=duration",
         "-of", "default=noprint_wrappers=1:nokey=1", str(path),
-    ], timeout=15))
+    ], timeout=15, creationflags=subprocess.CREATE_NO_WINDOW))
     session = uuid4().hex
     hints = {"session": session, "source": source, "target": target, "ahead": ahead,
              "path": str(path), "audio": audio, "duration": duration}

@@ -54,7 +54,7 @@ class FasterWhisper:
         return info.language, [Cue(s.start, s.end, s.text.strip()) for s in segments if s.text.strip()]
 
 
-def openai_client(key_file=None, endpoint=None):
+def openai_client(key_file=None, endpoint=None, endpoint_key="RELAY_LLM_API_KEY"):
     from openai import OpenAI
 
     key = os.getenv("OPENAI_API_KEY")
@@ -64,7 +64,7 @@ def openai_client(key_file=None, endpoint=None):
             raise ValueError("No OpenAI API key in the supplied key file")
         key = match.group(0)
     if endpoint:
-        return OpenAI(api_key=os.getenv("RELAY_LLM_API_KEY", "local"), base_url=endpoint, timeout=30)
+        return OpenAI(api_key=os.getenv(endpoint_key, "local"), base_url=endpoint, timeout=30)
     return OpenAI(api_key=key, base_url="https://api.openai.com/v1", timeout=30)
 
 
@@ -74,8 +74,9 @@ class OpenAIWhisper:
         "german": "de", "spanish": "es", "russian": "ru", "portuguese": "pt",
     }
 
-    def __init__(self, client):
+    def __init__(self, client, model="whisper-1"):
         self.client = client
+        self.model = model
 
     @staticmethod
     def _cues(response):
@@ -83,11 +84,14 @@ class OpenAIWhisper:
 
     def recognize(self, wav, source):
         response = self.client.audio.transcriptions.create(
-            file=("chunk.wav", wav), model="whisper-1", response_format="verbose_json",
+            file=("chunk.wav", wav), model=self.model, response_format="verbose_json",
             timestamp_granularities=["segment"], **({"language": source} if source else {}),
         )
-        language = response.language.lower()
-        return source or self.LANGUAGE_NAMES.get(language, language), self._cues(response)
+        language = (response.language or "").lower()
+        cues = self._cues(response)
+        if not cues and response.text.strip():
+            raise ValueError("The speech endpoint did not supply segment timestamps")
+        return source or self.LANGUAGE_NAMES.get(language, language), cues
 
     def speech_translate(self, wav, source, target):
         if target not in {"en", "eng_Latn"}:

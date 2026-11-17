@@ -5,7 +5,7 @@ string GetLoginTitle() { return "Subtitle Relay audio pre-read"; }
 string GetLoginDesc() { return "Click OK to start or stop audio pre-read for this window."; }
 string GetUserText() { return "Optional"; }
 string GetPasswordText() { return ""; }
-array<string> GetSrcLangs() { array<string> languages = {"en"}; return languages; }
+array<string> GetSrcLangs() { array<string> languages = {""}; return languages; }
 array<string> GetDstLangs() { array<string> languages = {"zh-CN"}; return languages; }
 void ServerLogout() {}
 

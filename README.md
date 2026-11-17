@@ -10,6 +10,8 @@
 
 **PotPlayer** 标签提供两个入口：
 
+常用方式：启动 Relay 服务后，在正在播放的 PotPlayer 窗口按 **Ctrl+Alt+J**。再次按同一键停止该窗口的预读。快捷键由 Relay 服务注册，可在 PotPlayer 标签关闭，重启服务后生效。预读会自动识别源语言。先使用带文件名的 PotPlayer 标题格式；无法识别标题时可走扩展菜单或助手里的 Attach。
+
 - **Open video with translated subtitles…** 选择本地视频或 Windows 共享文件，服务先准备起始字幕，再用新 PotPlayer 窗口加载 SRT。后续更新会触发 PotPlayer 原生 Reload Subtitle 命令。已打开的视频也可用 **Select media and start pre-reading…** 手动绑定，助手会把首份 SRT 交给指定窗口。SRT 保存在后台缓存目录，默认是 `%LOCALAPPDATA%\Subtitle Relay\cache`。
 - **Install PotPlayer translation menu** 安装原生 **Subtitle Relay (local service)** 翻译引擎。重开 PotPlayer 后，在实时字幕翻译的引擎列表选择它，并指定来源和目标语言。该回调处理 PotPlayer 传入的现成字幕文本。观看已经由后台生成译文的 SRT 时，可关闭 PotPlayer 自己的字幕翻译以免重复处理。
 - 已经在 PotPlayer 打开视频时，在 **F5 → 扩展功能 → 实时字幕翻译** 的列表选 **Subtitle Relay - Start/stop audio pre-read**，打开它的**设置**并点**确定**。扩展把当前视频的文件名交给后台，后台从对应窗口的进程定位打开的文件并加载字幕。如果存在多个同名候选项或无法解析路径，助手的 Attach 可以显式指定。再次执行同一操作会停止预读，已加载的字幕仍可使用。默认译成简体中文、预读 20 秒并读第一条音轨。切换文件后重新启动预读。
@@ -26,11 +28,14 @@ python -m venv .venv
 
 ```cmd
 .venv\Scripts\python -m subtitle_relay serve --asr openai --mt openai --key-file D:\path\outside-repo\openai
+.venv\Scripts\python -m subtitle_relay serve --asr compatible --asr-url http://127.0.0.1:8000/v1 --asr-model qwen3-asr
 .venv\Scripts\python -m subtitle_relay serve --mt compatible --llm-url http://127.0.0.1:11434/v1 --llm-model qwen2.5:3b
 .venv\Scripts\python -m subtitle_relay serve --ast --key-file D:\path\outside-repo\openai
 ```
 
 云端 ASR 默认用能返回起止时间的 `whisper-1`。默认小型文本模型为 `gpt-4.1-mini`。OpenAI 音频直译模式的目标选 `en`。使用 OpenAI ASR / AST 时会发送处理过的语音段，使用云端文本翻译时会发送该段的字幕文本。凭据从环境变量 `OPENAI_API_KEY` 或本地密钥文件读取。兼容文本接口的可选密钥读取 `RELAY_LLM_API_KEY`。
+
+对 Qwen3-ASR 等兼容服务，选择 **Speech recognition → compatible**，在 **VAD and timing** 设置 ASR URL 和模型名。服务需支持带片段时间戳的 `verbose_json`。例如 [Qwen3-ASR-STT](https://github.com/hangry-labs/Qwen3-ASR-STT#openai-compatible-api) 会在请求片段时间戳时加载独立的强制对齐模型。兼容语音接口的可选密钥读取 `RELAY_ASR_API_KEY`。Qwen 权重与部署由该服务管理。
 
 ## 单独运行适配器
 

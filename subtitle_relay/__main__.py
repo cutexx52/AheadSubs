@@ -42,8 +42,13 @@ def make_relay(args):
     recognizer = None
     translator = None
     if not args.ast:
-        recognizer = (FasterWhisper(args.whisper_model, args.device, min(args.workers, 2))
-                      if args.asr == "local" else OpenAIWhisper(cloud))
+        if args.asr == "local":
+            recognizer = FasterWhisper(args.whisper_model, args.device, min(args.workers, 2))
+        elif args.asr == "compatible":
+            client = openai_client(endpoint=args.asr_url, endpoint_key="RELAY_ASR_API_KEY")
+            recognizer = OpenAIWhisper(client, args.asr_model)
+        else:
+            recognizer = OpenAIWhisper(cloud)
         if args.mt == "local":
             translator = NllbTranslation(args.nllb_model, args.device, min(args.workers, 2))
         else:
@@ -51,6 +56,8 @@ def make_relay(args):
             translator = ChatTranslation(client, args.llm_model)
     profile = ["v2", args.asr, args.mt, args.ast, args.whisper_model, args.nllb_model,
                args.llm_model, args.llm_url, args.device, asdict(settings)]
+    if args.asr == "compatible" and not args.ast:
+        profile.extend([args.asr_url, args.asr_model])
     return Relay(args.cache, recognizer, translator, profile, args.workers, args.chunk,
                  OpenAIWhisper(cloud) if args.ast else None, Segmenter(settings))
 
@@ -59,7 +66,9 @@ def main():
     parser = argparse.ArgumentParser(prog="python -m subtitle_relay")
     commands = parser.add_subparsers(dest="mode", required=True)
     server = commands.add_parser("serve")
-    server.add_argument("--asr", choices=["local", "openai"], default="local")
+    server.add_argument("--asr", choices=["local", "openai", "compatible"], default="local")
+    server.add_argument("--asr-url", default="http://127.0.0.1:8000/v1")
+    server.add_argument("--asr-model", default="qwen3-asr")
     server.add_argument("--mt", choices=["local", "openai", "compatible"], default="local")
     server.add_argument("--ast", action="store_true", help="Use OpenAI speech translation to English")
     server.add_argument("--device", choices=["cpu", "cuda"], default="cuda")
@@ -69,6 +78,7 @@ def main():
     server.add_argument("--llm-url", default="http://127.0.0.1:11434/v1")
     server.add_argument("--key-file")
     server.add_argument("--control-token-file", type=Path)
+    server.add_argument("--pot-hotkey-launcher", type=Path)
     server.add_argument("--cache", default=".relay")
     server.add_argument("--workers", type=int, choices=range(1, 17), default=4)
     server.add_argument("--chunk", type=int, choices=range(4, 21), default=8)
@@ -113,6 +123,10 @@ def main():
             parser.error("invalid VAD parameters or audio context")
         relay = make_relay(args)
         try:
+            if args.pot_hotkey_launcher:
+                from .potplayer import start_hotkey
+
+                start_hotkey(args.pot_hotkey_launcher)
             token = args.control_token_file.read_text(encoding="ascii").strip() if args.control_token_file else None
             serve(relay, args.port, token)
         finally:
