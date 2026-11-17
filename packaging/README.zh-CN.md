@@ -6,7 +6,7 @@
 
 ## 本地构建
 
-使用 Windows x64 和包含 Tcl/Tk 的完整 x64 CPython 3.11。WPF 构建需要 .NET 10 SDK。安装 [MSYS2](https://www.msys2.org/)，在 UCRT64 中运行 `pacman -S --needed diffutils make mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-nasm`。已安装的 `libwinpthread` 版本必须匹配 `windows/build.py` 的 `WINPTHREADS_VERSION`，保证 DLL 与对应源码一致。安装包需要 Inno Setup 7，也可让脚本下载固定编译器到构建缓存。
+使用 Windows x64 和包含 Tcl/Tk 的完整 x64 CPython 3.11。WPF 构建需要 .NET 10 SDK。安装 [MSYS2](https://www.msys2.org/)，在 UCRT64 中运行 `pacman -S --needed diffutils make mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-nasm`。构建从固定归档下载 `libwinpthread` DLL 和对应源码。安装包需要 Inno Setup 7，也可让脚本下载固定编译器到构建缓存。
 
 ```bat
 python packaging\windows\build.py --native --version 0.1.0

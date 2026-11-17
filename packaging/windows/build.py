@@ -31,6 +31,9 @@ FFMPEG_NOTICES = ("COPYING.LGPLv3", "COPYING.GPLv3", "CREDITS")
 WINPTHREADS_VERSION = "14.0.0.r598.ge3d18511f-1"
 WINPTHREADS_URL = f"https://mirror.msys2.org/mingw/sources/mingw-w64-winpthreads-{WINPTHREADS_VERSION}.src.tar.zst"
 WINPTHREADS_SHA256 = "1da3dad4f6916d0c23e8fe76c38ed79946fb32078f94047c0475229b8112a1db"
+WINPTHREADS_BINARY_URL = ("https://mirror.msys2.org/mingw/ucrt64/"
+                         f"mingw-w64-ucrt-x86_64-libwinpthread-{WINPTHREADS_VERSION}-any.pkg.tar.zst")
+WINPTHREADS_BINARY_SHA256 = "c35d6be83d141c8cfbb61f1637dd4b53aac8f5562d766aa26d0741c40bad4e4d"
 WHISPER_AUDIO_SHA256 = "60a1d8638f718cbf6d245aed3e5a5aa61c1f822a0b0fe9b48a7c928d47c23909"
 CTRANSLATE2_CUDNN_SHA256 = "9edbcdff73b0af070eb160b2ce66e59feca04aa017351d8eedcc5e8e149967d2"
 INTEL_OMP_SHA256 = "982233366b0afcda1e0f55a0b134097e35b779613f54ddb69e685e6cd06b755f"
@@ -148,8 +151,6 @@ def private_ffmpeg(source, downloads, msys2):
     env = dict(os.environ, MSYSTEM="UCRT64", CHERE_INVOKING="1", MSYS2_PATH_TYPE="minimal")
     packages = "pacman -Q mingw-w64-ucrt-x86_64-{gcc,crt,headers,binutils,nasm,libwinpthread} make"
     tools = subprocess.check_output([bash, "--login", "-c", packages], env=env)
-    if f"mingw-w64-ucrt-x86_64-libwinpthread {WINPTHREADS_VERSION}" not in tools.decode().splitlines():
-        raise RuntimeError("Update the libwinpthread source pin to match the installed UCRT64 runtime")
     fingerprint = hashlib.sha256(FFMPEG_SHA256.encode() + FFMPEG_RECIPE.read_bytes() + tools).hexdigest()
     cached = downloads / f"ffmpeg-win64-{fingerprint[:16]}"
     if not cached.is_dir():
@@ -171,9 +172,10 @@ def private_ffmpeg(source, downloads, msys2):
 
 def stage_ffmpeg(stage, downloads, msys2, companion):
     source = verified_download(FFMPEG_URL, FFMPEG_SHA256, downloads, filename=FFMPEG_TARBALL)
-    threads_source = verified_download(WINPTHREADS_URL, WINPTHREADS_SHA256, downloads,
-                                       curl=msys2 / "usr/bin/curl.exe")
     build = private_ffmpeg(source, downloads, msys2)
+    curl = msys2 / "usr/bin/curl.exe"
+    threads_source = verified_download(WINPTHREADS_URL, WINPTHREADS_SHA256, downloads, curl=curl)
+    threads_binary = verified_download(WINPTHREADS_BINARY_URL, WINPTHREADS_BINARY_SHA256, downloads, curl=curl)
     binary = stage / "bin"
     notices = stage / "notices" / "ffmpeg"
     binary.mkdir()
@@ -181,10 +183,16 @@ def stage_ffmpeg(stage, downloads, msys2, companion):
     built_bin = build / "aheadsubs-ffmpeg/bin"
     for path in (*built_bin.glob("*.dll"), *(built_bin / exe for exe in ("ffmpeg.exe", "ffprobe.exe"))):
         shutil.copy2(path, binary)
-    # UCRT64 implements the POSIX clocks used by libavutil in this small DLL.
-    shutil.copy2(msys2 / "ucrt64/bin/libwinpthread-1.dll", binary)
+    # UCRT64 supplies the imported POSIX clocks. Bundle the verified DLL and
+    # corresponding source together, independently of the SDK's installed copy.
+    threads_notice = notices / "libwinpthread"
+    threads_notice.mkdir()
+    windows_tar = Path(os.environ["SystemRoot"]) / "System32/tar.exe"
+    for member, destination in (("ucrt64/bin/libwinpthread-1.dll", binary / "libwinpthread-1.dll"),
+                                ("ucrt64/share/licenses/libwinpthread/COPYING", threads_notice / "COPYING")):
+        destination.write_bytes(subprocess.check_output([windows_tar, "-xOf", threads_binary, member]))
     licenses = msys2 / "ucrt64/share/licenses"
-    for name in ("libwinpthread", "libgcc", "crt"):
+    for name in ("libgcc", "crt"):
         shutil.copytree(licenses / name, notices / name)
     shutil.copy2(build / "toolchain.txt", notices)
     shutil.copy2(FFMPEG_BUILD_GUIDE, notices / "README.txt")
@@ -196,6 +204,7 @@ def stage_ffmpeg(stage, downloads, msys2, companion):
         f"FFmpeg {FFMPEG_REVISION}, licensed under LGPL v3 or later.\n"
         f"Corresponding source and build script: {companion.name}\n"
         f"Upstream source archive: {FFMPEG_URL}\nSHA-256: {FFMPEG_SHA256}\n"
+        f"winpthreads binary package: {WINPTHREADS_BINARY_URL}\nSHA-256: {WINPTHREADS_BINARY_SHA256}\n"
         f"winpthreads source package: {WINPTHREADS_URL}\nSHA-256: {WINPTHREADS_SHA256}\n",
         encoding="utf-8",
     )

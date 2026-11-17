@@ -6,7 +6,7 @@ The Windows build combines a private CPython 3.11 runtime, Tcl/Tk for the fallba
 
 ## Build locally
 
-Use Windows x64 and a complete x64 CPython 3.11 installation that includes Tcl/Tk. Use the .NET 10 SDK for the WPF build. Install [MSYS2](https://www.msys2.org/) and run `pacman -S --needed diffutils make mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-nasm` in UCRT64. The installed `libwinpthread` version must match `WINPTHREADS_VERSION` in `windows/build.py` so its DLL and corresponding source stay in sync. For the installer, use Inno Setup 7 or let the script download the pinned compiler into the build cache.
+Use Windows x64 and a complete x64 CPython 3.11 installation that includes Tcl/Tk. Use the .NET 10 SDK for the WPF build. Install [MSYS2](https://www.msys2.org/) and run `pacman -S --needed diffutils make mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-nasm` in UCRT64. The build downloads the runtime `libwinpthread` DLL and its matching source from pinned archives. For the installer, use Inno Setup 7 or let the script download the pinned compiler into the build cache.
 
 ```bat
 python packaging\windows\build.py --native --version 0.1.0
