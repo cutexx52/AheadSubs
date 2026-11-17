@@ -24,6 +24,8 @@ Generate translated SRT subtitles for local videos ahead of playback, using on-d
 
 ## 使用与扩展
 
+也可以从 [AheadSubs Wiki](https://github.com/cutexx52/AheadSubs/wiki) 按主题查找文档。
+
 | 文档 | 内容 |
 | --- | --- |
 | [Windows 安装与支持](docs/windows.md) | 安装、更新与适用系统 |

@@ -11,6 +11,8 @@ python -m venv .venv
 
 NVIDIA 本地后端的额外运行库及 Windows 支持情况见[安装指南](windows.md)。使用 CPU 排查时，启动后台用 `--device cpu`。
 
+项目文档正文保存在 `docs/`，通过主仓库的 Pull Request 审查。新增、重命名或移除文档时，请同时检查 README 和 [Wiki 首页](https://github.com/cutexx52/AheadSubs/wiki)上的链接。Wiki 首页可在 GitHub 上编辑，也可通过独立的 Wiki Git 仓库维护。
+
 提交前覆盖改动对应的边界：
 
 - 改播放器适配时，记录版本和宿主行为，验证开启、关闭、跳转、文件切换和多窗口隔离。
