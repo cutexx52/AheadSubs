@@ -127,6 +127,21 @@ class StatusTest(unittest.TestCase):
             self.assertEqual(read()[0]["state"], "unavailable")
         self.assertFalse(hasattr(backend, "usage_meter"))
 
+    def test_model_status_uses_per_model_devices_and_minimax_billing_mode(self):
+        args = SimpleNamespace(asr="local", mt="local", whisper_model="small", nllb_model="nllb",
+                               device="cuda", asr_device="cpu", mt_device=None, no_vad=True)
+        store = Mock()
+        backend = SimpleNamespace(model="MiniMax-M3.1-Flash", subscription=True)
+        read = monitor_pipeline(args, None, backend, None, "", store)
+        self.assertEqual([row["device"] for row in read()], ["cpu", "cuda"])
+        args.mt = "minimax"
+        read = monitor_pipeline(args, None, backend, None, "", store)
+        self.assertEqual(read()[1]["state"], "configured")
+        with backend.usage_meter.call("mt") as usage:
+            usage.tokens(SimpleNamespace(prompt_tokens=100, completion_tokens=20))
+        self.assertEqual(store.record.call_args.args[1], "minimax_plan")
+        self.assertIsNone(store.record.call_args.args[-1])
+
     def test_rtf_uses_actual_eof_duration_and_latency_ignores_immediate_cache_hits(self):
         with tempfile.TemporaryDirectory() as directory:
             media = Path(directory) / "private movie.mkv"
@@ -200,7 +215,8 @@ class StatusTest(unittest.TestCase):
                         self.assertEqual(error.exception.code, 403)
                         error.exception.close()
                     # Duration precedes the current playhead so the scheduler does not need media or a model.
-                    client.send("playback", {"session": "mpv-1", "path": str(media), "position": 8, "duration": 4})
+                    RelayClient(port, "").send("playback",
+                        {"session": "mpv-123-456", "path": str(media), "position": 8, "duration": 4})
                     RelayClient(port, "private process").send(
                         "playback", {"session": "private session", "path": str(media), "position": 8, "duration": 4})
                     with ThreadPoolExecutor(max_workers=1) as pool:
@@ -218,7 +234,7 @@ class StatusTest(unittest.TestCase):
                         finally:
                             release.set()
                         self.assertEqual(translation.result(timeout=3), {"translation": "text"})
-                    client.send("close", {"session": "mpv-1"})
+                    client.send("close", {"session": "mpv-123-456"})
                     self.assertEqual(status(**{"X-AheadSubs-Status": "1"})["sources"],
                                      [{"source": "http", "playback": 1, "text": 0}])
                     self.assertEqual(client.health()["active_sessions"], 1)

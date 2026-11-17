@@ -6,20 +6,13 @@ import sqlite3
 import sys
 from contextlib import redirect_stdout
 
-from . import assets, credentials, runtime
+from . import assets, credentials, hardware, runtime
+from .assets import MODELS
 from ..inference.chatgpt_auth import ChatGPTAccounts
 from ..inference.dashscope import DASHSCOPE_ASR_MODELS
 from ..inference.providers import MINIMAX_MODEL, QWEN_MT_MODELS, qwen_mt_credentials
 from ..server.engine import TranslationSettings
 from ..server.history import inspect_cache
-
-
-MODELS = {
-    "qwen-0.6b": "[本地] Qwen3-ASR 0.6B",
-    "qwen-1.7b": "[本地] Qwen3-ASR 1.7B",
-    "whisper-small": "[本地] Whisper Small",
-    "nllb": "[本地] NLLB-200 600M INT8",
-}
 
 
 def status():
@@ -35,8 +28,30 @@ def status():
             "credentials": credentials.public_state(settings),
             "chatgpt_accounts": accounts, "minimax_model": MINIMAX_MODEL,
             "models": {model: assets.model_ready(label) for model, label in MODELS.items()},
+            "active_models": sorted(assets.active_models(health)),
             "potplayer_detected": integrations["potplayer"]["detected"], "integrations": integrations,
             "ffmpeg_detected": bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))}
+
+
+def check_requirements(item, endpoint=None):
+    requested = set(item.split(",")) if item else set()
+    if not requested <= {"vulkan", "cuda", "dashscope"}:
+        raise ValueError("未知的预设运行条件。")
+    missing = []
+    if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
+        missing.append("ffmpeg")
+    if "vulkan" in requested and not hardware.vulkan_available():
+        missing.append("vulkan")
+    if "cuda" in requested and not hardware.cuda_available():
+        missing.append("cuda")
+    if "dashscope" in requested:
+        settings = runtime.config()
+        try:
+            qwen_mt_credentials(settings["qwen_mt_url"] if endpoint is None else endpoint,
+                                api_key=credentials.resolve(settings, "dashscope"))
+        except ValueError:
+            missing.append("dashscope")
+    return {"missing": missing}
 
 
 def apply(updates):
@@ -58,6 +73,7 @@ def apply(updates):
     for key, options in {
         "asr": {"local", "openai", "compatible", "qwen", "dashscope"}, "qwen_size": {"0.6b", "1.7b"},
         "mt": {"local", "openai", "compatible", "qwen-mt", "chatgpt", "minimax"}, "device": {"cpu", "cuda"},
+        "asr_device": {"", "cpu", "cuda"}, "mt_device": {"", "cpu", "cuda"},
         "diagnostics": {"0", "1"}, "pot_hotkey": {"0", "1"}, "vad_model": {"silero", "fsmn"},
         "bilingual": {"0", "1"},
         "route": {"asr+mt", "OpenAI AST (English)"}, "qwen_mt_model": QWEN_MT_MODELS,
@@ -150,6 +166,9 @@ def run_command(command, item=None, folder=None):
         from ..inference.usage import USAGE_DB, read_usage
 
         return read_usage(runtime.DATA / "cache" / USAGE_DB)
+    if command == "preset-check":
+        raw = sys.stdin.read()
+        return check_requirements(item, json.loads(raw)["qwen_mt_url"] if raw else None)
     if command == "automation":
         from ..automation_text import text
         from .automation import configure
@@ -164,6 +183,11 @@ def run_command(command, item=None, folder=None):
             raise ValueError("请选择已支持的本地模型。")
         if not assets.model_ready(MODELS[item]):
             assets.install_model(MODELS[item])
+        return status()
+    if command == "uninstall":
+        if item not in MODELS:
+            raise ValueError("请选择已支持的本地模型。")
+        assets.uninstall_model(item, MODELS[item])
         return status()
     if command == "apply":
         return apply(json.load(sys.stdin))
@@ -198,7 +222,8 @@ def run_command(command, item=None, folder=None):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("status", "cloud-usage", "automation", "install", "apply", "save-credentials", "stop",
+    parser.add_argument("command", choices=("status", "cloud-usage", "preset-check", "automation", "install",
+                                           "uninstall", "apply", "save-credentials", "stop",
                                            "integrate", "unintegrate", "logs", "inspect",
                                            "pot-windows", "pot-start", "pot-stop", "chatgpt-status", "chatgpt-login",
                                            "chatgpt-models", "chatgpt-logout"))
@@ -209,10 +234,14 @@ def main():
     try:
         with redirect_stdout(sys.stderr):
             result.update(run_command(args.command, args.item, args.folder))
+    except assets.ModelRemovalError as exc:
+        result = {"ok": False, "error": str(exc), "error_code": exc.code}
     except (ValueError, RuntimeError) as exc:
         result = {"ok": False, "error": str(exc)}
     except Exception as exc:
         result = {"ok": False, "error": f"操作失败（{type(exc).__name__}）。请检查网络、文件和运行环境。"}
+        if args.command in {"uninstall", "install"}:
+            result["error_code"] = "uninstall-failed" if args.command == "uninstall" else "download-failed"
     print(json.dumps(result, ensure_ascii=True))
     return 0 if result["ok"] else 1
 

@@ -1,6 +1,7 @@
 import json
 import math
 import os
+import re
 from secrets import compare_digest
 from threading import BoundedSemaphore, Thread
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -41,14 +42,14 @@ def playback_from_json(data, defaults=None):
                     source or None, target, ahead, bilingual)
 
 
-def serve(relay, port, control_token=None, playback_defaults=None):
+def serve(relay, port, control_token=None, playback_defaults=None, *, local_models=None):
     text_slots = BoundedSemaphore(2)
 
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
             if self.path == "/v1/health":
                 self.reply(200, {"service": "subtitle-relay", "pid": os.getpid(),
-                                 "active_sessions": relay.active_sessions()})
+                                 "active_sessions": relay.active_sessions(), "local_models": local_models})
             elif self.path == "/v1/status":
                 if self.headers.get("Origin") or self.headers.get("X-AheadSubs-Status") != "1":
                     self.reply(403, {"error": "native loopback clients only"})
@@ -57,12 +58,14 @@ def serve(relay, port, control_token=None, playback_defaults=None):
             else:
                 self.reply(404, {"error": "unknown route"})
 
-        def entry(self):
+        def entry(self, session=""):
             source = self.headers.get("X-AheadSubs-Entry", "")
             if source in SOURCES:
                 return source
             if self.path == "/v1/text" and self.headers.get("User-Agent") == "SubtitleRelay/1":
                 return "potplayer"
+            if not source and re.fullmatch(r"mpv-[0-9]+-[0-9]+", session):
+                return "mpv"
             return "http"
 
         def do_POST(self):
@@ -95,7 +98,8 @@ def serve(relay, port, control_token=None, playback_defaults=None):
                 if not isinstance(identifier, str) or not 1 <= len(identifier) <= 100:
                     raise ValueError("invalid session")
                 if self.path == "/v1/playback":
-                    self.reply(200, relay.update(identifier, playback_from_json(data, playback_defaults), self.entry()))
+                    self.reply(200, relay.update(identifier, playback_from_json(data, playback_defaults),
+                                                 self.entry(identifier)))
                 elif self.path == "/v1/close":
                     relay.drop(identifier)
                     self.reply(200, {})

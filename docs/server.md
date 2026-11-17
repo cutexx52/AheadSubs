@@ -58,7 +58,7 @@
 
 | 请求 | 合约 |
 | --- | --- |
-| `GET /v1/health` | 返回 `service`、`pid` 和 `active_sessions`，用于本地就绪与状态检查。 |
+| `GET /v1/health` | 返回 `service`、`pid`、`active_sessions` 和 `local_models`。`local_models` 是当前进程正在使用的本地模型标识，供桌面端保护运行中的模型。 |
 | `GET /v1/status` | 返回实时状态和周汇总。请求需带 `X-AheadSubs-Status: 1`，带 `Origin` 的请求返回 `403`。响应禁止缓存。 |
 | `POST /v1/close` | 以 JSON `{"session":"window-1"}` 释放会话，成功返回 `{}`。 |
 | `POST /v1/shutdown` | 以 JSON `{"token":"…"}` 停止服务。由进程管理端使用，须与启动时的控制令牌相符。 |
