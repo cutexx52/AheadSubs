@@ -60,7 +60,7 @@ Example response:
 
 | Request | Contract |
 | --- | --- |
-| `GET /v1/health` | Returns `service`, `pid`, `active_sessions`, `local_models`; local model IDs let the desktop protect models currently in use. |
+| `GET /v1/health` | Returns `service`, `pid`, `active_sessions`, `local_models`. The count covers external playback sessions. Local model IDs let the desktop protect models currently in use. |
 | `GET /v1/status` | Returns live status and weekly cloud totals. Send `X-AheadSubs-Status: 1`. Requests with `Origin` return `403`. The response uses `Cache-Control: no-store`. |
 | `POST /v1/close` | JSON `{"session":"window-1"}` releases a session; success returns `{}`. |
 | `POST /v1/shutdown` | JSON `{"token":"…"}` stops the service, requiring the startup control token. |

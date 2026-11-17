@@ -105,12 +105,13 @@ def media_duration(path, audio, timeout):
     return duration
 
 
-def export_subtitle(source, output, overwrite):
+def export_subtitle(source, output, overwrite, checkpoint):
     # Stage the complete SRT in the destination directory before publishing it.
     with tempfile.NamedTemporaryFile(dir=output.parent, suffix=".tmp", delete=False) as staged:
         temporary = Path(staged.name)
     try:
         shutil.copyfile(source, temporary)
+        checkpoint()
         if overwrite:
             temporary.replace(output)
         elif os.name == "nt":
@@ -183,7 +184,7 @@ def generate_subtitles(client, args, checkpoint):
                 cache = Path(reply["subtitle"])
                 if output.resolve() == cache.resolve():
                     raise OperationError("invalid_output")
-                export_subtitle(cache, output, args.overwrite)
+                export_subtitle(cache, output, args.overwrite, remaining)
                 return {"subtitle": str(output.resolve()), "duration": duration, "has_cues": reply["subtitle_has_cues"]}
             if ready > 0:
                 position += ready

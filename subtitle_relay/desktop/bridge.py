@@ -177,6 +177,10 @@ def run_command(command, item=None, folder=None):
         if item not in (None, "mcp-enable", "mcp-disable", "cli-install", "cli-remove"):
             raise ValueError(text("error.integration_action"))
         return configure(item)
+    if command == "folder-tasks":
+        from .folder_tasks import configure
+
+        return configure(item, sys.stdin)
     if command in {"inspect", "inspect-library", "inspect-rows", "inspect-srt", "inspect-regenerate"}:
         cache = runtime.DATA / "cache" / "cache.sqlite3"
         if command == "inspect-regenerate":
@@ -239,7 +243,7 @@ def run_command(command, item=None, folder=None):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("status", "cloud-usage", "preset-check", "automation", "install",
+    parser.add_argument("command", choices=("status", "cloud-usage", "preset-check", "automation", "folder-tasks", "install",
                                            "uninstall", "apply", "save-credentials", "stop",
                                            "integrate", "unintegrate", "logs", "inspect", "inspect-library",
                                            "inspect-rows", "inspect-srt", "inspect-regenerate",

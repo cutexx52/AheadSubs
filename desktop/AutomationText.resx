@@ -28,4 +28,67 @@
   <data name="Copied" xml:space="preserve"><value>MCP configuration copied.</value></data>
   <data name="ClipboardUnavailable" xml:space="preserve"><value>The clipboard is unavailable. Select the configuration text to copy it manually.</value></data>
   <data name="Failed" xml:space="preserve"><value>Could not update integrations. Check the application and try again.</value></data>
+  <data name="FolderTitle" xml:space="preserve"><value>Automatic tasks</value></data>
+  <data name="FolderIntro" xml:space="preserve"><value>Watch folders for new media and generate subtitles when playback is idle.</value></data>
+  <data name="FolderNew" xml:space="preserve"><value>Add rule</value></data>
+  <data name="FolderRules" xml:space="preserve"><value>Folder rules</value></data>
+  <data name="FolderRetry" xml:space="preserve"><value>Retry failed files</value></data>
+  <data name="FolderRuleName" xml:space="preserve"><value>Rule name (optional)</value></data>
+  <data name="FolderPath" xml:space="preserve"><value>Watch folder</value></data>
+  <data name="FolderBrowse" xml:space="preserve"><value>Browse…</value></data>
+  <data name="FolderEnabled" xml:space="preserve"><value>Enable this rule</value></data>
+  <data name="FolderRecursive" xml:space="preserve"><value>Include subfolders</value></data>
+  <data name="FolderExisting" xml:space="preserve"><value>Include files already present</value></data>
+  <data name="FolderFilters" xml:space="preserve"><value>File filters</value></data>
+  <data name="FolderRegex" xml:space="preserve"><value>Filename regex (optional)</value></data>
+  <data name="FolderTypes" xml:space="preserve"><value>Extensions (comma-separated)</value></data>
+  <data name="FolderMin" xml:space="preserve"><value>Minimum size (MiB)</value></data>
+  <data name="FolderMax" xml:space="preserve"><value>Maximum size (MiB)</value></data>
+  <data name="FolderSubtitle" xml:space="preserve"><value>Subtitle configuration</value></data>
+  <data name="FolderModels" xml:space="preserve"><value>Uses the recognition and translation models saved on the translation page.</value></data>
+  <data name="FolderSource" xml:space="preserve"><value>Source language</value></data>
+  <data name="FolderTarget" xml:space="preserve"><value>Subtitle language</value></data>
+  <data name="FolderAudio" xml:space="preserve"><value>Audio track (1–256)</value></data>
+  <data name="FolderStyle" xml:space="preserve"><value>SRT content</value></data>
+  <data name="FolderDestination" xml:space="preserve"><value>Output folder (blank writes beside the media)</value></data>
+  <data name="FolderSuffix" xml:space="preserve"><value>Optional suffix before .srt, for example .en</value></data>
+  <data name="FolderIdle" xml:space="preserve"><value>Windows input idle time in minutes (0–120, 0 checks AheadSubs only)</value></data>
+  <data name="FolderSave" xml:space="preserve"><value>Save rule</value></data>
+  <data name="FolderDelete" xml:space="preserve"><value>Delete rule</value></data>
+  <data name="FolderDefault" xml:space="preserve"><value>Use translation settings</value></data>
+  <data name="FolderAuto" xml:space="preserve"><value>Detect automatically</value></data>
+  <data name="FolderTranslated" xml:space="preserve"><value>Translation only</value></data>
+  <data name="FolderBilingual" xml:space="preserve"><value>Bilingual</value></data>
+  <data name="FolderLang_zh" xml:space="preserve"><value>Simplified Chinese</value></data>
+  <data name="FolderLang_zh-TW" xml:space="preserve"><value>Traditional Chinese</value></data>
+  <data name="FolderLang_en" xml:space="preserve"><value>English</value></data>
+  <data name="FolderLang_ja" xml:space="preserve"><value>Japanese</value></data>
+  <data name="FolderLang_ko" xml:space="preserve"><value>Korean</value></data>
+  <data name="FolderLang_fr" xml:space="preserve"><value>French</value></data>
+  <data name="FolderLang_de" xml:space="preserve"><value>German</value></data>
+  <data name="FolderLang_es" xml:space="preserve"><value>Spanish</value></data>
+  <data name="FolderLoading" xml:space="preserve"><value>Loading folder rules…</value></data>
+  <data name="FolderSaved" xml:space="preserve"><value>Folder rules saved.</value></data>
+  <data name="FolderRetried" xml:space="preserve"><value>Failed files are queued again.</value></data>
+  <data name="FolderUnavailable" xml:space="preserve"><value>Could not read the folder tasks. Try again in a moment.</value></data>
+  <data name="FolderStopped" xml:space="preserve"><value>Start the subtitle service to scan folders and generate subtitles.</value></data>
+  <data name="FolderSelect" xml:space="preserve"><value>Add or select a rule to see its queue.</value></data>
+  <data name="FolderPaused" xml:space="preserve"><value>This rule is paused.</value></data>
+  <data name="FolderCounts" xml:space="preserve"><value>Waiting {0:N0} · Running {1:N0} · Complete {2:N0} · Failed {3:N0} · Skipped {4:N0}</value></data>
+  <data name="FolderRunning" xml:space="preserve"><value>Generating subtitles…</value></data>
+  <data name="FolderFailureCode" xml:space="preserve"><value>Generation failed ({0}).</value></data>
+  <data name="FolderInvalid" xml:space="preserve"><value>Check the value for {0}.</value></data>
+  <data name="FolderInvalidSize" xml:space="preserve"><value>The maximum size must be greater than zero and at least the minimum.</value></data>
+  <data name="FolderIssue_regex_timeout" xml:space="preserve"><value>The filename regex took too long. Simplify the expression and save again.</value></data>
+  <data name="FolderIssue_folder_unavailable" xml:space="preserve"><value>Cannot scan this folder. Check its path and permissions.</value></data>
+  <data name="FolderIssue_output_exists" xml:space="preserve"><value>Skipped because the SRT already exists.</value></data>
+  <data name="FolderIssue_invalid_media" xml:space="preserve"><value>FFprobe could not read the media duration or audio streams.</value></data>
+  <data name="FolderIssue_invalid_audio" xml:space="preserve"><value>The selected audio track is missing.</value></data>
+  <data name="FolderIssue_invalid_output" xml:space="preserve"><value>The output folder or filename is invalid.</value></data>
+  <data name="FolderIssue_ffprobe_not_found" xml:space="preserve"><value>FFprobe is missing.</value></data>
+  <data name="FolderIssue_operation_failed" xml:space="preserve"><value>Check the media, output folder, and permissions.</value></data>
+  <data name="FolderIssue_generation_changed" xml:space="preserve"><value>The file changed while subtitles were generated.</value></data>
+  <data name="FolderIssue_generation_timeout" xml:space="preserve"><value>Subtitle generation exceeded 24 hours.</value></data>
+  <data name="FolderIssue_request_timeout" xml:space="preserve"><value>Reading the media timed out.</value></data>
+  <data name="FolderIssue_content_blocked" xml:space="preserve"><value>The provider returned a content moderation error.</value></data>
 </root>

@@ -44,6 +44,7 @@ public partial class MainWindow : Window
         previewMode = preview;
         InitializeComponent();
         LoadAutomationText();
+        InitializeFolderTasks();
         InitializeInspection();
         SourceLanguage.ItemsSource = new Choice[] { new("自动识别", ""), new("日语", "ja"),
             new("英语", "en"), new("中文", "zh"), new("韩语", "ko") };
@@ -87,6 +88,7 @@ public partial class MainWindow : Window
                  "mcp_config":{"mcpServers":{"aheadsubs":{"command":"C:\\AheadSubs\\runtime\\python.exe",
                  "args":["-m","subtitle_relay.cli","mcp","--desktop"]}}}}
                 """)!.AsObject());
+            PreviewFolderTasks();
             StatusDashboard.Preview(JsonNode.Parse("""
                 {"ready":true,"active_sessions":2,"workers":{"busy":1,"limit":4},
                  "sources":[{"source":"potplayer","playback":1,"text":0},{"source":"mpv","playback":1,"text":0}],
@@ -187,6 +189,7 @@ public partial class MainWindow : Window
         if (ServiceStrip is not null)
             ServiceStrip.Visibility = SettingsPanel.SelectedItem == StatusTab ? Visibility.Collapsed : Visibility.Visible;
         if (previewMode) return;
+        await SelectFolderTasksPage();
         if (SettingsPanel.SelectedItem == InspectTab && initialized) await Inspect();
         if (SettingsPanel.SelectedItem == AutomationTab) await ChangeAutomation();
         if (initialized && SettingsPanel.SelectedItem == TranslationTab && PresetDisclosure.IsExpanded) await CheckPreset();
@@ -711,10 +714,11 @@ public partial class MainWindow : Window
         Directory.CreateDirectory(directory);
         string[] pages = ["translation", "subtitles", "players", "models", "keys", "advanced", "advanced-vad",
                           "advanced-read-ahead", "translation-context", "chatgpt-oauth", "automation", "presets",
-                          "status", "status-cloud"];
+                          "status", "status-cloud", "folder-tasks"];
         for (int index = 0; index < pages.Length; index++)
         {
-            if (index >= 12) SettingsPanel.SelectedItem = StatusTab;
+            if (index == 14) SettingsPanel.SelectedItem = FolderTasksTab;
+            else if (index is 12 or 13) SettingsPanel.SelectedItem = StatusTab;
             else SettingsPanel.SelectedIndex = index switch { 8 or 11 => 0, 9 => 4, 10 => 6, _ => Math.Min(index, 5) };
             if (index is 6 or 7 && AdvancedTab.Content is ScrollViewer advanced)
                 advanced.ScrollToVerticalOffset(index == 6 ? 600 : 1100);

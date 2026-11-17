@@ -300,8 +300,13 @@ def main():
                     local_models.append(f"qwen-{args.qwen_size}")
                 if args.mt == "local":
                     local_models.append("nllb")
-            serve(relay, args.port, token, {"source": args.default_source, "target": args.default_target,
-                                          "bilingual": args.default_bilingual}, local_models=local_models)
+            defaults = {"source": args.default_source, "target": args.default_target,
+                        "bilingual": args.default_bilingual}
+            if args.desktop_config is not None:
+                from .desktop.folder_tasks import background_worker
+
+                resources.enter_context(background_worker(relay, defaults))
+            serve(relay, args.port, token, defaults, local_models=local_models)
         return
     if args.interval <= 0:
         parser.error("--interval must be positive")
