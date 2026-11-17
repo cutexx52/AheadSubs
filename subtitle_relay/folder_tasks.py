@@ -273,11 +273,14 @@ class FolderWorker:
         name = path.stem + rule.suffix + ".srt"
         output = path.with_name(name)
         if rule.destination:
-            root = Path(rule.destination).resolve(strict=True)
+            root = Path(rule.destination).resolve()
             parent = (root / path.parent.relative_to(rule.folder)).resolve()
-            if not parent.is_relative_to(root):
+            if not root.is_dir() or not parent.is_relative_to(root):
                 raise OperationError("invalid_output")
-            parent.mkdir(parents=True, exist_ok=True)
+            try:
+                parent.mkdir(parents=True, exist_ok=True)
+            except (FileExistsError, NotADirectoryError) as exc:
+                raise OperationError("invalid_output") from exc
             output = parent / name
         options = {"audio": rule.audio}
         options.update({key: getattr(rule, key) for key in ("source", "target", "bilingual")

@@ -179,6 +179,21 @@ class FolderTaskTest(unittest.TestCase):
             self.assertTrue(self.worker.next_job(db, [rule]))
             self.assertTrue(film.with_suffix(".srt").is_file())
 
+    def test_invalid_destination_is_retryable_and_keeps_media_untouched(self):
+        destination = self.create("output", folder=self.root)
+        rule = self.rule.model_copy(update={"include_existing": True, "destination": str(destination)})
+        self.configure(rule)
+        film = self.create("film.mp4")
+        with self.files.connect() as db:
+            self.worker.scan(db, rule, 0)
+            self.worker.scan(db, rule, 10)
+            self.assertTrue(self.worker.next_job(db, [rule]))
+            status = self.files.status()["summary"][rule.id]
+            self.assertEqual(status["items"][0]["issue"], "invalid_output")
+            self.assertEqual(self.states(rule), {"failed": 1})
+            self.assertFalse(film.with_suffix(".srt").exists())
+            self.assertEqual(destination.read_bytes(), b"XXXX")
+
     def test_invalid_rule_input_is_rejected(self):
         for invalid in ({"pattern": "["}, {"folder": "./media"}, {"extensions": "srt"},
                         {"suffix": "/output"}, {"min_bytes": 2, "max_bytes": 1}):
