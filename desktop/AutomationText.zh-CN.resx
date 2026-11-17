@@ -52,7 +52,7 @@
   <data name="FolderStyle" xml:space="preserve"><value>SRT 内容</value></data>
   <data name="FolderDestination" xml:space="preserve"><value>输出目录（留空写入媒体同目录）</value></data>
   <data name="FolderSuffix" xml:space="preserve"><value>文件名后缀（可选），例如 .zh</value></data>
-  <data name="FolderIdle" xml:space="preserve"><value>Windows 输入空闲分钟数（0–120，0 表示仅检查播放）</value></data>
+  <data name="FolderIdle" xml:space="preserve"><value>Windows 输入空闲分钟数（0–120，0 表示仅检查 AheadSubs）</value></data>
   <data name="FolderSave" xml:space="preserve"><value>保存规则</value></data>
   <data name="FolderDelete" xml:space="preserve"><value>删除规则</value></data>
   <data name="FolderDefault" xml:space="preserve"><value>沿用翻译设置</value></data>

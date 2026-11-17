@@ -36,9 +36,8 @@ public partial class MainWindow : Window
     private JsonArray chatGptAccounts = new();
     private string miniMaxModel = "MiniMax-M3.1-Flash";
     private bool mcpEnabled, cliInstalled;
-    private bool busy, refreshing, initialized, exiting, trayExplained, inspecting, loadingMedia;
+    private bool busy, refreshing, initialized, exiting, trayExplained;
     private string previousVad = "silero";
-    private sealed record SubtitleRow(string Time, string Original, string Translation);
 
     public MainWindow(bool preview = false)
     {
@@ -46,6 +45,7 @@ public partial class MainWindow : Window
         InitializeComponent();
         LoadAutomationText();
         InitializeFolderTasks();
+        InitializeInspection();
         SourceLanguage.ItemsSource = new Choice[] { new("自动识别", ""), new("日语", "ja"),
             new("英语", "en"), new("中文", "zh"), new("韩语", "ko") };
         TargetLanguage.ItemsSource = new Choice[] { new("简体中文", "zh"), new("繁體中文", "zh-TW"),
@@ -82,10 +82,7 @@ public partial class MainWindow : Window
             ServiceStatus.Text = "服务已就绪"; ServiceDetail.Text = "在 PotPlayer 播放窗口按 Ctrl+Alt+J 开启，Ctrl+Alt+K 关闭。";
             SessionStatus.Text = "已连接 2 个播放窗口。"; SessionStatus.Visibility = Visibility.Visible;
             ApplyButton.Content = "保存并应用";
-            MediaChoice.ItemsSource = new Choice[] { new("示例视频 · 日语 → 简体中文", "preview") }; MediaChoice.SelectedIndex = 0;
-            SubtitleRows.ItemsSource = new SubtitleRow[] { new("00:12.4", "今日はいい天気ですね。", "今天天气真好。"),
-                new("00:16.8", "少し散歩に行きませんか。", "要不要出去散散步？"), new("00:21.2", "いいですね。駅の近くに新しいお店ができたそうです。", "好啊。听说车站附近开了一家新店。") };
-            InspectStatus.Text = "预览示例 · 3 条字幕。运行时显示已生成的真实结果。";
+            LoadInspectionPreview();
             UpdateAutomation(JsonNode.Parse("""
                 {"mcp_enabled":true,"cli_available":true,"cli_installed":false,
                  "mcp_config":{"mcpServers":{"aheadsubs":{"command":"C:\\AheadSubs\\runtime\\python.exe",
@@ -709,49 +706,11 @@ public partial class MainWindow : Window
         }, "密钥设置已保存。应用翻译设置后生效。");
     }
 
-    private async void RefreshSubtitles(object sender, RoutedEventArgs e) => await Inspect(Selected(MediaChoice));
-    private void SubtitleSizeChanged(object sender, SizeChangedEventArgs e)
-    {
-        if (SubtitleRows.Columns.Count < 3) return;
-        double width = Math.Max(180, (SubtitleRows.ActualWidth - 120) / 2);
-        SubtitleRows.Columns[1].Width = width; SubtitleRows.Columns[2].Width = width;
-    }
-    private async void InspectMediaChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (!loadingMedia && !previewMode && Selected(MediaChoice).Length > 0) await Inspect(Selected(MediaChoice));
-    }
-
-    private async Task Inspect(string? key = null)
-    {
-        if (inspecting || previewMode) return;
-        inspecting = true; InspectRefreshButton.IsEnabled = false; InspectStatus.Text = "正在读取字幕…";
-        try
-        {
-            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
-            var data = await bridge.Run("inspect", string.IsNullOrEmpty(key) ? null : key, cancellationToken: timeout.Token);
-            loadingMedia = true;
-            MediaChoice.ItemsSource = (data["media"] as JsonArray ?? new()).OfType<JsonObject>()
-                .Select(m => new Choice(m["display_name"]?.ToString() ?? "视频", m["key"]?.ToString() ?? "")).ToList();
-            MediaChoice.SelectedValue = data["key"]?.ToString();
-            loadingMedia = false;
-            var rows = (data["rows"] as JsonArray ?? new()).OfType<JsonObject>().Select(r =>
-            {
-                double start = r["start"]?.GetValue<double>() ?? 0;
-                return new SubtitleRow(TimeSpan.FromSeconds(Math.Max(0, start)).ToString(@"hh\:mm\:ss\.f"),
-                    r["original"]?.ToString() ?? "", r["translation"]?.ToString() ??
-                    r["status_message"]?.ToString() ?? "");
-            }).ToList();
-            SubtitleRows.ItemsSource = rows;
-            InspectStatus.Text = rows.Count > 0 ? $"已读取 {rows.Count} 条字幕。刷新可获取最新结果。" : "还没有生成字幕。在播放器中开启翻译后，再刷新查看。";
-        }
-        catch (Exception ex) { InspectStatus.Text = Friendly(ex); }
-        finally { loadingMedia = false; inspecting = false; InspectRefreshButton.IsEnabled = true; }
-    }
-
     internal void RenderPreviews(string directory)
     {
         if (!previewMode) throw new InvalidOperationException("Preview requires fixture mode.");
         VerifyControls();
+        VerifyInspection();
         Directory.CreateDirectory(directory);
         string[] pages = ["translation", "subtitles", "players", "models", "keys", "advanced", "advanced-vad",
                           "advanced-read-ahead", "translation-context", "chatgpt-oauth", "automation", "presets",

@@ -32,11 +32,21 @@ Use **Automatic tasks** to watch multiple folders. Each rule chooses whether to 
 1. Open **Automatic tasks → Add rule** and choose a folder. Enable **Include subfolders** to scan its tree. Leave **Include files already present** off to start with new or modified files, or turn it on to queue the files already there.
 2. Under **File filters**, enter a case-insensitive filename regex if needed, for example `^Episode.*\.mkv$`. A file must also have an allowed extension and fall within both inclusive size limits. Sizes use MiB. Leave the maximum blank for no upper limit. A regex timeout pauses scanning that folder until a later scan can match successfully.
 3. Under **Subtitle configuration**, select the source language, subtitle language, audio track (numbered from 1), and SRT content. A blank output folder writes beside the media. A separate output folder keeps the watched folder's relative subdirectory structure. For example, a suffix of `.en` writes `Episode 01.en.srt`. When two inputs map to the same output, the first SRT is kept.
-4. Select **Save rule** and start the service with the main **Save and start** button if needed. The default idle threshold of 0 waits for all AheadSubs playback sessions to close. Set a positive number to additionally require that many minutes without Windows keyboard or mouse input.
+4. Select **Save rule** and start the service with the main **Save and start** button if needed. The default idle threshold of 0 waits for AheadSubs playback sessions, text translations, and manual regenerations to finish. Set a positive number to additionally require that many minutes without Windows keyboard or mouse input.
 
 The task worker runs while the desktop-managed subtitle service is running, including when the window is hidden in the tray. It checks folders about every 10 seconds between jobs and requires an unchanged size and file timestamp across two scans before generating. It processes one file and one chunk at a time. Once playback starts, the worker stops queuing new chunks and lets the in-flight chunk finish. The task resumes from cached chunks once idle. Pausing a rule or stopping the service retains the queue. Changes to an existing rule's output options requeue files previously accepted by that rule. Existing SRTs are always preserved.
 
 The selected rule shows waiting, running, completed, skipped, and failed counts. Use **Retry failed files** after fixing a media or provider error. The worker stores the queue and rule settings in `folder-tasks.sqlite3` and `folder-tasks.json` in the app's local data folder. Folder scanning skips symbolic links and directory junctions. The worker can use cloud models configured in the app, so only enable rules for media you intend to process with those providers.
+
+## Subtitle inspection
+
+Open **Subtitle inspection** to search by file name or path and filter by primary source language. History groups records by their stored path and opens the newest version by default. You can switch to an older version. Moving a file creates a new entry. Older records with only a file name stay separate until a playback with the same cache settings records their path.
+
+Coverage is the share of the selected version's media duration that has been processed, including silence. It is unknown when duration is unavailable. The primary source language is based on the duration of the recognized cues with a reported language. The filter uses the most recent version with a reported language for each file. The listed subtitle languages reflect the available target subtitles across versions of the file.
+
+**Regenerate** creates a fresh version using the selected version's audio track and languages and the running service's models. The service accepts one regeneration at a time and starts the next chunk only while playback sessions are idle. If generation stops or the service exits, previously saved chunks and versions remain available. Refresh to check the status and retry. Play moved or replaced media to record it again.
+
+**Open SRT** opens the selected version's target subtitles in Notepad. **Save SRT** exports all generated target subtitles for that version, including partial results. Recorded paths, generation state, and subtitles are kept in the local cache.
 
 ## Status
 
@@ -79,6 +89,10 @@ The launcher starts `UI/AheadSubs.exe`. WPF uses `python -m subtitle_relay.deskt
 | `pot-windows` | Lists controllable PotPlayer windows. |
 | `pot-start <window>` / `pot-stop <window>` | Starts/stops that window's look-ahead. |
 | `logs` | Returns log paths. |
+| `inspect-library` | Reads the local cache and returns `files` grouped by path with versions, coverage, and language summaries. |
+| `inspect-rows <key>` | Returns recent originals, subtitle text, and failed rows for the selected version. |
+| `inspect-regenerate <key>` | Queues regeneration on the desktop-managed service and returns the new version's `key`. |
+| `inspect-srt <key>` | Reads `{"output":"…"}` from stdin and returns the `subtitle` path. A `null` output writes a copy for viewing in the cache. |
 | `automation [mcp-enable\|mcp-disable\|cli-install\|cli-remove]` | Reads or updates MCP access, client configuration and CLI user-PATH registration. See [integrations](automation.md). |
 | `folder-tasks [save\|retry]` | Reads rules and queue summaries. `save` replaces the saved rules with `{rules: [...]}` from stdin; `retry` reads `{id: "rule ID"}` and requeues that rule's failed files. |
 

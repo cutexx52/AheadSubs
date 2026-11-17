@@ -64,6 +64,7 @@ Example response:
 | `GET /v1/status` | Returns live status and weekly cloud totals. Send `X-AheadSubs-Status: 1`. Requests with `Origin` return `403`. The response uses `Cache-Control: no-store`. |
 | `POST /v1/close` | JSON `{"session":"window-1"}` releases a session; success returns `{}`. |
 | `POST /v1/shutdown` | JSON `{"token":"…"}` stops the service, requiring the startup control token. |
+| `POST /v1/inspection/regenerate` | Desktop control sends JSON `{"token":"…","key":"…"}` with the startup token and a local cache version key. Success returns `202` and the new version's `key`. A rejected job returns `409` with `error_code`. |
 
 POST requests with `Origin` are rejected. Ordinary bodies are limited to 32 KiB; text translation allows 50 KiB for URL-encoded Unicode. Common statuses: invalid input `400`, unauthorized `403`, temporarily busy `503`.
 

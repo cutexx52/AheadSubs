@@ -52,7 +52,7 @@
   <data name="FolderStyle" xml:space="preserve"><value>SRT content</value></data>
   <data name="FolderDestination" xml:space="preserve"><value>Output folder (blank writes beside the media)</value></data>
   <data name="FolderSuffix" xml:space="preserve"><value>Optional suffix before .srt, for example .en</value></data>
-  <data name="FolderIdle" xml:space="preserve"><value>Windows input idle time in minutes (0–120, 0 checks playback only)</value></data>
+  <data name="FolderIdle" xml:space="preserve"><value>Windows input idle time in minutes (0–120, 0 checks AheadSubs only)</value></data>
   <data name="FolderSave" xml:space="preserve"><value>Save rule</value></data>
   <data name="FolderDelete" xml:space="preserve"><value>Delete rule</value></data>
   <data name="FolderDefault" xml:space="preserve"><value>Use translation settings</value></data>

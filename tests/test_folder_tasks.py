@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -140,6 +141,31 @@ class FolderTaskTest(unittest.TestCase):
             self.assertTrue(media.with_suffix(".new.srt").is_file())
             self.assertEqual(existing.read_text(encoding="utf-8"), "existing subtitle")
 
+    def test_changed_file_during_export_never_publishes_a_stale_subtitle(self):
+        rule = self.rule.model_copy(update={"include_existing": True})
+        self.configure(rule)
+        media = self.create("changing.mp4")
+        output = media.with_suffix(".srt")
+        copyfile = shutil.copyfile
+
+        def modify_media_after_staging(source, destination):
+            copyfile(source, destination)
+            media.write_bytes(b"additional data")
+
+        with self.files.connect() as db:
+            self.worker.scan(db, rule, 0)
+            self.worker.scan(db, rule, 10)
+            with patch("subtitle_relay.automation.shutil.copyfile", side_effect=modify_media_after_staging):
+                self.assertTrue(self.worker.next_job(db, [rule]))
+            self.assertEqual(self.states(rule), {"waiting": 1})
+            self.assertFalse(output.exists())
+            self.assertEqual(list(self.media.iterdir()), [media])
+            self.worker.scan(db, rule, 20)
+            self.assertFalse(self.worker.next_job(db, [rule]))
+            self.worker.scan(db, rule, 30)
+            self.assertTrue(self.worker.next_job(db, [rule]))
+            self.assertTrue(output.exists())
+
     def test_missing_initial_folder_is_reported_and_does_not_establish_baseline(self):
         rule = WatchRule(id=self.rule.id, folder=str(self.media / "unavailable"), include_existing=True)
         self.configure(rule)
@@ -173,6 +199,14 @@ class FolderTaskTest(unittest.TestCase):
             relay.drop("player")
             self.assertNotIn("automatic", relay.sessions)
             self.assertIsNotNone(relay.update_background("automatic", playback))
+            relay.text_activity("http", 1)
+            self.assertNotIn("automatic", relay.sessions)
+            self.assertIsNone(relay.update_background("automatic", playback))
+            relay.text_activity("http", -1)
+            self.assertIsNotNone(relay.update_background("automatic", playback))
+            relay.queue_regeneration(relay.sessions["automatic"].key)
+            self.assertNotIn("automatic", relay.sessions)
+            self.assertIsNone(relay.update_background("automatic", playback))
 
     @unittest.skipUnless(os.name == "nt", "Windows desktop bridge")
     def test_bridge_saves_only_valid_rules_and_round_trips_unicode(self):

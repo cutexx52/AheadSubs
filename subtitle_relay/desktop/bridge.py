@@ -12,7 +12,8 @@ from ..inference.chatgpt_auth import ChatGPTAccounts
 from ..inference.dashscope import DASHSCOPE_ASR_MODELS
 from ..inference.providers import MINIMAX_MODEL, QWEN_MT_MODELS, qwen_mt_credentials
 from ..server.engine import TranslationSettings
-from ..server.history import inspect_cache
+from ..client import RelayClient, RelayHTTPError
+from ..server.history import InspectionError, inspect_cache, inspection_subtitle
 
 
 def status():
@@ -180,8 +181,24 @@ def run_command(command, item=None, folder=None):
         from .folder_tasks import configure
 
         return configure(item, sys.stdin)
-    if command == "inspect":
-        return inspect_cache(runtime.DATA / "cache" / "cache.sqlite3", item)
+    if command in {"inspect", "inspect-library", "inspect-rows", "inspect-srt", "inspect-regenerate"}:
+        cache = runtime.DATA / "cache" / "cache.sqlite3"
+        if command == "inspect-regenerate":
+            try:
+                token = runtime.CONTROL.read_text(encoding="ascii")
+                return RelayClient(runtime.PORT).send("inspection/regenerate", {"key": item, "token": token},
+                                                      timeout=18)
+            except RelayHTTPError as exc:
+                raise InspectionError(exc.error_code or "inspection_service_required") from exc
+            except OSError as exc:
+                raise InspectionError("inspection_service_required") from exc
+        if command == "inspect-srt":
+            try:
+                return inspection_subtitle(cache, item, json.load(sys.stdin).get("output"))
+            except OSError as exc:
+                raise InspectionError("inspection_write_failed") from exc
+        return inspect_cache(cache, item, catalog_only=command == "inspect-library",
+                             rows_only=command == "inspect-rows")
     if command == "install":
         if item not in MODELS:
             raise ValueError("请选择已支持的本地模型。")
@@ -228,7 +245,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("command", choices=("status", "cloud-usage", "preset-check", "automation", "folder-tasks", "install",
                                            "uninstall", "apply", "save-credentials", "stop",
-                                           "integrate", "unintegrate", "logs", "inspect",
+                                           "integrate", "unintegrate", "logs", "inspect", "inspect-library",
+                                           "inspect-rows", "inspect-srt", "inspect-regenerate",
                                            "pot-windows", "pot-start", "pot-stop", "chatgpt-status", "chatgpt-login",
                                            "chatgpt-models", "chatgpt-logout"))
     parser.add_argument("item", nargs="?")
@@ -238,6 +256,8 @@ def main():
     try:
         with redirect_stdout(sys.stderr):
             result.update(run_command(args.command, args.item, args.folder))
+    except InspectionError as exc:
+        result = {"ok": False, "error": str(exc), "error_code": str(exc)}
     except assets.ModelRemovalError as exc:
         result = {"ok": False, "error": str(exc), "error_code": exc.code}
     except (ValueError, RuntimeError) as exc:

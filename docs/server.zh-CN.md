@@ -64,6 +64,7 @@
 | `GET /v1/status` | 返回实时状态和周汇总。请求需带 `X-AheadSubs-Status: 1`，带 `Origin` 的请求返回 `403`。响应使用 `Cache-Control: no-store`。 |
 | `POST /v1/close` | 以 JSON `{"session":"window-1"}` 释放会话，成功返回 `{}`。 |
 | `POST /v1/shutdown` | 以 JSON `{"token":"…"}` 停止服务。由进程管理端使用，须与启动时的控制令牌相符。 |
+| `POST /v1/inspection/regenerate` | 桌面管理端发送 JSON `{"token":"…","key":"…"}`，使用控制令牌和本地缓存的版本键。接受任务后返回 `202` 和新版本的 `key`。无法开始时返回 `409` 和 `error_code`。 |
 
 服务拒绝带 `Origin` 头的 POST，普通请求体最大 32 KiB，文字翻译为 50 KiB，以容纳 URL 编码的 Unicode。常见响应包括无效输入 `400`、未授权 `403` 和临时忙 `503`。
 
