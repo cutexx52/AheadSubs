@@ -9,7 +9,8 @@ class LocalDevicesTest(unittest.TestCase):
     def test_local_devices_override_the_legacy_default_independently(self):
         with patch.object(cli, "FasterWhisper") as whisper, patch.object(cli, "NllbTranslation") as nllb, \
                 patch.object(cli, "configure_cuda") as cuda, patch.object(cli, "Relay") as relay, \
-                patch.object(cli, "serve") as server, patch.object(sys, "argv", ["relay", "serve", "--device", "cpu"]):
+                patch.object(cli, "serve") as server, \
+                patch.object(sys, "argv", ["relay", "serve", "--device", "cpu", "--no-vad"]):
             cli.main()
             self.assertEqual(whisper.call_args.args[1], "cpu")
             self.assertEqual(nllb.call_args.args[1], "cpu")
