@@ -32,7 +32,7 @@
 | 每日资格检查 | 标准 Ubuntu，5 分钟超时；不符合条件不开 Windows |
 | Windows 构建 | 两个标准 runner，各 45 分钟超时；不做无限自动重试 |
 | 成功发布频率 | 至少间隔 72 小时，约每 30 天 10 次，取决于时点 |
-| PR CI | 只跑 PR 和 main push，不重复跑功能分支 push；取消过时运行 |
+| PR CI | 只跑 PR 和 main push；取消过时运行；纯文档 PR 只跑 Ubuntu 文档校验 |
 | 二进制存储 | 直接放 Release 附件；不上传/下载 Actions artifact，不建持久缓存 |
 | 私有化 | 停止构建，待维护者重新评估预算 |
 

@@ -32,7 +32,7 @@ Verified on 2026-11-17: AheadSubs is public. Standard GitHub-hosted runner compu
 | Daily eligibility check | Standard Ubuntu, 5-minute timeout; no Windows job when ineligible |
 | Windows builds | Two standard runners, 45-minute timeout each; no automatic retry loop |
 | Successful release frequency | At most one per 72 hours; approximately 10 per 30 days, depending on timing |
-| PR CI | Run on PRs and `main` pushes, not duplicate feature-branch pushes; superseded runs cancel |
+| PR CI | Run on PRs and `main` pushes; cancel superseded runs; use only Ubuntu documentation checks for pure documentation PRs |
 | Binary storage | Direct Release assets; no Actions artifact upload/download or persistent cache |
 | Private visibility | Fail closed / skip builds until maintainers deliberately revisit the budget |
 
