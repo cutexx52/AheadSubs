@@ -1,4 +1,4 @@
-# Local Video Subtitle Translator
+# AheadSubs
 
 Windows 本地视频语音识别与字幕翻译工具。为 PotPlayer 和 mpv 提前生成带时间轴的字幕，多个播放窗口共享推理服务。模型在本机运行时，无需 API 密钥。
 
@@ -20,7 +20,7 @@ Generate translated SRT subtitles for local videos ahead of playback, using on-d
 2. 第一次运行时选择 **安装本地模型并启动**。没有可用 Vulkan GPU 时，选择 **无可用显卡：安装 CPU 方案**。服务就绪后可按视频选择源语言。
 3. 在 PotPlayer 打开本地视频，按 **Ctrl+Alt+J** 开启预读，按 **Ctrl+Alt+K** 停止当前窗口的预读。mpv 可以从助手安装右键菜单，详见[播放器适配](docs/adapters.md)。
 
-关闭设置窗口会隐藏到系统托盘。右键托盘图标选 **停止并退出** 会停止后台并释放模型资源。旧版配置、播放器扩展和 `python -m subtitle_relay` 继续使用 **Subtitle Relay** 标识。
+关闭设置窗口会隐藏到系统托盘。右键托盘图标选 **停止并退出** 会停止后台并释放模型资源。升级保留已有设置、模型和字幕缓存。
 
 ## 使用与扩展
 

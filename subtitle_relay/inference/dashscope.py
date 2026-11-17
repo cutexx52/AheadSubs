@@ -21,8 +21,8 @@ class NoRedirects(HTTPRedirectHandler):
 class DashScopeAudio:
     """Use the native short-audio API, which supplies actual sentence timestamps."""
 
-    def __init__(self, endpoint, key_file, model):
-        compatible, self.key = qwen_mt_credentials(endpoint, key_file)
+    def __init__(self, endpoint, key_file, model, *, api_key=None):
+        compatible, self.key = qwen_mt_credentials(endpoint, key_file, api_key=api_key)
         self.endpoint = (f"https://{urlsplit(compatible).netloc}"
                          "/api/v1/services/aigc/multimodal-generation/generation")
         self.model = model

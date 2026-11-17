@@ -15,13 +15,15 @@ public partial class MainWindow : Window
     private static readonly Choice[] LocalModels =
     [new("Qwen3-ASR 0.6B · 识别 · Vulkan GPU", "qwen-0.6b"), new("Qwen3-ASR 1.7B · 识别 · Vulkan GPU", "qwen-1.7b"),
      new("Whisper Small · 识别 · CPU / CUDA", "whisper-small"), new("NLLB-200 600M · 翻译 · CPU / CUDA", "nllb")];
+    private static readonly string[] ModelSizes = ["0.63", "1.33", "0.49", "0.65"];
+    private sealed record ModelDownload(string Id, string Label, string Details, string Action, bool CanDownload);
     private static readonly Choice[] DashScopeSpeechModels =
     [new("[云端] Qwen-Audio 3.1 ASR Flash", "qwen-audio-3.1-asr-flash"),
      new("[云端] Qwen-Audio 3.0 ASR Flash", "qwen-audio-3.0-asr-flash")];
     private static readonly Choice[] DashScopeTranslationModels =
     [new("[云端] Qwen-MT Flash", "qwen-mt-flash"), new("[云端] Qwen-MT Lite", "qwen-mt-lite"),
      new("[云端] Qwen-MT Plus", "qwen-mt-plus")];
-    private sealed record EnhancementDraft(bool Enabled, string PreviousCues, string Prompt);
+    private sealed record EnhancementDraft(bool Enabled, string PreviousCues, string ContextChars, string Prompt);
     private readonly Dictionary<string, EnhancementDraft> enhancementDrafts = new();
     private string? enhancementModel;
     private readonly EngineBridge bridge = new();
@@ -44,8 +46,7 @@ public partial class MainWindow : Window
             new("日语", "ja"), new("英语", "en"), new("韩语", "ko"), new("法语", "fr"), new("德语", "de"), new("西班牙语", "es") };
         Device.ItemsSource = new Choice[] { new("CPU · 无需独立显卡", "cpu"), new("GPU · NVIDIA CUDA", "cuda") };
         Vad.ItemsSource = new Choice[] { new("Silero · 默认", "silero"), new("阿里 FSMN · 可选", "fsmn") };
-        InstallChoice.ItemsSource = LocalModels;
-        InstallChoice.SelectedIndex = 0;
+        UpdateModelDownloads();
         CloudProvider.ItemsSource = new Choice[] { new("阿里云百炼 · Qwen", "dashscope"),
             new("OpenAI", "openai"), new("自定义兼容接口", "compatible") };
         CloudProvider.SelectedIndex = 0;
@@ -57,7 +58,7 @@ public partial class MainWindow : Window
         tray = new Forms.NotifyIcon
         {
             Icon = appIcon,
-            Text = "视频字幕翻译 · 正在连接", Visible = !preview,
+            Text = "AheadSubs · 正在连接", Visible = !preview,
             ContextMenuStrip = new Forms.ContextMenuStrip()
         };
         tray.Disposed += (_, _) => appIcon.Dispose();
@@ -65,13 +66,15 @@ public partial class MainWindow : Window
         {
             settings = new JsonObject { ["source"] = "ja", ["target"] = "zh", ["asr"] = "qwen",
                 ["qwen_size"] = "1.7b", ["mt"] = "qwen-mt", ["qwen_mt_model"] = "qwen-mt-flash", ["bilingual"] = "1" };
-            models = new JsonObject { ["qwen-0.6b"] = true, ["qwen-1.7b"] = true, ["whisper-small"] = true, ["nllb"] = true };
+            models = new JsonObject { ["qwen-0.6b"] = false, ["qwen-1.7b"] = true, ["whisper-small"] = false, ["nllb"] = true };
+            integrations = new JsonObject { ["potplayer"] = new JsonObject { ["installed"] = true, ["configured"] = true, ["detected"] = true },
+                ["mpv"] = new JsonObject { ["detected"] = true } };
+            UpdatePlayers();
+            UpdateModelDownloads();
             LoadControls(); initialized = true;
             ServiceStatus.Text = "服务已就绪"; ServiceDetail.Text = "在 PotPlayer 播放窗口按 Ctrl+Alt+J 开启，Ctrl+Alt+K 关闭。";
             SessionStatus.Text = "已连接 2 个播放窗口。"; SessionStatus.Visibility = Visibility.Visible;
-            ApplyButton.Content = "保存并应用"; PlayerDetection.Text = "已配置"; MpvIntegration.Text = "未配置";
-            RemoveMpv.IsEnabled = false;
-            ModelSummary.Text = "已安装：Qwen3-ASR 0.6B、Qwen3-ASR 1.7B、Whisper Small、NLLB-200";
+            ApplyButton.Content = "保存并应用";
             MediaChoice.ItemsSource = new Choice[] { new("示例视频 · 日语 → 简体中文", "preview") }; MediaChoice.SelectedIndex = 0;
             SubtitleRows.ItemsSource = new SubtitleRow[] { new("00:12.4", "今日はいい天気ですね。", "今天天气真好。"),
                 new("00:16.8", "少し散歩に行きませんか。", "要不要出去散散步？"), new("00:21.2", "いいですね。駅の近くに新しいお店ができたそうです。", "好啊。听说车站附近开了一家新店。") };
@@ -168,7 +171,8 @@ public partial class MainWindow : Window
             foreach (var pair in enhancements)
                 if (pair.Value is JsonObject entry)
                     enhancementDrafts[pair.Key] = new(entry["enabled"]?.GetValue<bool>() == true,
-                        entry["previous_cues"]?.ToString() ?? "4", entry["prompt"]?.ToString() ?? "");
+                        entry["previous_cues"]?.ToString() ?? "4", entry["context_chars"]?.ToString() ?? "250",
+                        entry["prompt"]?.ToString() ?? "");
         LlmModel.Text = Setting("llm_model");
         PopulateModels();
         SourceLanguage.SelectedValue = Setting("source"); TargetLanguage.SelectedValue = Setting("target", "zh");
@@ -177,7 +181,7 @@ public partial class MainWindow : Window
         previousVad = Setting("vad_model", "silero"); Vad.SelectedValue = previousVad;
         VadThreshold.Text = Setting("vad_threshold", previousVad == "fsmn" ? "0.8" : "0.5");
         Backfill.Text = Setting("backfill", "4");
-        OpenAiKey.Text = Setting("key_file"); QwenKey.Text = Setting("qwen_mt_key_file"); QwenUrl.Text = Setting("qwen_mt_url");
+        QwenUrl.Text = Setting("qwen_mt_url");
         DashScopeSpeech.SelectedValue = Setting("dashscope_asr_model", DashScopeSpeechModels[0].Value);
         DashScopeTranslation.SelectedValue = Setting("qwen_mt_model", DashScopeTranslationModels[0].Value);
         ChunkSeconds.Text = Setting("chunk", "8"); MaxSpeech.Text = Setting("max_speech", "12");
@@ -218,12 +222,11 @@ public partial class MainWindow : Window
             ServiceDetail.Text = running
                 ? "在 PotPlayer 播放窗口按 Ctrl+Alt+J，开始为该窗口翻译。"
                 : "选择模型后启动服务。已开启的播放窗口会在应用设置后自动接续。";
-            tray.Text = running ? "视频字幕翻译 · 服务就绪" : "视频字幕翻译 · 已停止";
+            tray.Text = running ? "AheadSubs · 服务就绪" : "AheadSubs · 已停止";
             ApplyButton.Content = running ? "保存并应用" : "保存并启动";
             StopButton.IsEnabled = running && !busy;
             integrations = result["integrations"] as JsonObject ?? new();
-            UpdateIntegration("potplayer", PlayerDetection, RemovePotPlayer);
-            UpdateIntegration("mpv", MpvIntegration, RemoveMpv);
+            UpdatePlayers();
             if (result["active_sessions"] is JsonValue sessionCount && sessionCount.TryGetValue<int>(out int count))
             {
                 SessionStatus.Text = count > 0 ? $"已连接 {count} 个播放会话。" : "尚未连接播放窗口。";
@@ -234,6 +237,7 @@ public partial class MainWindow : Window
             {
                 settings = result["settings"] as JsonObject ?? new();
                 LoadControls();
+                LoadKeys(result["credentials"]);
                 initialized = true;
             }
             else if (previousModels != models.ToJsonString())
@@ -245,8 +249,7 @@ public partial class MainWindow : Window
             }
             FirstRunPanel.Visibility = !Installed("nllb") && !Installed("qwen-0.6b") && !Installed("qwen-1.7b")
                 ? Visibility.Visible : Visibility.Collapsed;
-            string installed = string.Join("、", LocalModels.Where(m => Installed(m.Value)).Select(m => m.Label.Split('·')[0].Trim()));
-            ModelSummary.Text = "已安装：" + (installed.Length > 0 ? installed : "暂无本地模型");
+            if (previousModels != models.ToJsonString()) UpdateModelDownloads();
         }
         catch (Exception ex)
         {
@@ -303,16 +306,18 @@ public partial class MainWindow : Window
             SaveEnhancementDraft();
             enhancementModel = key;
             var draft = key is not null && enhancementDrafts.TryGetValue(key, out var saved)
-                ? saved : new EnhancementDraft(false, "4", "");
+                ? saved : new EnhancementDraft(false, "4", "250", "");
             EnhancementEnabled.IsChecked = draft.Enabled;
             PreviousCues.Text = draft.PreviousCues;
+            ContextChars.Text = draft.ContextChars;
             TranslationPrompt.Text = draft.Prompt;
             TranslationEnhancement.IsExpanded = draft.Enabled;
         }
         TranslationEnhancement.Visibility = key is null ? Visibility.Collapsed : Visibility.Visible;
         PreviousCuesPanel.Visibility = contextual ? Visibility.Visible : Visibility.Collapsed;
-        TranslationCapabilityHint.Text = contextual ? "参考前面已识别的原文，输出当前字幕的译文。填 0 可只用提示词。"
-            : "此模型支持英文领域或风格提示词。";
+        TranslationCapabilityHint.Text = contextual
+            ? "参考前文有助于译准指代和术语，也可能增加 token 用量和延迟。片段数填 0 时只用提示词。"
+            : "用英文提示词指定领域或字幕风格。";
         TranslationHint.Text = mt == "nllb" ? "本地运行"
             : mt.Length == 0 ? "请选择已安装的本地模型，或使用自己的云端 API 账户。"
             : "";
@@ -344,8 +349,10 @@ public partial class MainWindow : Window
     private void SaveEnhancementDraft()
     {
         if (enhancementModel is null) return;
-        var draft = new EnhancementDraft(EnhancementEnabled.IsChecked == true, PreviousCues.Text.Trim(), TranslationPrompt.Text.Trim());
-        if (draft.Enabled || draft.PreviousCues != "4" || draft.Prompt.Length > 0 || enhancementDrafts.ContainsKey(enhancementModel))
+        var draft = new EnhancementDraft(EnhancementEnabled.IsChecked == true, PreviousCues.Text.Trim(),
+            ContextChars.Text.Trim(), TranslationPrompt.Text.Trim());
+        if (draft.Enabled || draft.PreviousCues != "4" || draft.ContextChars != "250" || draft.Prompt.Length > 0
+            || enhancementDrafts.ContainsKey(enhancementModel))
             enhancementDrafts[enhancementModel] = draft;
     }
 
@@ -357,10 +364,16 @@ public partial class MainWindow : Window
         foreach (var (model, draft) in enhancementDrafts)
         {
             int count = 0;
-            if (!model.StartsWith("qwen-mt:", StringComparison.Ordinal)
-                && (!int.TryParse(draft.PreviousCues, NumberStyles.None, CultureInfo.InvariantCulture, out count) || count is < 0 or > 8))
-                throw new InvalidOperationException("前文字幕数量请填写 0 到 8 的整数。");
-            result[model] = new JsonObject { ["enabled"] = draft.Enabled, ["previous_cues"] = count, ["prompt"] = draft.Prompt };
+            int chars = 250;
+            if (!model.StartsWith("qwen-mt:", StringComparison.Ordinal))
+            {
+                if (!int.TryParse(draft.PreviousCues, NumberStyles.None, CultureInfo.InvariantCulture, out count) || count is < 0 or > 8)
+                    throw new InvalidOperationException("前文片段数请填写 0 到 8 的整数。");
+                if (!int.TryParse(draft.ContextChars, NumberStyles.None, CultureInfo.InvariantCulture, out chars) || chars is < 20 or > 1000)
+                    throw new InvalidOperationException("前文每段最多字符请填写 20 到 1000 的整数。");
+            }
+            result[model] = new JsonObject { ["enabled"] = draft.Enabled, ["previous_cues"] = count,
+                ["context_chars"] = chars, ["prompt"] = draft.Prompt };
         }
         return result;
     }
@@ -382,16 +395,17 @@ public partial class MainWindow : Window
         DeviceSelection.Visibility = speech == "whisper-small" || mt == "nllb" ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private void ModelDownloadChanged(object sender, SelectionChangedEventArgs e)
+    private void UpdateModelDownloads()
     {
-        if (ModelRequirement is null) return;
-        ModelRequirement.Text = Selected(InstallChoice) switch
+        ModelDownloads.ItemsSource = LocalModels.Select((model, index) =>
         {
-            "qwen-0.6b" or "qwen-1.7b" => "当前 Windows 版本需要支持 Vulkan 的 GPU 和驱动。AMD、Intel 或 NVIDIA 均可使用兼容设备，无需 CUDA。",
-            "whisper-small" => "识别可用 CPU。若选择 GPU 加速，需要 NVIDIA CUDA 显卡、驱动和运行库。",
-            "nllb" => "翻译可用 CPU。若选择 GPU 加速，需要 NVIDIA CUDA 显卡、驱动和运行库。",
-            _ => ""
-        };
+            string[] parts = model.Label.Split(" · ", 2);
+            bool downloaded = Installed(model.Value);
+            return new ModelDownload(model.Value, parts[0], $"{parts[1]} · 约 {ModelSizes[index]} GB",
+                downloaded ? "已下载" : "下载", !downloaded);
+        }).ToArray();
+        SetupLocalButton.Content = Installed("qwen-0.6b") && Installed("nllb") ? "启用本地方案" : "安装并启用本地方案";
+        SetupCpuButton.Content = Installed("whisper-small") && Installed("nllb") ? "启用 CPU 方案" : "安装并启用 CPU 方案";
     }
 
     private JsonObject CollectSettings()
@@ -412,7 +426,7 @@ public partial class MainWindow : Window
             ["asr"] = IsDashScopeSpeech(speech) ? "dashscope"
                 : speech.StartsWith("qwen-") ? "qwen" : speech == "whisper-small" ? "local" : speech,
             ["mt"] = translation == "nllb" ? "local" : translation.StartsWith("qwen-mt-") ? "qwen-mt" : translation == "compatible" ? "compatible" : "openai",
-            ["key_file"] = OpenAiKey.Text.Trim(), ["qwen_mt_key_file"] = QwenKey.Text.Trim(),
+            ["credentials"] = CollectKeyEdits(),
             ["qwen_mt_url"] = QwenUrl.Text.Trim(), ["diagnostics"] = Diagnostics.IsChecked == true ? "1" : "0",
             ["chunk"] = ChunkSeconds.Text.Trim(), ["max_speech"] = MaxSpeech.Text.Trim(), ["vad_model"] = Selected(Vad),
             ["before"] = BeforeSeconds.Text.Trim(), ["after"] = AfterSeconds.Text.Trim(),
@@ -480,16 +494,28 @@ public partial class MainWindow : Window
         }, "CPU 本地方案已就绪。速度取决于处理器，可在高级设置中更换设备。", reloadSettings: true);
 
     private async void InstallModel(object sender, RoutedEventArgs e) => await Act("正在下载并安装模型，请保持网络连接…",
-        async () => { string id = Selected(InstallChoice); if (id.Length == 0) throw new InvalidOperationException("先选择要安装的模型。"); await bridge.Run("install", id); },
-        "模型已安装，可在上方选择后应用。");
+        async () => { await bridge.Run("install", (string)((FrameworkElement)sender).Tag); },
+        "模型已下载，可在翻译页选用。");
 
-    private void UpdateIntegration(string player, TextBlock status, System.Windows.Controls.Button remove)
+    private void UpdatePlayers()
+    {
+        UpdateIntegration("potplayer", PlayerDetection, PotPlayerFolder, ConfigurePotPlayer, RemovePotPlayer, PickPotPlayer);
+        UpdateIntegration("mpv", MpvIntegration, MpvFolder, ConfigureMpv, RemoveMpv, PickMpv);
+    }
+
+    private void UpdateIntegration(string player, TextBlock status, TextBlock folder,
+        FrameworkElement configure, FrameworkElement remove, FrameworkElement pick)
     {
         var value = integrations[player];
         bool installed = value?["installed"]?.GetValue<bool>() == true;
-        remove.IsEnabled = installed;
+        bool detected = value?["detected"]?.GetValue<bool>() == true;
+        configure.Visibility = installed ? Visibility.Collapsed : Visibility.Visible;
+        remove.Visibility = installed ? Visibility.Visible : Visibility.Collapsed;
+        pick.Visibility = !installed && detected ? Visibility.Visible : Visibility.Collapsed;
+        folder.Text = detected || installed ? value?["folder"]?.ToString() ?? "" : "";
+        folder.Visibility = folder.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         status.Text = value?["configured"]?.GetValue<bool>() == true ? "已配置"
-            : installed ? "部分配置" : value?["detected"]?.GetValue<bool>() == true ? "未配置" : "未找到位置";
+            : installed ? "部分配置" : detected ? "未配置" : "未找到位置";
     }
 
     private async void ConfigurePlayer(object sender, RoutedEventArgs e) =>
@@ -518,13 +544,40 @@ public partial class MainWindow : Window
         async () => { await bridge.Run("unintegrate", ((FrameworkElement)sender).Tag.ToString()); },
         "已卸载。重开播放器后生效。");
 
-    private static void Browse(System.Windows.Controls.TextBox field)
+    private IEnumerable<(string Provider, ApiKeyEditor Editor)> KeyEditors()
     {
-        var dialog = new Microsoft.Win32.OpenFileDialog { Title = "选择 API 密钥文件", CheckFileExists = true, Filter = "所有文件|*.*" };
-        if (dialog.ShowDialog() == true) field.Text = dialog.FileName;
+        yield return ("openai", OpenAiKey);
+        yield return ("dashscope", QwenKey);
+        yield return ("compatible-asr", CustomAsrKey);
+        yield return ("compatible-mt", CustomMtKey);
     }
-    private void BrowseOpenAi(object sender, RoutedEventArgs e) => Browse(OpenAiKey);
-    private void BrowseQwen(object sender, RoutedEventArgs e) => Browse(QwenKey);
+
+    private void LoadKeys(JsonNode? state, string? group = null)
+    {
+        foreach (var (provider, editor) in KeyEditors())
+            if (group is null || provider.StartsWith(group, StringComparison.Ordinal)) editor.Load(state?[provider]);
+    }
+
+    private JsonObject CollectKeyEdits(string? group = null)
+    {
+        var edits = new JsonObject();
+        foreach (var (provider, editor) in KeyEditors())
+            if ((group is null || provider.StartsWith(group, StringComparison.Ordinal)) && editor.Edit() is JsonObject edit)
+                edits[provider] = edit;
+        return edits;
+    }
+
+    private async void SaveKeys(object sender, RoutedEventArgs e)
+    {
+        string group = Selected(CloudProvider);
+        var edits = CollectKeyEdits(group);
+        if (edits.Count == 0) return;
+        await Act("正在保存密钥…", async () =>
+        {
+            var result = await bridge.Run("save-credentials", input: edits);
+            LoadKeys(result["credentials"], group);
+        }, "密钥设置已保存。应用翻译设置后生效。");
+    }
 
     private async void RefreshSubtitles(object sender, RoutedEventArgs e) => await Inspect(Selected(MediaChoice));
     private void SubtitleSizeChanged(object sender, SizeChangedEventArgs e)
@@ -602,6 +655,15 @@ public partial class MainWindow : Window
     {
         static void Require(bool condition, string message)
         { if (!condition) throw new InvalidOperationException("Desktop preview check failed: " + message); }
+        Require(ConfigurePotPlayer.Visibility == Visibility.Collapsed && RemovePotPlayer.Visibility == Visibility.Visible
+                && ConfigureMpv.Visibility == Visibility.Visible && RemoveMpv.Visibility == Visibility.Collapsed,
+                "each player has one setup action");
+        var catalog = ((IEnumerable<ModelDownload>)ModelDownloads.ItemsSource).ToDictionary(model => model.Id);
+        Require(catalog["qwen-1.7b"] is { Action: "已下载", CanDownload: false }
+                && catalog["whisper-small"].Details.Contains("0.49 GB") && catalog["whisper-small"].CanDownload,
+                "model size and download state");
+        LoadKeys(new JsonObject { ["openai"] = new JsonObject { ["mode"] = "direct", ["saved"] = true } });
+        Require(CollectKeyEdits().Count == 0, "loading a stored key leaves it untouched");
         var values = CollectSettings();
         Require(values["target"]?.ToString() == "zh" && values["bilingual"]?.ToString() == "1", "language and bilingual settings");
         Require(values["min_speech"]?.ToString() == "3" && values["pad_ms"]?.ToString() == "80", "segmentation defaults");
@@ -611,15 +673,18 @@ public partial class MainWindow : Window
         TargetLanguage.SelectedValue = "zh"; Bilingual.IsChecked = true;
         TranslationModel.SelectedValue = "gpt-4.1-mini";
         Require(TranslationEnhancement.Visibility == Visibility.Visible && PreviousCuesPanel.Visibility == Visibility.Visible, "LLM context controls");
-        EnhancementEnabled.IsChecked = true; PreviousCues.Text = "3"; TranslationPrompt.Text = "Use natural dialogue.";
+        EnhancementEnabled.IsChecked = true; PreviousCues.Text = "3"; ContextChars.Text = "120";
+        TranslationPrompt.Text = "Use natural dialogue.";
         TranslationModel.SelectedValue = "qwen-mt-lite";
         Require(TranslationEnhancement.Visibility == Visibility.Collapsed, "unsupported model controls");
         TranslationModel.SelectedValue = "qwen-mt-flash";
         Require(TranslationEnhancement.Visibility == Visibility.Visible && PreviousCuesPanel.Visibility == Visibility.Collapsed, "Qwen-MT style capability");
         EnhancementEnabled.IsChecked = true; TranslationPrompt.Text = "Use conversational subtitles.";
         TranslationModel.SelectedValue = "gpt-4.1-mini";
-        Require(EnhancementEnabled.IsChecked == true && PreviousCues.Text == "3"
+        Require(EnhancementEnabled.IsChecked == true && PreviousCues.Text == "3" && ContextChars.Text == "120"
                 && TranslationPrompt.Text == "Use natural dialogue.", "per-model enhancement draft");
+        Require(CollectSettings()["translation_enhancements"]?["openai:gpt-4.1-mini"]?["context_chars"]?.GetValue<int>() == 120,
+                "context length reaches bridge");
         Require(CollectSettings()["translation_enhancements"]?["qwen-mt:qwen-mt-flash"]?["previous_cues"]?.GetValue<int>() == 0,
                 "NMT provider receives prompt only");
         SpeechModel.SelectedValue = "qwen-audio-3.1-asr-flash";

@@ -9,6 +9,10 @@ LOCAL_MODELS = {
     "[本地] Whisper Small": "Systran/faster-whisper-small",
     "[本地] NLLB-200 600M INT8": "Adom4600/nllb-200-distilled-600M-ct2-int8",
 }
+MODEL_ASSETS = {
+    "[本地] Whisper Small": ("config.json", "model.bin", "tokenizer.json", "vocabulary.txt"),
+    "[本地] NLLB-200 600M INT8": ("config.json", "model.bin", "tokenizer.json", "shared_vocabulary.json"),
+}
 QWEN_LABELS = {"[本地] Qwen3-ASR 0.6B": "0.6b", "[本地] Qwen3-ASR 1.7B": "1.7b"}
 
 
@@ -21,7 +25,8 @@ def model_ready(label):
         hf_home = Path(os.environ.get("HF_HOME", Path.home() / ".cache" / "huggingface"))
         hub = Path(os.environ.get("HF_HUB_CACHE", hf_home / "hub"))
         snapshots = hub / ("models--" + LOCAL_MODELS[label].replace("/", "--")) / "snapshots"
-        return any(path.is_file() for path in snapshots.glob("*/model.bin"))
+        return any(all((snapshot / name).is_file() for name in MODEL_ASSETS[label])
+                   for snapshot in snapshots.glob("*"))
     return True
 
 

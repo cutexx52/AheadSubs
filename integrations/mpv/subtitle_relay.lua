@@ -5,7 +5,7 @@ local msg = require "mp.msg"
 
 local config = { launcher = "", pythonw = "", port = 8769 }
 options.read_options(config, "subtitle_relay")
-local title = "Subtitle Relay"
+local title = "AheadSubs"
 local session = "mpv-" .. tostring(utils.getpid()) .. "-" .. tostring(os.time())
 local enabled, pending = false, false
 local source, target, ahead = nil, nil, 20
@@ -38,7 +38,7 @@ end
 
 local function launcher(background)
     if config.launcher == "" or config.pythonw == "" then
-        mp.osd_message("Open Subtitle Relay settings to install its launcher.", 4)
+        mp.osd_message("Open AheadSubs settings to install its launcher.", 4)
         return
     end
     local args = {config.pythonw, config.launcher}
@@ -77,7 +77,7 @@ local function poll()
         pending = false
         if not enabled or generation ~= request_generation then return end
         if not success or result.status ~= 0 then
-            last_status = "Waiting for Subtitle Relay service"
+            last_status = "Waiting for AheadSubs service"
             if result then
                 msg.verbose("Relay request failed: " .. tostring(result.error_string) .. " " ..
                             tostring(result.stderr) .. " " .. tostring(result.stdout))
@@ -125,12 +125,12 @@ mp.register_script_message("relay-toggle", function()
     enabled = not enabled
     reset()
     if enabled then
-        mp.osd_message("Subtitle Relay enabled")
+        mp.osd_message("AheadSubs enabled")
         poll()
     else
         mp.set_property_native("user-data/subtitle-relay", {enabled = false})
         request("close", {session = session}, function() end)
-        mp.osd_message("Subtitle Relay disabled")
+        mp.osd_message("AheadSubs disabled")
     end
 end)
 mp.register_script_message("relay-source", function(value)
@@ -145,7 +145,7 @@ mp.register_script_message("relay-target", function(value)
     reset(); poll()
 end)
 mp.register_script_message("relay-ahead", function(value) ahead = tonumber(value) or ahead; poll() end)
-mp.register_script_message("relay-status", function() mp.osd_message(enabled and last_status or "Subtitle Relay disabled", 4) end)
+mp.register_script_message("relay-status", function() mp.osd_message(enabled and last_status or "AheadSubs disabled", 4) end)
 mp.register_script_message("relay-settings", function() launcher(false) end)
 mp.register_event("start-file", reset)
 mp.register_event("seek", poll)

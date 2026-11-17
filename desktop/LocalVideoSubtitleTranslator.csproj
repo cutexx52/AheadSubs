@@ -6,7 +6,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyName>LocalVideoSubtitleTranslator</AssemblyName>
+    <AssemblyName>AheadSubs</AssemblyName>
     <RootNamespace>LocalVideoSubtitleTranslator</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>..\assets\aheadsubs.ico</ApplicationIcon>

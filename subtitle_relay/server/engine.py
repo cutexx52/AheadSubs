@@ -59,18 +59,23 @@ class Playback:
 class TranslationSettings:
     previous_cues: int = 0
     prompt: str = ""
+    context_chars: int = 250
 
     def __post_init__(self):
         if type(self.previous_cues) is not int or not 0 <= self.previous_cues <= MAX_CONTEXT_CUES:
             raise ValueError(f"Translation context must be between 0 and {MAX_CONTEXT_CUES} previous cues")
+        if type(self.context_chars) is not int or not 20 <= self.context_chars <= 1000:
+            raise ValueError("前文每段最多字符请填写 20 到 1000 的整数。")
         if len(self.prompt) > 1000:
             raise ValueError("Translation style guidance must be at most 1000 characters")
         object.__setattr__(self, "prompt", self.prompt.strip())
 
     def for_translator(self, translator):
+        count = self.previous_cues if getattr(translator, "supports_neighbor_context", False) is True else 0
         return TranslationSettings(
-            self.previous_cues if getattr(translator, "supports_neighbor_context", False) is True else 0,
+            count,
             self.prompt if getattr(translator, "supports_style_prompt", False) is True else "",
+            self.context_chars if count else TranslationSettings.context_chars,
         )
 
 
@@ -118,17 +123,19 @@ def _translate_cues(cues, translator, language, target, *, previous=(), prompt="
             for cue, text in zip(cues, texts, strict=True)]
 
 
-def _context_lines(cues, limit, before):
+def _context_lines(cues, limit, before, max_chars):
     # Bound the request by both cue count and text size, keeping the closest lines.
     selected = []
     remaining = 1000
     for cue in reversed(cues):
         if cue.end > before:
             continue
-        if len(selected) == limit or len(cue.text) > remaining:
+        if len(selected) == limit or not remaining:
             break
-        selected.append(cue.text)
-        remaining -= len(cue.text)
+        text = cue.text[-min(max_chars, remaining):].lstrip()
+        if text:
+            selected.append(text)
+            remaining -= len(text)
     return selected[::-1]
 
 
@@ -189,7 +196,7 @@ def translate_chunk(playback, index, chunk, recognizer, translator, speech_trans
     if use_neighbors and owned:
         for language, group in groupby(owned, key=lambda item: item[0]):
             current = [cue for _, cue in group]
-            before = _context_lines(previous, translation.previous_cues, current[0].start)
+            before = _context_lines(previous, translation.previous_cues, current[0].start, translation.context_chars)
             translated.extend(_translate_cues(current, translator, language, playback.target,
                                               previous=before,
                                               prompt=translation.prompt))
@@ -316,7 +323,7 @@ class Relay:
         identity = [self.profile, self.chunk, os.path.normcase(str(playback.path)),
                     info.st_size, info.st_mtime_ns, playback.audio, playback.source, playback.target]
         if self.translation_settings != TranslationSettings():
-            identity.append(["translation-context-v2", asdict(self.translation_settings)])
+            identity.append(["translation-context-v3", asdict(self.translation_settings)])
         return hashlib.sha256(json.dumps(identity).encode()).hexdigest()
 
     def _render(self, key, playback):
