@@ -71,3 +71,7 @@ Checked 2026-11-17. These are project choices informed by the sources, not ident
 - [OpenAI GitHub review](https://learn.chatgpt.com/docs/third-party/github): setup, triggers and review rules.
 - [Claude best practices](https://code.claude.com/docs/en/best-practices) and [shared instructions](https://code.claude.com/docs/en/memory): concise context and executable verification.
 - GitHub [Draft PRs](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request), [branch protection](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches), [auto-merge](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-auto-merge-for-pull-requests-in-your-repository), [Copilot instructions](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions).
+
+## Wiki and license maintenance
+
+Wiki home pages are generated from README marker sections and published automatically after main updates; see [Wiki publication](wiki.md). Update both README navigation tables instead of editing generated Wiki pages. Dependency or model changes must refresh the [license inventory and redistribution assessment](licenses.md); preserve upstream notices and distinguish source, binary and model terms.

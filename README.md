@@ -1,3 +1,4 @@
+<!-- wiki:intro:start -->
 # AheadSubs
 
 [English](README.md) | [简体中文](README.zh-CN.md)
@@ -9,6 +10,8 @@ AheadSubs reads upcoming audio, transcribes speech, translates dialogue, and sen
 ![AheadSubs workflow: player position drives bounded audio look-ahead, local or cloud transcription and translation, and timed subtitles returned to the player.](docs/images/aheadsubs-overview.png)
 
 *The player supplies the playhead. AheadSubs processes a bounded window ahead of it and loads subtitles on the original media timeline. The illustration shows the workflow, not a screenshot or a zero-latency guarantee.*
+
+<!-- wiki:intro:end -->
 
 ## What you get
 
@@ -79,7 +82,10 @@ The packaged application currently targets Windows x64 and readable local files 
 
 Start with one video on your own hardware. An RTX 4090 test with Qwen3-ASR 1.7B Q4_K and NLLB 600M INT8 sustained four simulated playback sessions for 45 seconds with no sampled buffer exhaustion and a minimum 18.17 seconds ready ahead. It used independent copies of one public Japanese sample, not a long-running mixed-content workload. [Measurements, CPU results and reproduction](docs/performance.md).
 
+<!-- wiki:navigation:start -->
 ## Documentation
+
+[Quick start: local and cloud](README.md#quick-start)
 
 Every repository Markdown page offers an English / Simplified Chinese switch. English is the default entry point.
 
@@ -94,5 +100,15 @@ Every repository Markdown page offers an English / Simplified Chinese switch. En
 | [HTTP protocol](docs/server.md) / [Architecture](docs/architecture.md) | APIs, sessions, timeline and module boundaries |
 | [Contributing](docs/contributing.md) | Development, tests and Agent PR-to-merge workflow |
 | [Releases and budget](docs/releases.md) | Automatic previews, build verification and cost controls |
+| [Performance](docs/performance.md) | Measurements and device limits |
+| [Windows packaging](packaging/README.md) | Building installers and portable packages |
+| [Wiki publication](docs/wiki.md) | Automatic bilingual navigation and image references |
+| [Licenses](docs/licenses.md) | MIT source license, model restrictions and redistribution audit |
+
+<!-- wiki:navigation:end -->
 
 The [Wiki](https://github.com/cutexx52/AheadSubs/wiki) is a navigation entry; maintained documentation lives in this repository. The overview illustration was created with the built-in image generator; its [prompt and accessible description](docs/images/README.md) are included.
+
+## License
+
+Original project code is [MIT licensed](LICENSE). Third-party components retain their own terms. In particular, NLLB weights are noncommercial and CUDA runtimes are proprietary; see the [dependency and model audit](docs/licenses.md) before commercial use or binary redistribution.

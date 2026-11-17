@@ -1,0 +1,63 @@
+name: Wiki
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**/*.md'
+      - 'docs/**'
+      - 'tools/wiki.py'
+      - 'tools/check_docs.py'
+      - '.github/workflows/wiki.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wiki-publication
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: main
+          path: source
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.11'
+      - name: Validate documentation and generate both pages
+        working-directory: source
+        env:
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          python tools/check_docs.py
+          python tools/wiki.py --repository "$REPOSITORY" --output ../generated
+      - name: Check out Wiki
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: ${{ github.repository }}.wiki
+          path: wiki
+      - name: Publish changed navigation only
+        working-directory: wiki
+        run: |
+          cp ../generated/Home.md ../generated/Home.zh-CN.md .
+          git add -- Home.md Home.zh-CN.md
+          if git diff --cached --quiet; then
+            echo "Wiki already matches the repository." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          source_sha=$(git -C ../source rev-parse HEAD)
+          git commit -m "docs: sync bilingual navigation from $source_sha"
+          git push
+          echo "Published Wiki navigation from $source_sha." >> "$GITHUB_STEP_SUMMARY"
