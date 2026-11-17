@@ -1,49 +1,49 @@
-# Agent 与命令行接入
+# Agent and command-line integrations
 
-[English](en/automation.md)
+[English](automation.md) | [简体中文](automation.zh-CN.md)
 
-AheadSubs 的 CLI 和 MCP 共用同一套操作、参数和错误码。两者调用本机字幕服务，沿用当前识别、翻译、音轨和字幕缓存。先在桌面的 **翻译** 页保存配置并启动服务，或者用 [HTTP 服务入口](server.md) 独立启动。默认端口是 `8769`。独立服务用了其他端口时，在 CLI 命令或 MCP 启动参数末尾加 `--port <端口>`。
+AheadSubs exposes the same operations, argument validation, and error codes over CLI and MCP. Both use the subtitle service's active model profile and cache. Start that service from the desktop Translation page or [run it independently](server.md). The default port is `8769`. For a different local port, append `--port <port>` to the CLI command or MCP launch arguments.
 
-## Windows 桌面接入
+## Windows desktop setup
 
-- 打开 **接入 → 开启 MCP 接入 → 复制 MCP 配置**，把配置加入客户端的本地 MCP 设置，再连接。支持 `mcpServers` 格式的客户端可以直接使用该 JSON，其他客户端可以填写其中的 `command`、`args` 和 `env`。客户端通过 stdio 启动 MCP 进程。
-- 点击 **安装 CLI** 将 `cli` 目录加入当前用户的 PATH。重新打开终端，运行 `aheadsubs status` 或 `aheadsubs --help`。也可以直接运行发布包内的 `cli/aheadsubs.exe`。便携包移动后可重新安装 CLI，并重新复制 MCP 配置。
-- **关闭 MCP 接入** 会阻止通过桌面配置发起的新调用。**从 PATH 移除** 会撤销当前安装目录的 PATH 注册。
+- Open **Integrations → Enable MCP access → Copy MCP configuration**. Add the JSON to your local MCP client's settings, or enter the `command`, `args`, and `env` fields separately. The client launches MCP over stdio when it connects.
+- Select **Install CLI** to add the bundle's `cli` directory to your Windows user PATH. Reopen your terminal and run `aheadsubs status` or `aheadsubs --help`. You can also run `cli/aheadsubs.exe` directly. If you move a portable bundle, register the new directory and copy the updated MCP configuration.
+- **Disable MCP access** blocks new calls through the desktop MCP configuration. **Remove from PATH** removes the registration for the current installation.
 
-MCP 客户端可以提交本机可读的媒体或文本，并把 SRT 写入指定路径。启用云端模型时，任务使用已配置的云端服务。只把配置交给你信任、能访问同一台机器的客户端。
+The MCP client can submit local media or text and write SRT files to a destination it specifies. With cloud models, requests use the configured provider. Share the configuration with clients you trust on the same machine.
 
-接入页、CLI 的 AheadSubs 文案和 MCP 工具说明随系统界面语言显示，也可通过进程环境变量 `AHEADSUBS_UI_LOCALE` 选择 `zh-CN` 或 `en`。其他语言回退到英文。识别和字幕语言独立配置，参数名与错误码保持一致。自动化接口保留来自字幕服务的原始错误说明。
+The Integrations page, AheadSubs CLI messages, and MCP tool descriptions use the system UI locale. Set the process environment variable `AHEADSUBS_UI_LOCALE` to `en` or `zh-CN` to override it. Unsupported locales fall back to English. Speech and subtitle languages are configured separately. Automation preserves error details returned by the subtitle service.
 
-## CLI 示例
+## CLI examples
 
 ```powershell
 aheadsubs status
-aheadsubs translate-text "おはようございます" ja zh
-Get-Content -Raw ./line.txt | aheadsubs translate-text - ja zh
-aheadsubs generate-subtitles "D:/Videos/clip.mp4" "D:/Videos/clip.zh.srt" --source ja --target zh --bilingual
+aheadsubs translate-text "Good morning" en zh
+Get-Content -Raw ./line.txt | aheadsubs translate-text - en zh
+aheadsubs generate-subtitles "D:/Videos/clip.mp4" "D:/Videos/clip.zh.srt" --source en --target zh --bilingual
 aheadsubs update-playback my-player "D:/Videos/clip.mp4" 12.5 --ahead 30
 aheadsubs close-playback my-player
 ```
 
-每次操作向 stdout 输出一个 JSON 对象。成功时含 `ok: true`，操作失败时含 `ok: false`、`error` 和 `error_code`，进程退出码为 `1`。命令行语法错误由参数解析器写入 stderr，退出码为 `2`。
+Each operation writes a single JSON object to stdout. Success includes `ok: true`. An operation failure returns `ok: false`, `error`, and `error_code` with exit code `1`. CLI syntax errors go to stderr with exit code `2`.
 
-## MCP 工具
+## MCP tools
 
-| MCP 工具 | 对应 CLI 命令 | 行为 |
+| MCP tool | CLI command | Behavior |
 | --- | --- | --- |
-| `aheadsubs_status` | `status` | 返回字幕服务是否在运行及活跃会话数。 |
-| `aheadsubs_translate_text` | `translate-text` | 翻译最多 4000 字符的文本，需要指定来源和目标语言。 |
-| `aheadsubs_generate_subtitles` | `generate-subtitles` | 处理整个媒体文件，并将完整 SRT 写到指定位置。 |
-| `aheadsubs_update_playback` | `update-playback` | 提交位置并返回预读进度、字幕路径和版本。用同一 `session` 重复提交，10 秒无更新则自动释放。 |
-| `aheadsubs_close_playback` | `close-playback` | 释放指定播放会话，保留磁盘缓存。 |
+| `aheadsubs_status` | `status` | Report whether the service is running and how many sessions are active. |
+| `aheadsubs_translate_text` | `translate-text` | Translate up to 4000 characters between two language codes. |
+| `aheadsubs_generate_subtitles` | `generate-subtitles` | Process a whole local media file and write the completed SRT. |
+| `aheadsubs_update_playback` | `update-playback` | Submit a position and return progress, subtitle path, and revision. Reuse the session ID when polling. A session expires after 10 seconds without updates. |
+| `aheadsubs_close_playback` | `close-playback` | Release a playback session and retain its cached subtitles. |
 
-MCP 客户端通过工具列表获得参数 schema。调用结果包含与 CLI 一致的结构化 JSON。生成 SRT 的参数示例。
+The MCP tool list provides the argument schemas. Tool calls return the same structured JSON as their CLI counterparts. Example arguments for SRT generation follow.
 
 ```json
 {
   "path": "D:/Videos/clip.mp4",
   "output": "D:/Videos/clip.zh.srt",
-  "source": "ja",
+  "source": "en",
   "target": "zh",
   "audio": 0,
   "bilingual": true,
@@ -51,12 +51,12 @@ MCP 客户端通过工具列表获得参数 schema。调用结果包含与 CLI �
 }
 ```
 
-`audio` 是从零开始的音轨序号。省略 `source`、`target` 和 `bilingual` 会沿用服务默认值。用 `source: "auto"` 或 `--source auto` 显式启用源语言自动识别。媒体与输出路径以调用进程的工作目录为基准，MCP 配置中建议传绝对路径。
+`audio` is the zero-based stream ordinal. Omit `source`, `target`, or `bilingual` to use the service defaults. Pass `source: "auto"` or `--source auto` to request detection. Relative paths use the process's working directory. For MCP calls, prefer absolute paths.
 
-生成操作会用 FFprobe 确认时长和音轨，逐段推进有界预读，只在处理完整个文件后发布 SRT。输出目录需已存在。用 `overwrite: true` 或 `--overwrite` 替换现有输出。没有对白时会生成空 SRT，返回 `has_cues: false`。超时或失败后可以用相同参数复用已完成的分块。默认超时 1800 秒，可通过 `timeout` 或 `--timeout` 调整。长视频还要为 MCP 客户端的单次调用设置足够的等待时间。
+Generation uses FFprobe to check media duration and available audio, advances through bounded look-ahead windows, and publishes the output after processing completes. The destination directory must already exist. Set `overwrite: true` or use `--overwrite` to replace an existing file. With no dialogue, the operation writes an empty SRT and returns `has_cues: false`. Completed chunks can be reused when retrying a failed or timed-out run. The default timeout is 1800 seconds, configurable with `timeout` or `--timeout`. Set the MCP client's per-call timeout to leave enough time for long media.
 
-## 源码安装和扩展
+## Source installation and extension
 
-在项目目录运行 `python -m pip install .` 安装 `aheadsubs`。也可运行 `python -m subtitle_relay.cli --help`。独立启动 MCP 的客户端配置使用 `aheadsubs` 作为 `command`，`["mcp"]` 作为 `args`。如果客户端找不到 CLI，请填写已安装命令的绝对路径。部署使用桌面控制开关时，可给 MCP 加 `--desktop`。
+Run `python -m pip install .` from the source checkout to install `aheadsubs`. You can also run `python -m subtitle_relay.cli --help`. For a standalone MCP connection, set the client command to `aheadsubs` with `["mcp"]` as its arguments. Use the installed command's absolute path if your client cannot find it. Use `--desktop` on Windows to honor the desktop access switch.
 
-新增操作时，在 `subtitle_relay/automation.py` 定义参数模型和处理函数，注册到 `OPERATIONS`，并在 `automation_text.py` 中补齐两种语言。CLI 帮助、命令参数和 MCP 工具 schema 从同一个参数模型生成。需要直接接入播放器或自定义客户端时，可使用 [HTTP v1](server.md)。
+To add an operation, define its argument model and handler in `subtitle_relay/automation.py`, register it in `OPERATIONS`, and add localized strings in `automation_text.py`. Both transports derive their arguments from the shared models. See [HTTP v1](server.md) for direct integrations.

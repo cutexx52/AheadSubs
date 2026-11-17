@@ -1,12 +1,14 @@
-# 后台 HTTP v1 接口
+# Background HTTP v1 API
 
-服务默认绑定 `127.0.0.1:8769`，用于本机客户端。服务和播放器共享文件访问权限。所有 API 时间均使用原媒体时间，单位秒。
+[English](server.md) | [简体中文](server.zh-CN.md)
 
-可用 `python -m subtitle_relay serve --asr local --mt local --device cpu` 独立启动服务。使用 `--port` 设置端口时，调用者也需配置相同端口。
+The service binds to `127.0.0.1:8769` for local clients by default. Service and player must share media access. All times are seconds on the original media timeline.
 
-## 更新播放状态
+Start with `python -m subtitle_relay serve --asr local --mt local --device cpu`. Clients must match any custom `--port`.
 
-`POST /v1/playback`，`Content-Type: application/json`。
+## Update playback
+
+`POST /v1/playback`, `Content-Type: application/json`.
 
 ```json
 {
@@ -23,19 +25,19 @@
 }
 ```
 
-| 字段 | 合约 |
+| Field | Contract |
 | --- | --- |
-| `session` | 必填，1–100 字符，每个播放窗口独立。10 秒无更新时过期。 |
-| `path` | 必填，后台可访问的媒体绝对路径。可用本地路径或共享目录。 |
-| `position` | 必填，当前媒体时间，非负，最多 1000 万秒。 |
-| `audio` | 可选，默认 `0`，FFmpeg 内嵌音轨序号，从零起算。 |
-| `duration` | 可选，总时长，必须大于零。 |
-| `speed` | 可选，默认 `1`，允许 `0.1–5`。 |
-| `source` / `target` | 省略时使用服务启动配置。默认自动识别并输出 `zh`。显式设置 `source: null` 可强制自动识别。可用语言取决于 provider。 |
-| `ahead` | 可选，默认 `20`，允许 `1–120` 秒。 |
-| `bilingual` | 可选，默认使用服务启动配置。为 `true` 时，带语言前缀的原文在上，译文在下。 |
+| `session` | Required, 1–100 characters, unique per window. Expires after 10 seconds without updates. |
+| `path` | Required absolute media path accessible to the service, local or shared. |
+| `position` | Required nonnegative media time, at most 10 million seconds. |
+| `audio` | Optional, default `0`: zero-based FFmpeg embedded audio-stream ordinal. |
+| `duration` | Optional positive total duration. |
+| `speed` | Optional, default `1`, range `0.1–5`. |
+| `source` / `target` | Omitted values use service settings: by default detect source and output `zh`. Explicit `source: null` forces detection. Languages depend on the provider. |
+| `ahead` | Optional, default `20`, range `1–120` seconds. |
+| `bilingual` | Optional, defaults to startup settings. When true, prefixed source text appears above translation. |
 
-响应示例。
+Example response:
 
 ```json
 {
@@ -50,26 +52,28 @@
 }
 ```
 
-`revision` 和 `subtitle` 一起标识字幕版本。尚无数据时是 `0` 和 `null`。`ready_ahead` 是从指定位置开始连续处理完成的媒体秒数，包含静音。`nearby_cues` 指示附近已处理区间是否有尚未结束的字幕。`error` 是当前块的错误说明，`error_code` 是用于适配器判定的稳定分类。内容审核导致的单句拦截作为字幕检查记录保存。跳转、换轨或新文件可能使预读余量下降。
+`revision` and `subtitle` jointly identify a version; initially they are `0` and `null`. `ready_ahead` is continuous completed coverage from the requested position, including silence. `nearby_cues` indicates an unended cue in nearby processed coverage. `error` describes the current chunk failure; `error_code` is a stable adapter-facing category. Sentence-level moderation blocks remain in inspection records. Seeking, track changes or new files can reduce ready-ahead coverage.
 
-`subtitle_generation` 在有效识别、翻译、时间轴配置或双语显示切换后变化，即使新配置还没有字幕。播放器可据此撤下旧字幕，等待本次结果。回到完全相同的处理配置时可复用它自己的缓存。
+`subtitle_generation` changes when effective recognition, translation, timeline settings or bilingual display change—even before new cues exist. Players can remove old subtitles and await new results. Returning to identical processing settings can reuse their cache.
 
-## 会话与服务控制
+## Session and service control
 
-| 请求 | 合约 |
+| Request | Contract |
 | --- | --- |
-| `GET /v1/health` | 返回 `service`、`pid`、`active_sessions` 和 `local_models`。`local_models` 是当前进程正在使用的本地模型标识，供桌面端保护运行中的模型。 |
-| `POST /v1/close` | 以 JSON `{"session":"window-1"}` 释放会话，成功返回 `{}`。 |
-| `POST /v1/shutdown` | 以 JSON `{"token":"…"}` 停止服务。由进程管理端使用，须与启动时的控制令牌相符。 |
+| `GET /v1/health` | Returns `service`, `pid`, `active_sessions`, `local_models`; local model IDs let the desktop protect models currently in use. |
+| `POST /v1/close` | JSON `{"session":"window-1"}` releases a session; success returns `{}`. |
+| `POST /v1/shutdown` | JSON `{"token":"…"}` stops the service, requiring the startup control token. |
 
-服务拒绝带 `Origin` 头的 POST。普通请求体最大 32 KiB，文本翻译请求体最大 50 KiB，以容纳 URL 编码后的 Unicode 文本。常见响应包括无效输入 `400`、未授权 `403` 和临时忙 `503`。
+POST requests with `Origin` are rejected. Ordinary bodies are limited to 32 KiB; text translation allows 50 KiB for URL-encoded Unicode. Common statuses: invalid input `400`, unauthorized `403`, temporarily busy `503`.
 
-## 文本翻译
+<a id="文本翻译"></a>
 
-`POST /v1/text` 使用 `Content-Type: application/x-subtitle-relay`，请求体为 URL 编码的 `source`、`target`、`text`。文本上限为 4000 字符。成功时返回 `{"translation":"…"}`，没有配置翻译时返回 `409`，provider 失败时返回 `502` 及 `error`、`error_code`。这个入口适合翻译现成字幕，不传输媒体时间轴。
+## Text translation
 
-## 内部接口和缓存
+`POST /v1/text` uses `Content-Type: application/x-subtitle-relay` with URL-encoded `source`, `target`, `text`. Text is limited to 4000 characters. Success returns `{"translation":"…"}`; no translator returns `409`; provider failure returns `502` with `error` and `error_code`. This translates existing text without a media timeline.
 
-`Relay.update(identifier, Playback)` 接收播放状态并返回字幕元数据。`Relay.drop(identifier)` 释放会话。`Relay.close()` 关闭调度和持久化资源。工作单元读取指定音轨，保留其在媒体时间轴上的开头偏移，并在 ASR 后换算回原视频时间。输出相邻字幕若重叠，保留下一句的起始时间，并在该点结束前一句。
+## Internal API and cache
 
-SQLite 保存已完成的块，缓存身份包含媒体文件及其更新时间、音轨、语言和处理配置。相同身份的窗口共享已完成的块。SRT 批量原子替换。CLI 的默认缓存目录为 `.relay`，桌面启动的服务使用 `%LOCALAPPDATA%\Subtitle Relay\cache`。
+`Relay.update(identifier, Playback)` accepts state and returns subtitle metadata. `Relay.drop(identifier)` releases a session; `Relay.close()` closes scheduling/persistence. Tasks read the selected track and retain its offset, mapping ASR-relative times back to video time. Overlapping adjacent cues preserve the next cue's start and end the preceding cue there.
+
+SQLite stores completed chunks. Identity includes media and modification time, track, languages and processing settings. Matching windows share completed chunks. SRT uses batched atomic replacement. CLI cache defaults to `.relay`; desktop uses `%LOCALAPPDATA%\Subtitle Relay\cache`.
