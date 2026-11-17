@@ -7,7 +7,7 @@ from contextlib import ExitStack
 from pathlib import Path
 from uuid import uuid4
 
-from subtitle_relay.players import Mpv
+from subtitle_relay.adapters.players import Mpv
 
 
 def wait_for(check, seconds=25):

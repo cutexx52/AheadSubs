@@ -6,11 +6,12 @@ from contextlib import ExitStack
 from dataclasses import asdict
 from pathlib import Path
 
-from .audio import Segmentation, Segmenter, VAD_THRESHOLDS
-from .engine import Relay
-from .players import Mpv, run_adapter
-from .protocol import RelayClient, serve
-from .providers import (ChatTranslation, FasterWhisper, NllbTranslation, OpenAIWhisper,
+from .inference.audio import Segmentation, Segmenter, VAD_THRESHOLDS
+from .server.engine import Relay, TranslationSettings
+from .adapters.players import Mpv, run_adapter
+from .client import RelayClient
+from .server.protocol import serve
+from .inference.providers import (ChatTranslation, FasterWhisper, NllbTranslation, OpenAIWhisper,
                         QWEN_MT_MODELS, QwenMtTranslation, configure_cuda, openai_client, qwen_mt_client)
 
 
@@ -37,7 +38,7 @@ class ClockPlayer:
 
 def make_relay(args):
     settings = Segmentation(args.before, args.after, args.max_speech, args.min_silence_ms,
-                            args.pad_ms, args.vad_threshold, not args.no_vad, args.backfill)
+                            args.pad_ms, args.vad_threshold, not args.no_vad, args.backfill, args.min_speech)
     if args.device == "cuda" and (args.asr == "local" or args.mt == "local"):
         configure_cuda()
     cloud = openai_client(args.key_file) if "openai" in (args.asr, args.mt) or args.ast else None
@@ -62,6 +63,8 @@ def make_relay(args):
             translator = ChatTranslation(client, args.llm_model, reasoning_effort=effort)
     profile = ["v2", args.asr, args.mt, args.ast, args.whisper_model, args.nllb_model,
                args.llm_model, args.llm_url, args.device, asdict(settings)]
+    if settings.enabled:
+        profile.append("pause-planner-v1")
     if args.asr in {"compatible", "qwen"} and not args.ast:
         profile.extend([args.asr_url if args.asr == "compatible" else args.qwen_size, args.asr_model])
     if args.mt == "qwen-mt" and not args.ast:
@@ -69,7 +72,9 @@ def make_relay(args):
     if settings.enabled and args.vad_model != "silero":
         profile.append(args.vad_model)
     return Relay(args.cache, recognizer, translator, profile, args.workers, args.chunk,
-                 OpenAIWhisper(cloud) if args.ast else None, Segmenter(settings, args.vad_model))
+                 OpenAIWhisper(cloud) if args.ast else None, Segmenter(settings, args.vad_model),
+                 translation_settings=TranslationSettings(args.translation_before, args.translation_after,
+                                                          args.translation_prompt))
 
 
 def main():
@@ -93,6 +98,13 @@ def main():
     server.add_argument("--llm-url", default="http://127.0.0.1:11434/v1")
     server.add_argument("--key-file")
     server.add_argument("--control-token-file", type=Path)
+    server.add_argument("--diagnostics", action="store_true", help="Enable detailed service diagnostics")
+    server.add_argument("--default-source")
+    server.add_argument("--default-target", default="zh")
+    server.add_argument("--default-bilingual", action="store_true")
+    server.add_argument("--translation-before", type=float, default=0)
+    server.add_argument("--translation-after", type=float, default=0)
+    server.add_argument("--translation-prompt", default="")
     server.add_argument("--pot-hotkey-launcher", type=Path)
     server.add_argument("--cache", default=".relay")
     server.add_argument("--workers", type=int, choices=range(1, 17), default=4)
@@ -100,8 +112,9 @@ def main():
     server.add_argument("--before", type=float, default=2)
     server.add_argument("--after", type=float, default=2)
     server.add_argument("--max-speech", type=float, default=12)
+    server.add_argument("--min-speech", type=float, default=3)
     server.add_argument("--min-silence-ms", type=int, default=450)
-    server.add_argument("--pad-ms", type=int, default=160)
+    server.add_argument("--pad-ms", type=int, default=80)
     server.add_argument("--vad-threshold", type=float)
     server.add_argument("--vad-model", choices=VAD_THRESHOLDS, default="silero")
     server.add_argument("--backfill", type=float, default=4)
@@ -138,31 +151,34 @@ def main():
             args.vad_threshold = VAD_THRESHOLDS[args.vad_model]
         logging.basicConfig(format="%(asctime)s %(levelname)s %(name)s %(message)s")
         logger = logging.getLogger("subtitle_relay")
-        logger.setLevel(logging.INFO)
+        logger.setLevel(logging.INFO if args.diagnostics else logging.CRITICAL + 1)
         logger.info(
             "Starting service asr=%s mt=%s qwen_size=%s llm_model=%s ast=%s workers=%d vad=%s",
             args.asr, args.mt, args.qwen_size if args.asr == "qwen" else "-",
             {"openai": args.llm_model, "qwen-mt": args.qwen_mt_model}.get(args.mt, "-") if not args.ast else "-",
             args.ast, args.workers, "off" if args.no_vad else args.vad_model)
         if not (0 <= args.before <= 5 and 0 <= args.after <= 5 and
-                2 <= args.max_speech <= 20 and 40 <= args.min_silence_ms <= 2000 and
+                0.2 <= args.min_speech <= args.max_speech <= 20 and 2 <= args.max_speech and
+                40 <= args.min_silence_ms <= 2000 and
                 0 <= args.pad_ms <= 500 and 0 < args.vad_threshold < 1 and
-                0 <= args.backfill <= 30):
+                0 <= args.backfill <= 30 and 0 <= args.translation_before <= 15 and
+                0 <= args.translation_after <= 15 and len(args.translation_prompt) <= 1000):
             parser.error("invalid VAD parameters or audio context")
         with ExitStack() as resources:
             if args.asr == "qwen" and not args.ast:
-                from .qwen import run as run_qwen
+                from .inference.qwen import run as run_qwen
 
                 args.asr_url = resources.enter_context(run_qwen(args.qwen_root, args.qwen_size))
                 args.asr_model = "qwen3-asr"
             relay = make_relay(args)
             resources.callback(relay.close)
             if args.pot_hotkey_launcher:
-                from .potplayer import start_hotkey
+                from .adapters.potplayer import start_hotkey
 
                 start_hotkey(args.pot_hotkey_launcher)
             token = args.control_token_file.read_text(encoding="ascii").strip() if args.control_token_file else None
-            serve(relay, args.port, token)
+            serve(relay, args.port, token, {"source": args.default_source, "target": args.default_target,
+                                          "bilingual": args.default_bilingual})
         return
     if args.interval <= 0:
         parser.error("--interval must be positive")
@@ -171,12 +187,12 @@ def main():
         with Mpv(args.pipe) as player:
             run_adapter(player, *options)
     elif args.mode == "potplayer":
-        from .potplayer import PotPlayer
+        from .adapters.potplayer import PotPlayer
 
         run_adapter(PotPlayer(args.hwnd, args.path, args.audio, args.reload_command), *options,
                     stop=args.stop_file, seek_interval=min(0.15, args.interval))
     elif args.mode == "potplayer-open":
-        from .potplayer import open_with_subtitles
+        from .adapters.potplayer import open_with_subtitles
 
         open_with_subtitles(args.executable, args.path, options[0], args.audio, args.source,
                             args.target, args.ahead, args.muted, stop=args.stop_file)

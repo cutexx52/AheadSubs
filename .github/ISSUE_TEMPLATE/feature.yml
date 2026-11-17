@@ -1,0 +1,15 @@
+name: Feature request
+description: Request a player integration, inference backend, or workflow improvement.
+body:
+  - type: textarea
+    id: task
+    attributes:
+      label: What would this let you do?
+      description: Describe your workflow and where the current app falls short.
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Relevant details
+      description: Include player, platform and any existing protocol or model references.

@@ -5,7 +5,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
-from subtitle_relay.providers import QwenMtTranslation, qwen_mt_credentials
+from subtitle_relay.inference.providers import QwenMtTranslation, qwen_mt_credentials
 
 
 class QwenMtTest(unittest.TestCase):

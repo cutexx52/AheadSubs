@@ -89,7 +89,7 @@ class Mpv:
 
 
 def run_adapter(player, client, source, target, ahead, interval, stop=None, idle_limit=None,
-                report=None, session=None, seek_interval=None):
+                report=None, session=None, seek_interval=None, preferences=None):
     session = session or uuid4().hex
     previous_error = None
     last_active = time.monotonic()
@@ -127,9 +127,10 @@ def run_adapter(player, client, source, target, ahead, interval, stop=None, idle
                 previous_position = None
             try:
                 if state:
+                    output = preferences() if preferences else {"source": source() if callable(source) else source,
+                                                                "target": target}
                     response = client.send("playback", {
-                        **state, "session": session, "source": source() if callable(source) else source,
-                        "target": target, "ahead": ahead,
+                        **state, **output, "session": session, "ahead": ahead,
                     })
                     attached = True
                 elif attached and disconnected_at is None:

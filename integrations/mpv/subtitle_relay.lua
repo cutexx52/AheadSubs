@@ -8,7 +8,7 @@ options.read_options(config, "subtitle_relay")
 local title = "Subtitle Relay"
 local session = "mpv-" .. tostring(utils.getpid()) .. "-" .. tostring(os.time())
 local enabled, pending = false, false
-local source, target, ahead = nil, "zh", 20
+local source, target, ahead = nil, nil, 20
 local subtitle, revision, generation = nil, nil, 0
 local last_status, next_launch = "", 0
 
@@ -126,11 +126,16 @@ mp.register_script_message("relay-toggle", function()
     end
 end)
 mp.register_script_message("relay-source", function(value)
-    source = value ~= "auto" and value or nil
+    if value == "default" then source = nil
+    elseif value == "auto" then source = ""
+    else source = value end
     reset()
     poll()
 end)
-mp.register_script_message("relay-target", function(value) target = value; reset(); poll() end)
+mp.register_script_message("relay-target", function(value)
+    if value == "default" then target = nil else target = value end
+    reset(); poll()
+end)
 mp.register_script_message("relay-ahead", function(value) ahead = tonumber(value) or ahead; poll() end)
 mp.register_script_message("relay-status", function() mp.osd_message(enabled and last_status or "Subtitle Relay disabled", 4) end)
 mp.register_script_message("relay-settings", function() launcher(false) end)
@@ -149,12 +154,12 @@ mp.observe_property("menu-data", "native", function(_, menu)
     menu[#menu + 1] = {title = title, type = "submenu", submenu = {
         item("Enable / disable subtitles", "toggle"), item("Buffer status", "status"),
         {title = "Source language", type = "submenu", submenu = {
-            item("Automatic", "source auto"), item("English", "source en"),
+            item("Desktop setting", "source default"), item("Automatic", "source auto"), item("English", "source en"),
             item("Japanese", "source ja"), item("Korean", "source ko"),
             item("Chinese", "source zh"),
         }},
         {title = "Target language", type = "submenu", submenu = {
-            item("Simplified Chinese", "target zh"), item("Traditional Chinese", "target zh-TW"),
+            item("Desktop setting", "target default"), item("Simplified Chinese", "target zh"), item("Traditional Chinese", "target zh-TW"),
             item("English", "target en"), item("Japanese", "target ja"),
         }},
         {title = "Look-ahead", type = "submenu", submenu = {

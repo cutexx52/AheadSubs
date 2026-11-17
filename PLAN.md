@@ -1,4 +1,6 @@
-# Subtitle Relay 开发与验收计划
+# Subtitle Relay 初始开发与验收计划
+
+此页保留最初的设计与验收约定。当前结构与接口见[架构](docs/architecture.md)，最新实测见[性能与设备建议](docs/performance.md)。
 
 ## 1. 播放器协议
 

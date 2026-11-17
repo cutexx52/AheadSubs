@@ -1,0 +1,20 @@
+name: Bug report
+description: Report a player, subtitle, model, setup or performance issue.
+body:
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: What did you do and what happened?
+      description: Include the shortest reproducible steps and the expected result.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include the app version, Windows build, player version, GPU, and selected ASR and translation models.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Diagnostic excerpt
+      description: Enable diagnostics only if needed. Remove API keys, private media paths and personal information before posting.

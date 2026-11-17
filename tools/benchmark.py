@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from uuid import uuid4
 
-from subtitle_relay.protocol import RelayClient
+from subtitle_relay.client import RelayClient
 
 
 def main():

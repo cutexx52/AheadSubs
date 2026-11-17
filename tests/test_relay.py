@@ -2,18 +2,118 @@ import os
 import tempfile
 import time
 import unittest
+from dataclasses import replace
+from concurrent.futures import Future
 from types import SimpleNamespace
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from subtitle_relay.audio import Segmentation, Segmenter, make_wav
-from subtitle_relay.engine import Playback, Relay, clear_dialogue, merge_cues
-from subtitle_relay.players import run_adapter
-from subtitle_relay.protocol import playback_from_json
-from subtitle_relay.providers import Cue, OpenAIWhisper
+from subtitle_relay.inference.audio import Segmentation, Segmenter, make_wav
+from subtitle_relay.inference.errors import provider_error
+from subtitle_relay.server.engine import Playback, Relay, TranslationFailure, _translate_cues, clear_dialogue, merge_cues
+from subtitle_relay.server.history import inspect_cache
+from subtitle_relay.adapters.players import run_adapter
+from subtitle_relay.server.protocol import playback_from_json
+from subtitle_relay.inference.providers import Cue, OpenAIWhisper
 
 
 class RelayTest(unittest.TestCase):
+    def test_explicit_content_block_is_normalized_without_guessing_from_http_400(self):
+        block = SimpleNamespace(status_code=400, body={
+            "error": {"code": "data_inspection_failed", "message": "request body sample"}})
+        self.assertEqual(provider_error(block).kind, "content_blocked")
+        self.assertEqual(provider_error(SimpleNamespace(status_code=400)).kind, "invalid_request")
+        unavailable = SimpleNamespace(status_code=500, code="InternalError.DataInspection")
+        self.assertEqual(provider_error(unavailable).kind, "moderation_unavailable")
+        self.assertEqual(provider_error(SimpleNamespace(status_code=429)).kind, "rate_limited")
+
+    def test_inspector_marks_blocked_original_and_publishes_other_cues(self):
+        from subtitle_relay.inference.providers import QwenMtTranslation
+
+        denied = ValueError("private upstream details")
+        denied.body = {"error": {"code": "data_inspection_failed"}}
+        denied.status_code = 400
+        client = Mock()
+        client.chat.completions.create.side_effect = [
+            denied, SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content="译文"))])]
+        translator = QwenMtTranslation(client, "qwen-mt-flash")
+        result = _translate_cues([Cue(1, 2, "原句甲"), Cue(3, 4, "原句乙")], translator, "ja", "zh")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "movie.mp4"
+            path.touch()
+            playback = Playback(path, 0, duration=8)
+            relay = Relay(root, None, None, "test")
+            try:
+                with relay.lock:
+                    job = (relay._identity(playback), 0)
+                    relay.inflight.add(job)
+                    relay.update("test", playback)
+                    future = Future()
+                    future.set_result(result)
+                    relay._finish(job, future)
+                    status = relay.update("test", playback)
+                rows = inspect_cache(root / "cache.sqlite3")["rows"]
+                self.assertEqual(rows[0]["status"], "content_blocked")
+                self.assertEqual(rows[0]["original"], "原句甲")
+                self.assertIsNone(rows[0]["translation"])
+                self.assertEqual(rows[1]["translation"], "译文")
+                self.assertNotIn("private upstream details", str(rows))
+                subtitle = Path(status["subtitle"]).read_text(encoding="utf-8")
+                self.assertIn("译文", subtitle)
+                self.assertNotIn("原句甲", subtitle)
+            finally:
+                relay.close()
+
+    def test_inspector_keeps_original_when_translation_fails(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            video = root / "movie.mp4"
+            video.touch()
+            relay = Relay(root, None, None, "test")
+            try:
+                playback = Playback(video, 0, duration=8)
+                with relay.lock:
+                    key = relay._identity(playback)
+                    job = (key, 0)
+                    relay.inflight.add(job)
+                    relay.update("test", playback)
+                    future = Future()
+                    future.set_exception(TranslationFailure([Cue(1, 2, "こんにちは")]))
+                    relay._finish(job, future)
+                row = inspect_cache(root / "cache.sqlite3")["rows"][0]
+                self.assertEqual(row["original"], "こんにちは")
+                self.assertIsNone(row["translation"])
+                self.assertEqual(row["status"], "translation_failed")
+            finally:
+                relay.close()
+
+    def test_bilingual_subtitles_and_inspection_reuse_cached_recognition(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            video = root / "movie.mp4"
+            video.touch()
+            playback = Playback(video, 0, source="ja", target="zh", duration=8)
+            relay = Relay(root, None, None, "test")
+            try:
+                key = relay._identity(playback)
+                bilingual = replace(playback, bilingual=True)
+                self.assertEqual(relay._identity(bilingual), key)
+                relay.db.execute("INSERT INTO chunks VALUES (?, ?, ?)",
+                                 (key, 0, '[{"start": 1, "end": 2, "text": "你好", "original": "こんにちは"}]'))
+                relay.db.commit()
+                single = Path(relay.update("test", playback)["subtitle"])
+                dual = Path(relay.update("test", bilingual)["subtitle"])
+                self.assertNotEqual(single, dual)
+                self.assertNotIn("こんにちは", single.read_text(encoding="utf-8"))
+                self.assertIn("你好\nこんにちは", dual.read_text(encoding="utf-8"))
+                inspected = inspect_cache(root / "cache.sqlite3")
+                self.assertEqual(inspected["media"][0]["display_name"], "movie.mp4")
+                self.assertEqual(inspected["rows"][0]["original"], "こんにちは")
+                self.assertEqual(inspected["rows"][0]["translation"], "你好")
+            finally:
+                relay.close()
+
     def test_adapter_reports_seek_immediately_then_briefly_polls_faster(self):
         now = 0.0
         sent = []
@@ -32,8 +132,8 @@ class RelayTest(unittest.TestCase):
             nonlocal now
             now += seconds + 1e-9
 
-        with patch("subtitle_relay.players.time.monotonic", side_effect=lambda: now), \
-             patch("subtitle_relay.players.time.sleep", side_effect=sleep), self.assertRaises(EOFError):
+        with patch("subtitle_relay.adapters.players.time.monotonic", side_effect=lambda: now), \
+             patch("subtitle_relay.adapters.players.time.sleep", side_effect=sleep), self.assertRaises(EOFError):
             run_adapter(Mock(state=read_state), Mock(send=send), "ja", "zh", 20, 0.6, seek_interval=0.15)
 
         after_seek = [time for time, position in sent if position >= 60]
@@ -43,7 +143,7 @@ class RelayTest(unittest.TestCase):
 
     @unittest.skipUnless(os.name == "nt", "PotPlayer requires Windows")
     def test_potplayer_playback_status_does_not_open_an_overlay(self):
-        from subtitle_relay.feedback import PotFeedback
+        from subtitle_relay.desktop.feedback import PotFeedback
 
         feedback = PotFeedback.__new__(PotFeedback)
         feedback.root = Mock()
@@ -55,7 +155,7 @@ class RelayTest(unittest.TestCase):
 
     @unittest.skipUnless(os.name == "nt", "PotPlayer requires Windows")
     def test_potplayer_first_load_waits_for_a_real_subtitle_cue(self):
-        from subtitle_relay.potplayer import PotPlayer
+        from subtitle_relay.adapters.potplayer import PotPlayer
 
         player = PotPlayer.__new__(PotPlayer)
         player.subtitle = player.track = None
@@ -72,7 +172,7 @@ class RelayTest(unittest.TestCase):
     @unittest.skipUnless(os.name == "nt", "PotPlayer requires Windows")
     def test_potplayer_path_access_denied_offers_manual_resolution(self):
         import psutil
-        from subtitle_relay.potplayer import MediaPathUnavailable, current_media
+        from subtitle_relay.adapters.potplayer import MediaPathUnavailable, current_media
 
         with patch.object(psutil.Process, "open_files", side_effect=psutil.AccessDenied()):
             with self.assertRaises(MediaPathUnavailable):
@@ -80,7 +180,7 @@ class RelayTest(unittest.TestCase):
 
     @unittest.skipUnless(os.name == "nt", "PotPlayer requires Windows")
     def test_potplayer_folder_hint_checks_only_the_current_basename(self):
-        from subtitle_relay.potplayer import media_from_folder
+        from subtitle_relay.adapters.potplayer import media_from_folder
 
         with tempfile.TemporaryDirectory() as directory:
             folder = Path(directory)
@@ -102,7 +202,7 @@ class RelayTest(unittest.TestCase):
         ]
         source = Mock(side_effect=["en", "ja", "ja"])
         report = Mock()
-        with patch("subtitle_relay.players.time.sleep"), self.assertRaises(EOFError):
+        with patch("subtitle_relay.adapters.players.time.sleep"), self.assertRaises(EOFError):
             run_adapter(player, client, source, "zh", 20, 0.4, report=report)
         requests = [call.args[1] for call in client.send.call_args_list if call.args[0] == "playback"]
         self.assertEqual(len({request["session"] for request in requests}), 1)
@@ -154,7 +254,7 @@ class RelayTest(unittest.TestCase):
             path = root / "clip.mkv"
             path.touch()
             playback = Playback(path=path, position=8, ahead=1, duration=20)
-            with patch("subtitle_relay.engine.translate_chunk", return_value=[Cue(8.25, 9.5, "你好")]) as job:
+            with patch("subtitle_relay.server.engine.translate_chunk", return_value=[Cue(8.25, 9.5, "你好")]) as job:
                 relay = Relay(root, None, None, "test", workers=4)
                 try:
                     relay.update("first", playback)

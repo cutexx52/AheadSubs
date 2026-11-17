@@ -5,14 +5,14 @@ from secrets import compare_digest
 from threading import BoundedSemaphore, Thread
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.error import HTTPError
-from urllib.request import Request, build_opener, ProxyHandler
 from urllib.parse import parse_qs
 
+from ..inference.errors import provider_error
 from .engine import Playback
 
 
-def playback_from_json(data):
+def playback_from_json(data, defaults=None):
+    defaults = defaults or {}
     path = Path(data["path"])
     if not path.is_absolute() or not path.is_file():
         raise ValueError("Choose an accessible file on a local drive or Windows share")
@@ -29,21 +29,25 @@ def playback_from_json(data):
         raise ValueError("invalid duration")
     if type(audio) not in (int, float) or not 0 <= audio <= 255 or audio != int(audio):
         raise ValueError("invalid audio stream ordinal")
-    source = data.get("source")
-    target = data.get("target", "zh")
+    source = data.get("source", defaults.get("source"))
+    target = data.get("target", defaults.get("target", "zh"))
+    bilingual = data.get("bilingual", defaults.get("bilingual", False))
     if not isinstance(target, str) or not target or (source is not None and not isinstance(source, str)):
         raise ValueError("invalid language")
+    if type(bilingual) is not bool:
+        raise ValueError("invalid bilingual setting")
     return Playback(path.resolve(), position, int(audio), speed, float(duration) if duration else None,
-                    source, target, ahead)
+                    source or None, target, ahead, bilingual)
 
 
-def serve(relay, port, control_token=None):
+def serve(relay, port, control_token=None, playback_defaults=None):
     text_slots = BoundedSemaphore(2)
 
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
             if self.path == "/v1/health":
-                self.reply(200, {"service": "subtitle-relay", "pid": os.getpid()})
+                self.reply(200, {"service": "subtitle-relay", "pid": os.getpid(),
+                                 "active_sessions": relay.active_sessions()})
             else:
                 self.reply(404, {"error": "unknown route"})
 
@@ -76,7 +80,7 @@ def serve(relay, port, control_token=None):
                 if not isinstance(identifier, str) or not 1 <= len(identifier) <= 100:
                     raise ValueError("invalid session")
                 if self.path == "/v1/playback":
-                    self.reply(200, relay.update(identifier, playback_from_json(data)))
+                    self.reply(200, relay.update(identifier, playback_from_json(data, playback_defaults)))
                 elif self.path == "/v1/close":
                     relay.drop(identifier)
                     self.reply(200, {})
@@ -103,7 +107,8 @@ def serve(relay, port, control_token=None):
             try:
                 translated = relay.translator.translate([content], source, target)[0]
             except Exception as exc:
-                self.reply(502, {"error": type(exc).__name__})
+                error = provider_error(exc, default="translation_failed")
+                self.reply(502, {"error": str(error), "error_code": error.kind})
             else:
                 self.reply(200, {"translation": translated})
             finally:
@@ -123,22 +128,3 @@ def serve(relay, port, control_token=None):
     with ThreadingHTTPServer(("127.0.0.1", port), Handler) as server:
         print(f"Subtitle Relay listening on 127.0.0.1:{port}", flush=True)
         server.serve_forever()
-
-
-class RelayClient:
-    def __init__(self, port):
-        self.url = f"http://127.0.0.1:{port}/v1/"
-        self.opener = build_opener(ProxyHandler({}))
-
-    def send(self, route, data):
-        req = Request(self.url + route, data=json.dumps(data).encode(),
-                      headers={"Content-Type": "application/json"})
-        try:
-            with self.opener.open(req, timeout=5) as result:
-                return json.load(result)
-        except HTTPError as exc:
-            try:
-                detail = json.load(exc).get("error")
-            except (ValueError, AttributeError):
-                detail = None
-            raise RuntimeError(detail or f"Subtitle Relay HTTP {exc.code}") from exc

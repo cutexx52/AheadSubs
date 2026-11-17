@@ -5,3 +5,6 @@ __pycache__/
 .env*
 *.srt
 *.wav
+/desktop/bin/
+/desktop/obj/
+/dist/

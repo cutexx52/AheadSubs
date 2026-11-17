@@ -1,0 +1,9 @@
+# Development guidance
+
+- On Windows, prefer Python scripts, native executables, and Cmd for repository work. Use PowerShell when a Windows operation needs it.
+- Keep player adapters, the background service, inference, and the desktop UI independently runnable where practical. Define playback exchange in [the HTTP protocol](docs/server.md) and desktop operations in [the bridge](docs/desktop.md). Keep player-specific behavior in its adapter.
+- Segment the media timeline independently of ASR and translation. Use VAD pauses on both sides of the playhead and a bounded audio window. Scheduler chunks manage work and cache ownership. Keep the subtitle timestamps on the media timeline.
+- Route upstream failures through the shared provider error contract. Classify content moderation only from an explicit error code or completion reason. Add provider aliases at the boundary and keep upstream bodies, credentials, and private media content out of diagnostic logs.
+- Bound work by configured concurrency and lookahead. Release audio and intermediate inference buffers after processing. Keep reusable models resident and persist cues to SQLite/SRT. Keep neighbor transcript reuse small and scoped to active playback.
+- Keep common settings and one-click setup easy to find. Place provider credentials, model downloads, player integration and tuning in their respective sections. Keep diagnostics opt-in and document consequential defaults and protocol changes.
+- Run `python -m unittest discover -s tests` for service changes. Build the WPF project for desktop changes and smoke-test both Windows package variants for runtime changes. Publish hardware claims with model, settings, media, duration, and measurement limits.

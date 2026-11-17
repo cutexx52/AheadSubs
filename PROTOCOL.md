@@ -1,5 +1,7 @@
 # Subtitle Relay local protocol v1
 
+See the maintained [HTTP v1 contract](docs/server.md) for current client behavior, error codes and authenticated shutdown. This original reference remains available for existing links.
+
 The service listens on IPv4 loopback, port 8769 by default. The player and service share a filesystem. All times are seconds on the original media timeline.
 
 ## Player → service
