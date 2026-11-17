@@ -44,10 +44,10 @@ No account billing settings were changed or verified. Keep paid Actions budgets 
 
 ## Manual checks, retries and recovery
 
-- **Verify without publishing:** Actions → Windows bundles → Run workflow → `mode=verify`, version such as `0.1.0-check`. Both variants are built/installed/uninstalled; logs retain evidence, but binaries are discarded with the runner and no release/tag is created. Can run on a trusted PR branch.
+- **Verify without publishing.** Use ordinary PR CI for day-to-day development. Run both installer checks when changing packaging, the runtime or distributed dependencies. In Actions → Windows bundles → Run workflow, choose `mode=verify` and a version such as `0.1.0-check`. The workflow builds, installs and uninstalls both variants and keeps evidence in the job logs. The runner discards the binaries and creates no release or tag. A trusted PR branch can be selected.
 - **Check preview eligibility now:** run `mode=preview` on the default branch. It observes the same 72-hour, diff and CI gates; it is not a force-publish bypass.
 - **Stable release:** push an authorized version tag at the intended commit. Tag builds run tests and packaging before publication. Prerelease-style tags with `-` remain prereleases.
-- **Failure:** the draft stays unpublished. Rerun the failed workflow/jobs while the source is unchanged, or let the next daily check retry. Same-tag drafts can be resumed only with the matching source marker. Public or unrelated releases are never overwritten.
+- **Failure.** The draft stays unpublished. For a transient failure on the same source commit, use **Re-run failed jobs** in the existing Actions run, or `gh run rerun RUN_ID --failed`. This preserves completed builds and retries jobs that depend on the failed jobs. A scheduled preview can also retry at the next daily check. Same-tag drafts can be resumed only with the matching source marker. Public or unrelated releases are never overwritten.
 - **New commits after failure:** a new eligible SHA gets a new preview tag. Maintainers can delete abandoned drafts after diagnosis; the workflow does not delete public releases or historical tags.
 - **Disable automatic previews:** remove the schedule via a PR or disable Windows bundles in Actions (the latter also stops manual/tag builds). Runs are serialized with cancellation disabled so a newer run does not interrupt uploads. GitHub can replace an older pending run in a concurrency group; rerun an omitted tag build if necessary.
 
