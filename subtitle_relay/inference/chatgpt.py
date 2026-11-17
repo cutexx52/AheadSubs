@@ -3,6 +3,7 @@ from time import monotonic
 from .chatgpt_auth import RESOURCE, ChatGPTAccounts
 from .errors import ProviderError, provider_error
 from .providers import ChatTranslation
+from .usage import measured_call
 
 
 class ChatGPTTranslation(ChatTranslation):
@@ -23,11 +24,11 @@ class ChatGPTTranslation(ChatTranslation):
             raise ProviderError(retry_kind)
         try:
             with OpenAI(api_key=token, base_url=RESOURCE, max_retries=0, timeout=30) as client:
-                with client.responses.create(
+                with measured_call(self, "mt") as usage, client.responses.create(
                     model=self.model, instructions=instructions, input=[{"role": "user", "content": payload}],
                     text={"format": {"type": "json_object"}}, store=False, stream=True,
                 ) as stream:
-                    return completed_text(stream)
+                    return completed_text(stream, usage)
         except Exception as exc:
             error = provider_error(exc, default="translation_failed")
             if error.kind in {"authentication_failed", "chatgpt_sign_in_required"}:
@@ -38,12 +39,15 @@ class ChatGPTTranslation(ChatTranslation):
             raise error from None
 
 
-def completed_text(stream):
+def completed_text(stream, usage=None):
     chunks = []
     for event in stream:
         if event.type == "response.output_text.delta":
             chunks.append(event.delta)
         elif event.type == "response.completed":
+            if usage is not None:
+                usage.tokens(getattr(getattr(event, "response", None), "usage", None),
+                             "input_tokens", "output_tokens")
             return "".join(chunks)
         elif event.type == "response.failed":
             raise provider_error(event.response.error, default="translation_failed")

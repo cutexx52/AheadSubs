@@ -8,6 +8,7 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from .errors import provider_error
 from .providers import Cue, OpenAIWhisper, qwen_mt_credentials
+from .usage import measured_call
 
 
 DASHSCOPE_ASR_MODELS = ("qwen-audio-3.1-asr-flash", "qwen-audio-3.0-asr-flash")
@@ -40,12 +41,16 @@ class DashScopeAudio:
             "Authorization": f"Bearer {self.key}", "X-DashScope-SSE": "enable", "Content-Type": "application/json",
         })
         try:
-            with self.opener.open(request, timeout=30) as response:
-                if response.headers.get_content_type() == "text/event-stream":
-                    events = (json.loads(line[5:]) for line in response if line.startswith(b"data:")
-                              and line[5:].strip() not in {b"", b"[DONE]"})
-                    return self._results(events, source)
-                return self._results((json.load(response),), source)
+            with measured_call(self, "asr") as usage:
+                with self.opener.open(request, timeout=30) as response:
+                    if response.headers.get_content_type() == "text/event-stream":
+                        events = (json.loads(line[5:]) for line in response if line.startswith(b"data:")
+                                  and line[5:].strip() not in {b"", b"[DONE]"})
+                    else:
+                        events = (json.load(response),)
+                    result = self._results(events, source, usage)
+                    usage.audio = max(0, len(wav) - 44) / 32000
+                    return result
         except HTTPError as exc:
             with exc:
                 try:
@@ -55,11 +60,13 @@ class DashScopeAudio:
             raise provider_error(SimpleNamespace(status_code=exc.code, body=body)) from None
 
     @staticmethod
-    def _results(events, source):
+    def _results(events, source, usage=None):
         sentences = {}
         transcript = ""
         detected = ""
         for event in events:
+            if usage is not None and isinstance(event.get("usage"), dict):
+                usage.tokens(event["usage"], "input_tokens", "output_tokens")
             if event.get("code"):
                 raise provider_error(SimpleNamespace(body=event))
             output = event.get("output") or {}

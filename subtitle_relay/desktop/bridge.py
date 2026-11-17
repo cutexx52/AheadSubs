@@ -146,6 +146,10 @@ def run_command(command, item=None, folder=None):
         return result
     if command == "status":
         return status()
+    if command == "cloud-usage":
+        from ..inference.usage import USAGE_DB, read_usage
+
+        return read_usage(runtime.DATA / "cache" / USAGE_DB)
     if command == "automation":
         from ..automation_text import text
         from .automation import configure
@@ -194,7 +198,7 @@ def run_command(command, item=None, folder=None):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("status", "automation", "install", "apply", "save-credentials", "stop",
+    parser.add_argument("command", choices=("status", "cloud-usage", "automation", "install", "apply", "save-credentials", "stop",
                                            "integrate", "unintegrate", "logs", "inspect",
                                            "pot-windows", "pot-start", "pot-stop", "chatgpt-status", "chatgpt-login",
                                            "chatgpt-models", "chatgpt-logout"))

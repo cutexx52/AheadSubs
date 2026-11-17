@@ -9,6 +9,7 @@ from urllib.parse import parse_qs
 
 from ..inference.errors import provider_error
 from .engine import Playback
+from .metrics import SOURCES
 
 
 def playback_from_json(data, defaults=None):
@@ -48,8 +49,21 @@ def serve(relay, port, control_token=None, playback_defaults=None):
             if self.path == "/v1/health":
                 self.reply(200, {"service": "subtitle-relay", "pid": os.getpid(),
                                  "active_sessions": relay.active_sessions()})
+            elif self.path == "/v1/status":
+                if self.headers.get("Origin") or self.headers.get("X-AheadSubs-Status") != "1":
+                    self.reply(403, {"error": "native loopback clients only"})
+                    return
+                self.reply(200, relay.status())
             else:
                 self.reply(404, {"error": "unknown route"})
+
+        def entry(self):
+            source = self.headers.get("X-AheadSubs-Entry", "")
+            if source in SOURCES:
+                return source
+            if self.path == "/v1/text" and self.headers.get("User-Agent") == "SubtitleRelay/1":
+                return "potplayer"
+            return "http"
 
         def do_POST(self):
             try:
@@ -81,7 +95,7 @@ def serve(relay, port, control_token=None, playback_defaults=None):
                 if not isinstance(identifier, str) or not 1 <= len(identifier) <= 100:
                     raise ValueError("invalid session")
                 if self.path == "/v1/playback":
-                    self.reply(200, relay.update(identifier, playback_from_json(data, playback_defaults)))
+                    self.reply(200, relay.update(identifier, playback_from_json(data, playback_defaults), self.entry()))
                 elif self.path == "/v1/close":
                     relay.drop(identifier)
                     self.reply(200, {})
@@ -105,6 +119,8 @@ def serve(relay, port, control_token=None, playback_defaults=None):
             if not text_slots.acquire(blocking=False):
                 self.reply(503, {"error": "translation busy"})
                 return
+            source_app = self.entry()
+            relay.text_activity(source_app, 1)
             try:
                 translated = relay.translator.translate([content], source, target)[0]
             except Exception as exc:
@@ -113,12 +129,15 @@ def serve(relay, port, control_token=None, playback_defaults=None):
             else:
                 self.reply(200, {"translation": translated})
             finally:
+                relay.text_activity(source_app, -1)
                 text_slots.release()
 
         def reply(self, code, data):
             body = json.dumps(data).encode()
             self.send_response(code)
             self.send_header("Content-Type", "application/json")
+            if self.path == "/v1/status":
+                self.send_header("Cache-Control", "no-store")
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)

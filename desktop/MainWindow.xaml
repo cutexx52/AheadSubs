@@ -179,6 +179,9 @@
     </StackPanel></Border>
     <TextBlock x:Name="AutomationStatus" Style="{StaticResource Hint}" AutomationProperties.LiveSetting="Polite"/>
    </StackPanel></ScrollViewer></TabItem>
+   <TabItem Header="{local:StatusText Title}" x:Name="StatusTab">
+    <local:StatusPage x:Name="StatusDashboard"/>
+   </TabItem>
   </TabControl>
   <Border Grid.Row="2" Background="White" BorderBrush="#E3E7ED" BorderThickness="0,1,0,0" Padding="28,14"><StackPanel>
    <TextBlock x:Name="ActionStatus" TextWrapping="Wrap" Margin="176,0,0,8" Visibility="Collapsed" AutomationProperties.LiveSetting="Assertive"/><ProgressBar x:Name="Progress" Height="3" IsIndeterminate="True" Visibility="Collapsed" Margin="176,0,0,10"/>
