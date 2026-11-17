@@ -38,6 +38,7 @@
 | `pot-windows` | 列出当前可操作的 PotPlayer 窗口。 |
 | `pot-start <window>` / `pot-stop <window>` | 开启或停止对应窗口的预读。 |
 | `logs` | 输出可以查看的日志路径。 |
+| `automation [mcp-enable\|mcp-disable\|cli-install\|cli-remove]` | 返回 MCP 开关、客户端配置和 CLI 的用户 PATH 注册状态。指定操作时直接更新对应状态。详见[接入说明](automation.md)。 |
 
 每次调用向 stdout 输出一个 JSON 对象，带 `ok` 布尔值。失败时带 `error` 并返回非零退出码。它是项目内的桌面控制接口，外部适配器应以公开的 HTTP v1 合约为准。
 

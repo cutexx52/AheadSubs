@@ -51,3 +51,6 @@ Name: desktopicon; Description: "Create a desktop shortcut"; Flags: unchecked
 
 [Run]
 Filename: "{app}\AheadSubs.exe"; Description: "Open AheadSubs"; Flags: nowait postinstall skipifsilent
+
+[UninstallRun]
+Filename: "{app}\runtime\python.exe"; Parameters: "-m subtitle_relay.desktop.bridge automation cli-remove"; WorkingDir: "{app}"; Flags: runhidden skipifdoesntexist; RunOnceId: "RemoveAheadSubsFromPath"
