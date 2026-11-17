@@ -1,37 +1,39 @@
-# Subtitle Relay 初始开发与验收计划
+# Original Subtitle Relay design and acceptance plan
 
-此页保留最初的设计与验收约定。当前结构与接口见[架构](docs/architecture.md)，最新实测见[性能与设备建议](docs/performance.md)。
+[English](PLAN.md) | [简体中文](PLAN.zh-CN.md)
 
-## 1. 播放器协议
+Historical design record, not the current delivery policy. See [architecture](docs/architecture.md), [performance](docs/performance.md) and the current [PR-to-merge workflow](docs/contributing.md).
 
-- 本地 HTTP JSON v1。每个窗口独立会话，传绝对路径、音轨、播放位置、倍速和语言配置。会话掉线后过期。播放器根据字幕版本和路径增量刷新显示。
-- 使用模拟播放头独立测试服务。使用模拟字幕响应独立测试适配器。播放器更新只影响适配器。
-- mpv 通过 JSON IPC 或原生 Lua 读取状态并执行字幕重载。mpv 0.42 原生右键菜单提供启停、语言、预读设置和打开图形配置。
-- PotPlayer 先验证现有 Win32 消息与字幕重载。如果原生 AngelScript 实时翻译回调只提供当前字幕文本，将同一后台的文本翻译放入 PotPlayer 的原生列表，并通过图形助手启动预读；验证并记录具体可自动化的步骤。
+## 1. Player protocol
 
-## 2. 文件时间轴与语音边界
+- Local HTTP JSON v1; one session per window with absolute path, track, position, speed and languages. Expire disconnected sessions; refresh by subtitle path/version.
+- Test services with simulated playback and adapters with simulated subtitles. Player changes stay in adapters.
+- mpv uses JSON IPC or Lua; the 0.42 native menu exposes start/stop, language, look-ahead and settings.
+- Validate PotPlayer Win32 messages and reload. If AngelScript translation receives current text only, expose text translation through the native list and use the helper for audio look-ahead; document actual automation steps.
 
-- 每个会话以原视频媒体时间为准。用 FFmpeg 读取指定音轨。保持播放头前方的已译覆盖，预读目标可以调整。
-- 用有限的重叠前后文补足跨块对白。具体的推理块长、前文、后文、静音断句阈值、语音边缘保留和单段上限可配置。先通过 VAD 找到有效语音，再按自然静音断句；长句按上限拆分。
-- 保留识别的起止时间。时间坐标只从音频位置映射，LLM 按字幕 ID 回译。处理静音时同样记录覆盖区间。
-- 处理跨块重复、长静音、不同音轨、文件更新和跳转。采用稳定的分块缓存键，原文与译文结构可互相索引。已发出的 SRT 用原子替换，播放器按原时间显示。
+## 2. Media timeline and speech boundaries
 
-## 3. 推理与并发
+- Read the selected track with FFmpeg, retaining media time and configurable coverage ahead.
+- Use bounded context for dialogue crossing chunks; configure chunk/context lengths, pauses, padding and segment limits. Detect speech with VAD, prefer natural pauses and split long speech at the limit.
+- Preserve recognized start/end times, map from audio offsets, and translate by subtitle identity. Record silence coverage too.
+- Handle duplicates, long silence, tracks, file updates and seeks. Stable chunk keys index source/translation; atomically replace SRT for original-time playback.
 
-- 接口包括带时间戳的 ASR、直接语音翻译和文本翻译。首选链路是 faster-whisper / CTranslate2 加本地 NLLB / CTranslate2。OpenAI 实验链路用 whisper-1 时间戳和小型 GPT 文本翻译，另支持音频直译到英语。OpenAI 兼容翻译端点可接 Ollama、LM Studio 等。
-- 一个后台共享 GPU 模型、限制工作线程和在途任务数量。会话竞争时优先补最快要播到的缺口。相同文件、音轨和配置共用缓存。云端凭据从环境或仓库之外读取。
-- 验证本地和云端链路后再评估 Pipecat 流式 provider，统一时间戳格式能让这一步独立迭代。
+## 3. Inference and concurrency
 
-## 4. 最低操作成本
+- Interfaces cover timestamped ASR, direct speech translation and text translation. Initial local path: faster-whisper / CTranslate2 + NLLB. Initial OpenAI path: whisper-1 timestamps + small GPT translation; direct English audio translation and compatible Ollama/LM Studio text endpoints are alternatives.
+- One service shares GPU models and bounds workers/in-flight jobs. Prioritize the earliest playback gaps; share cache for matching media/track/settings. Keep cloud credentials outside Git.
+- Evaluate Pipecat streaming providers after local/cloud paths; unified timestamps keep that work independent.
 
-- 首次打开图形助手，选择预设并安装播放器入口。之后 mpv 右键启用字幕，后台按需启动。
-- 为 PotPlayer 分别验证原生既有字幕翻译、无字幕本地视频预读和窗口重载。确定首装步骤与每次使用步骤。实测后如实记录必须手动操作的限制。
-- 配置错误、模型准备、缓冲状态和云端模式应可见。默认使用本地 provider。
+## 4. Minimal operation
 
-## 5. 交付验收
+- Configure a preset and player entry in the helper; then enable from mpv's context menu with on-demand service startup.
+- Validate PotPlayer existing-text translation, audio look-ahead without subtitles and reload separately. Distinguish first-install steps from daily use; document unavoidable manual steps honestly.
+- Expose configuration errors, model preparation, buffering and cloud mode. Default to local providers.
 
-- 单元与集成测试覆盖分段边界、同一文件缓存命中、四会话、拖动到新时间、重启复用及 SRT 更新。
-- 用合成素材跑 MPV 读取状态、接收字幕、拖动并验证该时间点文本。
-- 用合成语音运行一次 OpenAI 转写和 GPT 翻译，确认输出中文 SRT。密钥和测试缓存不入 Git。
-- RTX 4090 上用四个独立文件、空缓存、持续推动播放头测预缓冲、最小已译余量和断字幕次数。记录模型、分段参数、测试时长和素材限制。
-- 最后记录图形菜单实测、PotPlayer 双开情况和已知限制，提交本地 Git。GitHub 发布后续处理。
+## 5. Original acceptance checklist
+
+- Unit/integration coverage: segmentation, shared cache hits, four sessions, seeking, restart reuse and SRT updates.
+- Synthetic media verifies mpv state, subtitle loading and seek-time text.
+- Synthetic speech verifies OpenAI ASR/GPT Chinese SRT and English direct speech translation; no keys/test caches in Git.
+- RTX 4090: four independent files, empty cache, moving playheads; record buffering, minimum coverage, exhaustion, models, segmentation, duration and limitations.
+- Record GUI tests, dual PotPlayer windows and known limits. The original plan ended with local Git and deferred GitHub publication; this is superseded by the current mandatory PR-to-merge workflow.
