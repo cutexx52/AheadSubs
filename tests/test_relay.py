@@ -248,6 +248,21 @@ class RelayTest(unittest.TestCase):
         self.assertEqual([call.args[0] for call in report.call_args_list], ["ready", "reconnecting", "ready"])
         self.assertEqual([call.args for call in player.publish.call_args_list], [("old.srt", 1), ("new.srt", 1)])
 
+    def test_adapter_clears_previous_subtitle_while_new_profile_has_no_cues(self):
+        player = Mock()
+        player.state.side_effect = [{"position": 4}, {"position": 5}, {"position": 6}, EOFError]
+        client = Mock()
+        status = {"revision": 0, "error": None, "ready_ahead": 0, "nearby_cues": False}
+        client.send.side_effect = [
+            {**status, "subtitle_generation": "old", "subtitle": "old.srt", "revision": 1},
+            {**status, "subtitle_generation": "new", "subtitle": None},
+            {**status, "subtitle_generation": "new", "subtitle": "new.srt", "revision": 1}, {},
+        ]
+        with patch("subtitle_relay.adapters.players.time.sleep"), self.assertRaises(EOFError):
+            run_adapter(player, client, "ja", "zh", 20, .4)
+        player.clear.assert_called_once_with()
+        self.assertEqual([call.args for call in player.publish.call_args_list], [("old.srt", 1), ("new.srt", 1)])
+
     def test_dialogue_filter_preserves_normal_repetition(self):
         self.assertTrue(clear_dialogue("はい、はい、わかりました。"))
         self.assertFalse(clear_dialogue("ありがとう、" * 7))

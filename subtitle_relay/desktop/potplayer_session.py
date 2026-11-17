@@ -183,5 +183,9 @@ def run_native_adapter(hwnd, media, stop, report, resolve_media):
         if stop.exists():
             return
         report("on", "预读已开启")
-        run_adapter(player, RelayClient(PORT), None, None, 20, 0.6, stop,
-                    report=report, seek_interval=0.15, preferences=preferences)
+        try:
+            run_adapter(player, RelayClient(PORT), None, None, 20, 0.6, stop,
+                        report=report, seek_interval=0.15, preferences=preferences)
+        finally:
+            if stop.exists():
+                player.clear()

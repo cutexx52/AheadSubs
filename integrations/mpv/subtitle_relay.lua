@@ -10,6 +10,7 @@ local session = "mpv-" .. tostring(utils.getpid()) .. "-" .. tostring(os.time())
 local enabled, pending = false, false
 local source, target, ahead = nil, nil, 20
 local subtitle, revision, generation = nil, nil, 0
+local subtitle_generation
 local last_status, next_launch = "", 0
 
 local function track_for(path)
@@ -89,12 +90,18 @@ local function poll()
         end
         local reply = utils.parse_json(result.stdout)
         if not reply then return end
+        if (not reply.subtitle or reply.subtitle_has_cues == false)
+            and subtitle_generation and reply.subtitle_generation ~= subtitle_generation then
+            unpublish()
+        end
+        subtitle_generation = reply.subtitle_generation
         last_status = reply.error or string.format("Translated buffer: %.1f s", reply.ready_ahead or 0)
         mp.set_property_native("user-data/subtitle-relay", {
             enabled = true, ready_ahead = reply.ready_ahead, revision = reply.revision,
             error = reply.error,
         })
-        if not reply.subtitle or reply.subtitle == subtitle and reply.revision == revision then return end
+        if not reply.subtitle or reply.subtitle_has_cues == false
+            or reply.subtitle == subtitle and reply.revision == revision then return end
         if subtitle ~= reply.subtitle then unpublish() end
         local id = track_for(reply.subtitle)
         local info = utils.file_info(reply.subtitle)
@@ -110,6 +117,7 @@ end
 
 local function reset()
     generation = generation + 1
+    subtitle_generation = nil
     unpublish()
 end
 

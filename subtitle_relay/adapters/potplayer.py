@@ -280,6 +280,21 @@ class PotPlayer:
             self._send(0x111, self.reload_command)
             self.revision = revision
 
+    def clear(self):
+        if not self.subtitle or not self._matches_media(self._title()):
+            return
+        if self.track is not None:
+            write_potplayer_track(self.track, None)
+            if self.reload_command:
+                self._send(0x111, self.reload_command)
+        else:
+            # Replace only this window's selection. Shared cached SRT files stay intact.
+            empty = Path(self.subtitle).with_name(f"empty-{self.pid}-{self.hwnd}.srt")
+            write_potplayer_track(empty, None)
+            self.load_subtitle(empty)
+        self.subtitle = None
+        self.revision = 0
+
     def load_subtitle(self, path):
         if self._pid() != self.pid or path.suffix.lower() != ".srt":
             raise ValueError("The target window or subtitle is no longer available")
@@ -377,7 +392,7 @@ def open_with_subtitles(executable, path, client, audio, source, target, ahead, 
 
 
 def write_potplayer_track(subtitle, source):
-    text = source.read_text(encoding="utf-8-sig").strip()
+    text = source.read_text(encoding="utf-8-sig").strip() if source is not None else ""
     if not text:
         # PotPlayer needs a valid external track even if the opening scene is silent.
         text = "1\n00:00:00,000 --> 00:00:00,100\n\u00a0"

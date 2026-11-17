@@ -6,7 +6,9 @@ import sys
 from contextlib import redirect_stdout
 
 from . import assets, runtime
+from ..inference.dashscope import DASHSCOPE_ASR_MODELS
 from ..inference.providers import QWEN_MT_MODELS, openai_key, qwen_mt_credentials
+from ..server.engine import TranslationSettings
 from ..server.history import inspect_cache
 
 
@@ -33,17 +35,21 @@ def apply(updates):
         raise ValueError("设置包含未知选项。")
     settings = runtime.config()
     for key, value in updates.items():
+        if key == "translation_enhancements":
+            settings[key] = validate_enhancements(value)
+            continue
         if isinstance(value, bool) and key in {"diagnostics", "pot_hotkey", "bilingual"}:
             value = "1" if value else "0"
         if not isinstance(value, (str, int, float)) or isinstance(value, bool):
             raise ValueError(f"无效的设置项 {key}。")
         settings[key] = str(value).strip()
     for key, options in {
-        "asr": {"local", "openai", "compatible", "qwen"}, "qwen_size": {"0.6b", "1.7b"},
+        "asr": {"local", "openai", "compatible", "qwen", "dashscope"}, "qwen_size": {"0.6b", "1.7b"},
         "mt": {"local", "openai", "compatible", "qwen-mt"}, "device": {"cpu", "cuda"},
         "diagnostics": {"0", "1"}, "pot_hotkey": {"0", "1"}, "vad_model": {"silero", "fsmn"},
         "bilingual": {"0", "1"},
         "route": {"asr+mt", "OpenAI AST (English)"}, "qwen_mt_model": QWEN_MT_MODELS,
+        "dashscope_asr_model": DASHSCOPE_ASR_MODELS,
     }.items():
         if settings[key] not in options:
             raise ValueError(f"不支持的设置值 {key}。")
@@ -51,16 +57,14 @@ def apply(updates):
         raise ValueError("请选择字幕目标语言。")
     try:
         numbers = {key: float(settings[key]) for key in (
-            "chunk", "before", "after", "min_speech", "max_speech", "min_silence_ms", "pad_ms", "vad_threshold", "backfill",
-            "translation_before", "translation_after")}
+            "chunk", "before", "after", "min_speech", "max_speech", "min_silence_ms", "pad_ms", "vad_threshold", "backfill")}
     except ValueError as exc:
         raise ValueError("高级时间轴设置需要填写数字。") from exc
     if not (4 <= numbers["chunk"] <= 20 and 0 <= numbers["before"] <= 5 and 0 <= numbers["after"] <= 5
             and 0.2 <= numbers["min_speech"] <= numbers["max_speech"] and 2 <= numbers["max_speech"] <= 20
             and 40 <= numbers["min_silence_ms"] <= 2000
             and 0 <= numbers["pad_ms"] <= 500 and 0 < numbers["vad_threshold"] < 1
-            and 0 <= numbers["backfill"] <= 30 and 0 <= numbers["translation_before"] <= 15
-            and 0 <= numbers["translation_after"] <= 15 and len(settings["translation_prompt"]) <= 1000):
+            and 0 <= numbers["backfill"] <= 30):
         raise ValueError("高级时间轴设置超出支持范围。")
     for key in ("chunk", "min_silence_ms", "pad_ms"):
         if not numbers[key].is_integer():
@@ -70,12 +74,24 @@ def apply(updates):
         raise ValueError("未找到 FFmpeg 和 FFprobe。请使用 Windows 发布包，或为源码运行配置 PATH。")
     if settings["route"] == "OpenAI AST (English)" or "openai" in (settings["asr"], settings["mt"]):
         openai_key(settings["key_file"])
-    if settings["mt"] == "qwen-mt" and settings["route"] != "OpenAI AST (English)":
+    if (settings["mt"] == "qwen-mt" or settings["asr"] == "dashscope") and settings["route"] != "OpenAI AST (English)":
         qwen_mt_credentials(settings["qwen_mt_url"], settings["qwen_mt_key_file"])
     runtime.save_config(settings)
     runtime.PAUSED.unlink(missing_ok=True)
     runtime.background_start(restart=True)
     return status()
+
+
+def validate_enhancements(values):
+    if not isinstance(values, dict):
+        raise ValueError("翻译增强设置格式无效。")
+    for model, value in values.items():
+        if not (model.partition(":")[0] in {"openai", "compatible", "qwen-mt"}
+                and isinstance(value, dict) and value.keys() == {"enabled", "previous_cues", "prompt"}
+                and isinstance(value["enabled"], bool) and isinstance(value["prompt"], str)):
+            raise ValueError("翻译增强设置格式无效。")
+        TranslationSettings(value["previous_cues"], value["prompt"])
+    return values
 
 
 def run_command(command, item=None):
@@ -94,6 +110,17 @@ def run_command(command, item=None):
     if command == "stop":
         runtime.background_stop()
         return {"running": False}
+    if command in {"pot-windows", "pot-start", "pot-stop"}:
+        from ..adapters.potplayer import list_windows
+
+        windows = list_windows()
+        if command == "pot-windows":
+            return {"windows": [{"id": hwnd, "title": title} for hwnd, title in windows]}
+        if not item or not any(str(hwnd) == item for hwnd, _ in windows):
+            raise ValueError("该 PotPlayer 窗口已关闭。")
+        switches = {"pot-start": "--pot-hwnd", "pot-stop": "--pot-stop-hwnd"}
+        runtime.spawn([str(runtime.LAUNCHER), switches[command], item], runtime.DATA / "potplayer.log")
+        return {}
     if command == "integrate":
         if item == "potplayer":
             destination = assets.potplayer_directory() / "Extension" / "Subtitle" / "Translate"
@@ -112,7 +139,8 @@ def run_command(command, item=None):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("status", "install", "apply", "stop", "integrate", "logs", "inspect"))
+    parser.add_argument("command", choices=("status", "install", "apply", "stop", "integrate", "logs", "inspect",
+                                           "pot-windows", "pot-start", "pot-stop"))
     parser.add_argument("item", nargs="?")
     args = parser.parse_args()
     result = {"ok": True}

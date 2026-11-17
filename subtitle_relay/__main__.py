@@ -7,11 +7,12 @@ from dataclasses import asdict
 from pathlib import Path
 
 from .inference.audio import Segmentation, Segmenter, VAD_THRESHOLDS
-from .server.engine import Relay, TranslationSettings
+from .inference.dashscope import DASHSCOPE_ASR_MODELS, DashScopeAudio
+from .server.engine import MAX_CONTEXT_CUES, Relay, TranslationSettings
 from .adapters.players import Mpv, run_adapter
 from .client import RelayClient
 from .server.protocol import serve
-from .inference.providers import (ChatTranslation, FasterWhisper, NllbTranslation, OpenAIWhisper,
+from .inference.providers import (DASHSCOPE_DEFAULT_URL, ChatTranslation, FasterWhisper, NllbTranslation, OpenAIWhisper,
                         QWEN_MT_MODELS, QwenMtTranslation, configure_cuda, openai_client, qwen_mt_client)
 
 
@@ -37,6 +38,7 @@ class ClockPlayer:
 
 
 def make_relay(args):
+    dashscope_url = args.qwen_mt_url.strip().rstrip("/") or DASHSCOPE_DEFAULT_URL
     settings = Segmentation(args.before, args.after, args.max_speech, args.min_silence_ms,
                             args.pad_ms, args.vad_threshold, not args.no_vad, args.backfill, args.min_speech)
     if args.device == "cuda" and (args.asr == "local" or args.mt == "local"):
@@ -50,12 +52,14 @@ def make_relay(args):
         elif args.asr in {"compatible", "qwen"}:
             client = openai_client(endpoint=args.asr_url, endpoint_key="RELAY_ASR_API_KEY")
             recognizer = OpenAIWhisper(client, args.asr_model)
+        elif args.asr == "dashscope":
+            recognizer = DashScopeAudio(dashscope_url, args.qwen_mt_key_file, args.dashscope_asr_model)
         else:
             recognizer = OpenAIWhisper(cloud)
         if args.mt == "local":
             translator = NllbTranslation(args.nllb_model, args.device, min(args.workers, 2))
         elif args.mt == "qwen-mt":
-            translator = QwenMtTranslation(qwen_mt_client(args.qwen_mt_url, args.qwen_mt_key_file),
+            translator = QwenMtTranslation(qwen_mt_client(dashscope_url, args.qwen_mt_key_file),
                                            args.qwen_mt_model)
         else:
             client = cloud if args.mt == "openai" else openai_client(endpoint=args.llm_url)
@@ -68,20 +72,22 @@ def make_relay(args):
     if args.asr in {"compatible", "qwen"} and not args.ast:
         profile.extend([args.asr_url if args.asr == "compatible" else args.qwen_size, args.asr_model])
     if args.mt == "qwen-mt" and not args.ast:
-        profile.extend([args.qwen_mt_model, args.qwen_mt_url.rstrip("/")])
+        profile.extend([args.qwen_mt_model, dashscope_url])
+    if args.asr == "dashscope" and not args.ast:
+        profile.extend([args.dashscope_asr_model, dashscope_url])
     if settings.enabled and args.vad_model != "silero":
         profile.append(args.vad_model)
     return Relay(args.cache, recognizer, translator, profile, args.workers, args.chunk,
                  OpenAIWhisper(cloud) if args.ast else None, Segmenter(settings, args.vad_model),
-                 translation_settings=TranslationSettings(args.translation_before, args.translation_after,
-                                                          args.translation_prompt))
+                 translation_settings=TranslationSettings(args.translation_previous_cues, args.translation_prompt))
 
 
 def main():
     parser = argparse.ArgumentParser(prog="python -m subtitle_relay")
     commands = parser.add_subparsers(dest="mode", required=True)
     server = commands.add_parser("serve")
-    server.add_argument("--asr", choices=["local", "openai", "compatible", "qwen"], default="local")
+    server.add_argument("--asr", choices=["local", "openai", "compatible", "qwen", "dashscope"], default="local")
+    server.add_argument("--dashscope-asr-model", choices=DASHSCOPE_ASR_MODELS, default=DASHSCOPE_ASR_MODELS[0])
     server.add_argument("--qwen-size", choices=["0.6b", "1.7b"], default="1.7b")
     server.add_argument("--qwen-root", type=Path)
     server.add_argument("--asr-url", default="http://127.0.0.1:8000/v1")
@@ -102,8 +108,7 @@ def main():
     server.add_argument("--default-source")
     server.add_argument("--default-target", default="zh")
     server.add_argument("--default-bilingual", action="store_true")
-    server.add_argument("--translation-before", type=float, default=0)
-    server.add_argument("--translation-after", type=float, default=0)
+    server.add_argument("--translation-previous-cues", type=int, default=0, choices=range(MAX_CONTEXT_CUES + 1))
     server.add_argument("--translation-prompt", default="")
     server.add_argument("--pot-hotkey-launcher", type=Path)
     server.add_argument("--cache", default=".relay")
@@ -161,8 +166,7 @@ def main():
                 0.2 <= args.min_speech <= args.max_speech <= 20 and 2 <= args.max_speech and
                 40 <= args.min_silence_ms <= 2000 and
                 0 <= args.pad_ms <= 500 and 0 < args.vad_threshold < 1 and
-                0 <= args.backfill <= 30 and 0 <= args.translation_before <= 15 and
-                0 <= args.translation_after <= 15 and len(args.translation_prompt) <= 1000):
+                0 <= args.backfill <= 30 and len(args.translation_prompt) <= 1000):
             parser.error("invalid VAD parameters or audio context")
         with ExitStack() as resources:
             if args.asr == "qwen" and not args.ast:

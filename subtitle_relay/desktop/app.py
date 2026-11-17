@@ -36,7 +36,8 @@ def gui(initial_media=None, show_request=None):
     ttk.Label(setup, text="Subtitle Relay", font=("Segoe UI", 18, "bold")).grid(row=0, columnspan=3, sticky="w")
     ttk.Label(setup, text="选择模型后启动服务。在 PotPlayer 中按 Ctrl+Alt+J。").grid(
         row=1, columnspan=3, sticky="w", pady=(0, 12))
-    settings = {key: tk.StringVar(value=value) for key, value in config().items() if key in DEFAULTS}
+    settings = {key: tk.StringVar(value=value) for key, value in config().items()
+                if key in DEFAULTS and isinstance(value, str)}
     status = tk.StringVar(value="Checking service…")
     pot_status = tk.StringVar(value="Select a playing window and its local file.")
     starter_process = None
@@ -170,7 +171,7 @@ def gui(initial_media=None, show_request=None):
                     onvalue="1", offvalue="0").grid(row=18, columnspan=2, sticky="w", pady=(8, 0))
 
     def save():
-        save_config({key: value.get() for key, value in settings.items()})
+        save_config({**config(), **{key: value.get() for key, value in settings.items()}})
 
     def start():
         nonlocal starter_process
@@ -451,12 +452,13 @@ def main():
         background_stop()
     elif "--background" in sys.argv or "--restart" in sys.argv:
         background_start(restart="--restart" in sys.argv)
-    elif len(sys.argv) >= 3 and sys.argv[1] in {"--pot-toggle", "--pot-hwnd", "--pot-stop-hwnd"}:
+    elif len(sys.argv) >= 3 and sys.argv[1] in {
+            "--pot-toggle", "--pot-start-file", "--pot-stop-file", "--pot-hwnd", "--pot-stop-hwnd"}:
         try:
-            if sys.argv[1] != "--pot-toggle":
+            if sys.argv[1].endswith("-hwnd"):
                 native_potplayer(foreground=int(sys.argv[2]), disable=sys.argv[1] == "--pot-stop-hwnd")
             else:
-                native_potplayer("".join(sys.argv[2:]).strip('"'))
+                native_potplayer("".join(sys.argv[2:]).strip('"'), disable=sys.argv[1] == "--pot-stop-file")
         except EOFError:
             pass
         except Exception as exc:

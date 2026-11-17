@@ -87,6 +87,16 @@ class Mpv:
             self.command("sub-add", path, "select", "Subtitle Relay", required=True)
         self.subtitle, self.revision = path, revision
 
+    def clear(self):
+        if not self.subtitle:
+            return
+        tracks = self.command("get_property", "track-list") or []
+        old = next((track for track in tracks if track["type"] == "sub"
+                    and track.get("external-filename") == self.subtitle), None)
+        if old is not None:
+            self.command("sub-remove", old["id"])
+        self.subtitle = self.revision = None
+
 
 def run_adapter(player, client, source, target, ahead, interval, stop=None, idle_limit=None,
                 report=None, session=None, seek_interval=None, preferences=None):
@@ -97,6 +107,7 @@ def run_adapter(player, client, source, target, ahead, interval, stop=None, idle
     attached = False
     previous_position = None
     next_poll = fast_until = 0
+    subtitle_generation = None
     try:
         while stop is None or not stop.exists():
             state = player.state()
@@ -147,8 +158,15 @@ def run_adapter(player, client, source, target, ahead, interval, stop=None, idle
                 continue
             if state:
                 disconnected_at = None
-                if response["subtitle"]:
+                generation = response.get("subtitle_generation")
+                has_cues = response.get("subtitle_has_cues", bool(response["subtitle"]))
+                if response["subtitle"] and has_cues:
                     player.publish(response["subtitle"], response["revision"])
+                elif generation and subtitle_generation and generation != subtitle_generation:
+                    clear = getattr(player, "clear", None)
+                    if clear:
+                        clear()
+                subtitle_generation = generation
                 if response["error"] and response["error"] != previous_error:
                     print(response["error"], flush=True)
                 previous_error = response["error"]

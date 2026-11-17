@@ -21,14 +21,14 @@ def silence(seconds):
 
 
 class TranslationContextTest(unittest.TestCase):
-    def test_contextual_seek_reads_both_sides_and_translates_only_owned_cues(self):
+    def test_contextual_seek_sends_only_the_requested_number_of_preceding_cues(self):
         media = Path("movie.mp4")
         segmenter = SimpleNamespace(settings=Segmentation(), iter_spans=lambda _: [
             (0, silence(4)), (4, silence(10)), (14, silence(6)),
         ])
         recognizer = Mock()
         recognizer.recognize.side_effect = [
-            ("ja", [Cue(0.5, 1.5, "previous")]),
+            ("ja", [Cue(0.1, 0.4, "older"), Cue(0.5, 1.5, "previous")]),
             ("ja", [Cue(0.8, 1.6, "one"), Cue(2, 3.4, "two")]),
             ("ja", [Cue(0.4, 1, "following")]),
         ]
@@ -38,13 +38,13 @@ class TranslationContextTest(unittest.TestCase):
         with patch("subtitle_relay.server.engine.extract_audio", return_value=silence(20)) as extract:
             result = translate_chunk(Playback(media, 22, source="ja"), 2, 10, recognizer, translator,
                                      segmenter=segmenter,
-                                     translation_settings=TranslationSettings(4, 6, "Use casual wording"))
+                                     translation_settings=TranslationSettings(1, "Use casual wording"))
 
-        extract.assert_called_once_with(media, 0, 16.0, 20.0)
+        extract.assert_called_once_with(media, 0, 16, 16)
         payload = json.loads(client.chat.completions.create.call_args.kwargs["messages"][1]["content"])
         self.assertEqual(payload, {
             "source": "ja", "target": "zh", "lines": {"0": "one", "1": "two"},
-            "previous": ["previous"], "following": ["following"], "style": "Use casual wording",
+            "previous": ["previous"], "style": "Use casual wording",
         })
         self.assertEqual(result, [Cue(20.8, 21.6, "一", "one", source_language="ja"),
                                   Cue(22, 23.4, "二", "two", source_language="ja")])
@@ -103,10 +103,10 @@ class TranslationContextTest(unittest.TestCase):
                 client = Mock()
                 client.chat.completions.create.return_value = chat_response("你好")
                 translator = QwenMtTranslation(client, model)
-                settings = TranslationSettings(3, 4, prompt).for_translator(translator)
-                self.assertEqual((settings.before, settings.after), (0, 0))
+                settings = TranslationSettings(3, prompt).for_translator(translator)
+                self.assertEqual(settings.previous_cues, 0)
                 self.assertEqual(translator.translate_with_context(["main"], "ja", "zh", previous=["past"],
-                                                                 following=["future"], prompt=prompt), ["你好"])
+                                                                 prompt=prompt), ["你好"])
                 request = client.chat.completions.create.call_args.kwargs
                 self.assertEqual(request["messages"], [{"role": "user", "content": "main"}])
                 domains = request["extra_body"]["translation_options"].get("domains")
@@ -131,8 +131,8 @@ class TranslationContextTest(unittest.TestCase):
                     relay.close()
 
             self.assertEqual(identity(TranslationSettings()), old_key)
-            contextual = identity(TranslationSettings(3, 4, "plain"))
-            self.assertEqual(contextual, identity(TranslationSettings(3.0, 4.0, " plain ")))
+            contextual = identity(TranslationSettings(3, "plain"))
+            self.assertEqual(contextual, identity(TranslationSettings(3, " plain ")))
             self.assertNotEqual(contextual, old_key)
-            self.assertNotEqual(contextual, identity(TranslationSettings(4, 3, "plain")))
-            self.assertNotEqual(contextual, identity(TranslationSettings(3, 4, "formal")))
+            self.assertNotEqual(contextual, identity(TranslationSettings(4, "plain")))
+            self.assertNotEqual(contextual, identity(TranslationSettings(3, "formal")))

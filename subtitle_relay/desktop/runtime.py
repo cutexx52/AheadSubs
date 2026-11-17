@@ -27,15 +27,25 @@ DEFAULTS = {
     "diagnostics": "0",
     "qwen_size": "1.7b", "source": "",
     "target": "zh", "bilingual": "0",
-    "translation_before": "0", "translation_after": "0", "translation_prompt": "",
+    "translation_enhancements": {},
     "asr_url": "http://127.0.0.1:8000/v1", "asr_model": "qwen3-asr",
     "asr": "local", "mt": "local", "device": "cpu", "whisper_model": "small",
     "llm_model": "gpt-4.1-mini", "llm_url": "http://127.0.0.1:11434/v1", "key_file": "",
     "qwen_mt_model": "qwen-mt-flash", "qwen_mt_url": "", "qwen_mt_key_file": "",
+    "dashscope_asr_model": "qwen-audio-3.1-asr-flash",
     "chunk": "8", "before": "2", "after": "2", "min_speech": "3", "max_speech": "12",
     "min_silence_ms": "450", "pad_ms": "80", "vad_threshold": "0.5", "backfill": "4",
     "vad_model": "silero",
 }
+
+
+def enhancement_key(settings):
+    provider = settings["mt"]
+    if provider == "qwen-mt":
+        return f"qwen-mt:{settings['qwen_mt_model']}"
+    if provider in {"openai", "compatible"}:
+        return f"{provider}:{settings['llm_model']}"
+    return None
 
 
 def config():
@@ -49,7 +59,19 @@ def config():
             saved["min_speech"] = str(min(float(saved.get("max_speech", 12)), 3))
         except (TypeError, ValueError):
             pass
-    return {**DEFAULTS, **saved}
+    prompt = str(saved.pop("translation_prompt", "")).strip()
+    context_times = [saved.pop(name, "0") for name in ("translation_before", "translation_after")]
+    settings = {**DEFAULTS, **saved}
+    if "translation_enhancements" not in saved and (key := enhancement_key(settings)):
+        try:
+            context = any(float(value) > 0 for value in context_times)
+        except (TypeError, ValueError):
+            context = False
+        if context or prompt:
+            settings["translation_enhancements"] = {
+                key: {"enabled": True, "previous_cues": 4 if context else 0, "prompt": prompt[:1000]},
+            }
+    return settings
 
 
 def save_config(settings):
@@ -181,7 +203,7 @@ def background_start(on_wait=None, restart=False):
         if settings["bilingual"] == "1":
             args.append("--default-bilingual")
         for name in DEFAULTS:
-            if name in {"source", "target", "bilingual"}:
+            if name in {"source", "target", "bilingual", "translation_enhancements"}:
                 continue
             if name == "pot_hotkey":
                 if settings[name] == "1":
@@ -198,6 +220,10 @@ def background_start(on_wait=None, restart=False):
             value = settings[name]
             if value:
                 args.extend(["--" + name.replace("_", "-"), value])
+        enhancement = settings["translation_enhancements"].get(enhancement_key(settings), {})
+        if enhancement.get("enabled"):
+            args.extend(["--translation-previous-cues", str(enhancement["previous_cues"]),
+                         f"--translation-prompt={enhancement['prompt']}"])
         if settings["asr"] == "qwen":
             args.extend(["--qwen-root", str(QWEN)])
         process = spawn(args)

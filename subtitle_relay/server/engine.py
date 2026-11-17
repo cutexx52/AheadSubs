@@ -20,6 +20,7 @@ from .history import create_history, remember_failed_cues, remember_media
 
 
 BILINGUAL_SUFFIX = "-bilingual-v2"
+MAX_CONTEXT_CUES = 8
 SUBTITLE_LABELS = {
     "ja": "JP", "jpn": "JP", "ko": "KR", "kor": "KR", "en": "EN", "eng": "EN",
     "zh": "CN", "zho": "CN", "zh-cn": "CN", "zh-hans": "CN",
@@ -52,24 +53,20 @@ class Playback:
 
 @dataclass(frozen=True)
 class TranslationSettings:
-    before: float = 0.0
-    after: float = 0.0
+    previous_cues: int = 0
     prompt: str = ""
 
     def __post_init__(self):
-        if not (0 <= self.before <= 15 and 0 <= self.after <= 15):
-            raise ValueError("Translation context must be between 0 and 15 seconds per side")
+        if type(self.previous_cues) is not int or not 0 <= self.previous_cues <= MAX_CONTEXT_CUES:
+            raise ValueError(f"Translation context must be between 0 and {MAX_CONTEXT_CUES} previous cues")
         if len(self.prompt) > 1000:
             raise ValueError("Translation style guidance must be at most 1000 characters")
-        object.__setattr__(self, "before", float(self.before))
-        object.__setattr__(self, "after", float(self.after))
         object.__setattr__(self, "prompt", self.prompt.strip())
 
     def for_translator(self, translator):
         return TranslationSettings(
-            self.before if getattr(translator, "supports_neighbor_context", False) else 0,
-            self.after if getattr(translator, "supports_neighbor_context", False) else 0,
-            self.prompt if getattr(translator, "supports_style_prompt", False) else "",
+            self.previous_cues if getattr(translator, "supports_neighbor_context", False) is True else 0,
+            self.prompt if getattr(translator, "supports_style_prompt", False) is True else "",
         )
 
 
@@ -94,7 +91,7 @@ class TranslationFailure(ValueError):
         self.cues = cues
 
 
-def _translate_cues(cues, translator, language, target, *, previous=(), following=(), prompt=""):
+def _translate_cues(cues, translator, language, target, *, previous=(), prompt=""):
     if not cues or NLLB_LANGUAGES.get(language, language) == NLLB_LANGUAGES.get(target, target):
         return cues
     if len(cues) > 1 and getattr(translator, "per_cue_requests", False) is True:
@@ -102,9 +99,9 @@ def _translate_cues(cues, translator, language, target, *, previous=(), followin
                 for result in _translate_cues([cue], translator, language, target, prompt=prompt)]
     lines = [cue.text for cue in cues]
     try:
-        if previous or following or prompt:
+        if previous or prompt:
             texts = translator.translate_with_context(lines, language, target,
-                                                      previous=previous, following=following, prompt=prompt)
+                                                      previous=previous, prompt=prompt)
         else:
             texts = translator.translate(lines, language, target)
         if len(texts) != len(cues) or any(not isinstance(text, str) or not text.strip() for text in texts):
@@ -117,17 +114,18 @@ def _translate_cues(cues, translator, language, target, *, previous=(), followin
             for cue, text in zip(cues, texts, strict=True)]
 
 
-def _context_lines(cues, *, previous=False):
-    # Keep the closest complete subtitle lines within a small per-side limit.
+def _context_lines(cues, limit, before):
+    # Bound the request by both cue count and text size, keeping the closest lines.
     selected = []
     remaining = 1000
-    ordered = reversed(cues) if previous else iter(cues)
-    for cue in ordered:
-        if len(selected) == 8 or len(cue.text) > remaining:
+    for cue in reversed(cues):
+        if cue.end > before:
+            continue
+        if len(selected) == limit or len(cue.text) > remaining:
             break
         selected.append(cue.text)
         remaining -= len(cue.text)
-    return selected[::-1] if previous else selected
+    return selected[::-1]
 
 
 def translate_chunk(playback, index, chunk, recognizer, translator, speech_translator=None,
@@ -136,25 +134,26 @@ def translate_chunk(playback, index, chunk, recognizer, translator, speech_trans
     stop = start + chunk
     settings = segmenter.settings if segmenter else Segmentation(enabled=False)
     translation = translation_settings.for_translator(None if speech_translator else translator)
-    use_neighbors = bool(translation.before or translation.after)
+    use_neighbors = bool(translation.previous_cues)
     margin = getattr(segmenter, "planning_margin", 0)
-    read_start = max(0, start - max(settings.before + margin, translation.before))
-    read_end = stop + max(settings.after + margin, translation.after)
+    # At a cold seek, a bounded earlier audio window can supply preceding cues.
+    read_start = max(0, start - max(settings.before + margin, translation.previous_cues * 4))
+    read_end = stop + settings.after + margin
     wav = extract_audio(playback.path, playback.audio, read_start, read_end - read_start)
     if len(wav) < 400:
         logging.getLogger(__name__).info("No audio samples start=%.1fs audio_stream=%d", start, playback.audio)
         return []
     translated = []
-    owned, previous, following = [], [], []
+    owned, previous = [], []
     spans = segmenter.iter_spans(wav) if segmenter else ((0, wav),)
     raw_cues = speech_spans = 0
     for offset, speech in spans:
         speech_spans += 1
         base = read_start + offset
         end = base + (len(speech) - 44) / 32000
-        owns_span = start <= (base + end) / 2 < stop
-        if margin and not owns_span and not (
-                use_neighbors and end > start - translation.before and base < stop + translation.after):
+        span_midpoint = (base + end) / 2
+        owns_span = start <= span_midpoint < stop
+        if margin and not owns_span and not (use_neighbors and span_midpoint < start):
             continue
         if speech_translator:
             cues = speech_translator.speech_translate(speech, playback.source, playback.target)
@@ -174,10 +173,8 @@ def translate_chunk(playback, index, chunk, recognizer, translator, speech_trans
                 continue
             if (owns_span if margin else start <= midpoint < stop):
                 current.append(absolute)
-            elif start - translation.before <= midpoint < start:
+            elif use_neighbors and midpoint < start:
                 previous.append(absolute)
-            elif stop <= midpoint < stop + translation.after:
-                following.append(absolute)
         if use_neighbors:
             owned.extend((language, cue) for cue in current)
         elif speech_translator:
@@ -186,12 +183,13 @@ def translate_chunk(playback, index, chunk, recognizer, translator, speech_trans
             translated.extend(_translate_cues(current, translator, language, playback.target,
                                               prompt=translation.prompt))
     if use_neighbors and owned:
-        previous_lines = _context_lines(previous, previous=True)
-        following_lines = _context_lines(following)
         for language, group in groupby(owned, key=lambda item: item[0]):
-            translated.extend(_translate_cues([cue for _, cue in group], translator, language, playback.target,
-                                              previous=previous_lines, following=following_lines,
+            current = [cue for _, cue in group]
+            before = _context_lines(previous, translation.previous_cues, current[0].start)
+            translated.extend(_translate_cues(current, translator, language, playback.target,
+                                              previous=before,
                                               prompt=translation.prompt))
+            previous.extend(current)
     if not translated:
         logging.getLogger(__name__).info("No subtitle start=%.1fs source=%s speech_spans=%d asr_cues=%d",
                                          start, playback.source or "auto", speech_spans, raw_cues)
@@ -262,8 +260,7 @@ class Relay:
         self.speech_translator = speech_translator
         self.segmenter = segmenter
         self.translation_settings = translation_settings.for_translator(None if speech_translator else translator)
-        self.recognition_cache = RecognitionCache(recognizer) if recognizer and (
-            self.translation_settings.before or self.translation_settings.after) else None
+        self.recognition_cache = RecognitionCache(recognizer) if recognizer and self.translation_settings.previous_cues else None
         self.profile, self.workers, self.chunk = profile, workers, chunk
         self.lock = threading.RLock()
         self.db = sqlite3.connect(self.root / "cache.sqlite3", check_same_thread=False)
@@ -293,7 +290,7 @@ class Relay:
         identity = [self.profile, self.chunk, os.path.normcase(str(playback.path)),
                     info.st_size, info.st_mtime_ns, playback.audio, playback.source, playback.target]
         if self.translation_settings != TranslationSettings():
-            identity.append(["translation-context-v1", asdict(self.translation_settings)])
+            identity.append(["translation-context-v2", asdict(self.translation_settings)])
         return hashlib.sha256(json.dumps(identity).encode()).hexdigest()
 
     def _render(self, key, playback):
@@ -357,6 +354,8 @@ class Relay:
                          for cue in json.loads(encoded))
             nearby_rows.close()
             return {"revision": revision, "subtitle": str(path) if revision else None,
+                    "subtitle_generation": path.stem,
+                    "subtitle_has_cues": bool(revision and path.stat().st_size),
                     "ready_ahead": max(0, end - playback.position),
                     "nearby_cues": nearby,
                     "error": error[1] if error else None, "error_code": error[2] if error else None}

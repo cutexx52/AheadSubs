@@ -41,6 +41,8 @@
 {
   "revision": 5,
   "subtitle": "E:/relay/cache/example.srt",
+  "subtitle_generation": "example",
+  "subtitle_has_cues": true,
   "ready_ahead": 16.8,
   "nearby_cues": true,
   "error": null,
@@ -49,6 +51,8 @@
 ```
 
 `revision` 和 `subtitle` 一起标识字幕版本。尚无数据时是 `0` 和 `null`。`ready_ahead` 是从指定位置开始连续处理完成的媒体秒数，包含静音。`nearby_cues` 指示附近已处理区间是否有尚未结束的字幕。`error` 是当前块的错误说明，`error_code` 是用于适配器判定的稳定分类。内容审核导致的单句拦截作为字幕检查记录保存。跳转、换轨或新文件可能使预读余量下降。
+
+`subtitle_generation` 在有效识别、翻译、时间轴配置或双语显示切换后变化，即使新配置还没有字幕。播放器可据此撤下旧字幕，等待本次结果。回到完全相同的处理配置时可复用它自己的缓存。
 
 ## 会话与服务控制
 

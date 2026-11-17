@@ -33,7 +33,7 @@ class QwenMtTest(unittest.TestCase):
             key.write_text("DASHSCOPE_API_KEY=sk-example-file", encoding="utf-8")
             self.assertEqual(qwen_mt_credentials(self.endpoint, key), (self.endpoint, "sk-example-file"))
             key.write_text("LTAIexample\nexample-secret", encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "Qwen-MT"):
+            with self.assertRaisesRegex(ValueError, "百炼"):
                 qwen_mt_credentials(self.endpoint, key)
 
     def test_rejects_lookalike_endpoint(self):
