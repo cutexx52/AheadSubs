@@ -4,6 +4,7 @@ from secrets import compare_digest
 from threading import BoundedSemaphore, Thread
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.error import HTTPError
 from urllib.request import Request, build_opener, ProxyHandler
 from urllib.parse import parse_qs
 
@@ -12,8 +13,8 @@ from .engine import Playback
 
 def playback_from_json(data):
     path = Path(data["path"])
-    if not path.is_absolute() or str(path).startswith(("\\\\", "//")) or not path.is_file():
-        raise ValueError("path must be an absolute local media file")
+    if not path.is_absolute() or not path.is_file():
+        raise ValueError("Choose an accessible file on a local drive or Windows share")
     position = float(data["position"])
     speed = float(data.get("speed", 1))
     ahead = float(data.get("ahead", 20))
@@ -80,7 +81,9 @@ def serve(relay, port, control_token=None):
                     self.reply(200, {})
                 else:
                     self.reply(404, {"error": "unknown route"})
-            except (TypeError, ValueError, KeyError, FileNotFoundError):
+            except ValueError as exc:
+                self.reply(400, {"error": str(exc)})
+            except (TypeError, KeyError, FileNotFoundError):
                 self.reply(400, {"error": "invalid playback request"})
             except PermissionError:
                 self.reply(503, {"error": "subtitle file temporarily in use"})
@@ -129,5 +132,12 @@ class RelayClient:
     def send(self, route, data):
         req = Request(self.url + route, data=json.dumps(data).encode(),
                       headers={"Content-Type": "application/json"})
-        with self.opener.open(req, timeout=5) as result:
-            return json.load(result)
+        try:
+            with self.opener.open(req, timeout=5) as result:
+                return json.load(result)
+        except HTTPError as exc:
+            try:
+                detail = json.load(exc).get("error")
+            except (ValueError, AttributeError):
+                detail = None
+            raise RuntimeError(detail or f"Subtitle Relay HTTP {exc.code}") from exc

@@ -1,5 +1,6 @@
 """Windows setup and playback controls. Run by double-clicking this file."""
 import base64
+import ctypes
 import json
 import msvcrt
 import os
@@ -125,6 +126,81 @@ def install_potplayer(destination):
         (destination / path.name).write_text(script, encoding="utf-8")
 
 
+def native_potplayer(encoded):
+    from subtitle_relay.players import run_adapter
+    from subtitle_relay.potplayer import (PotPlayer, caller_potplayer, current_media,
+                                         find_reload_command, list_windows)
+    from subtitle_relay.protocol import RelayClient
+
+    value = base64.b64decode(encoded)
+    encodings = ("utf-16-le", "utf-8-sig", "mbcs") if b"\0" in value else ("utf-8-sig", "mbcs")
+    filename = None
+    for encoding in encodings:
+        try:
+            candidate = value.decode(encoding).strip('\0\r\n"')
+            if candidate:
+                filename = candidate
+                break
+        except (UnicodeError, OSError, ValueError):
+            continue
+    if filename is None:
+        raise RuntimeError("PotPlayer did not supply a filename.")
+    pid = caller_potplayer()
+    if pid is None:
+        raise RuntimeError("Subtitle Relay could not identify the PotPlayer process that opened it.")
+    windows = list_windows(pid)
+    matching = [window for window in windows if Path(filename).stem.casefold() in window[1].casefold()]
+    if matching:
+        windows = matching
+    elif not windows:
+        # Some builds invoke the extension from a helper process without a playback window.
+        # Restrict the fallback to a unique main window whose title contains the exact filename.
+        windows = [window for window in list_windows()
+                   if Path(filename).name.casefold() in window[1].casefold()]
+    if len(windows) != 1:
+        raise RuntimeError(f"Cannot identify a unique PotPlayer playback window (PID {pid}, "
+                           f"{len(windows)} candidates).")
+    hwnd, _ = windows[0]
+    from ctypes import wintypes
+
+    owner = wintypes.DWORD()
+    user = ctypes.WinDLL("user32")
+    user.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.DWORD)]
+    user.GetWindowThreadProcessId(hwnd, ctypes.byref(owner))
+    pid = owner.value
+    DATA.mkdir(parents=True, exist_ok=True)
+    lock = DATA / f"pot-{pid}-{hwnd}.lock"
+    stop = lock.with_suffix(".stop")
+    with lock.open("a+b") as handle:
+        try:
+            msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+        except OSError:
+            stop.touch()
+            return
+        media = current_media(pid, filename)
+        stop.unlink(missing_ok=True)
+        if not healthy():
+            background_start()
+        deadline = time.monotonic() + 45
+        while not healthy():
+            if stop.exists():
+                return
+            if time.monotonic() >= deadline:
+                raise RuntimeError("Subtitle Relay did not start. See service.log.")
+            time.sleep(0.4)
+        directory = potplayer_directory()
+        executable = directory / "PotPlayerMini64.exe"
+        if not executable.is_file():
+            executable = directory / "PotPlayerMini.exe"
+        reload = find_reload_command(executable)
+        with (DATA / "potplayer.log").open("a", encoding="utf-8") as log:
+            from contextlib import redirect_stdout
+
+            with redirect_stdout(log):
+                player = PotPlayer(hwnd, media, 0, reload)
+                run_adapter(player, RelayClient(PORT), None, "zh", 20, 0.6, stop, idle_limit=4)
+
+
 def gui(initial_media=None):
     from subtitle_relay.potplayer import list_windows
 
@@ -208,7 +284,7 @@ def gui(initial_media=None):
         if CONTROL.is_file() and healthy():
             try:
                 RelayClient(PORT).send("shutdown", {"token": CONTROL.read_text(encoding="ascii")})
-            except OSError:
+            except (OSError, RuntimeError):
                 messagebox.showerror("Subtitle Relay", "This running service is not owned by the settings app.")
 
     def mpv_install():
@@ -256,6 +332,7 @@ def gui(initial_media=None):
     ttk.Label(pot, text="Open a local video in a new PotPlayer window with a live translated subtitle track.",
               wraplength=550).pack(anchor="w", pady=10)
     pot_log = DATA / "potplayer.log"
+    pot_jobs = []
 
     def open_video():
         if not healthy():
@@ -270,7 +347,7 @@ def gui(initial_media=None):
                                                     filetypes=[("Application", "*.exe")])
             if not executable:
                 return
-        processes.append(spawn(["potplayer-open", str(executable), selected, "--target", target.get(),
+        pot_jobs.append(spawn(["potplayer-open", str(executable), selected, "--target", target.get(),
                                 "--audio", audio.get(), "--ahead", ahead.get()], pot_log))
         pot_status.set("Preparing subtitles. PotPlayer will open when the initial buffer is ready.")
 
@@ -312,9 +389,9 @@ def gui(initial_media=None):
                      "--audio", audio.get(), "--ahead", ahead.get()]
         if reload_command:
             arguments.extend(["--reload-command", str(reload_command)])
-        processes.append(spawn(arguments, pot_log))
+        pot_jobs.append(spawn(arguments, pot_log))
         instruction = "The track will refresh automatically." if reload_command else "Use Ctrl+Alt+Y to refresh."
-        pot_status.set(f"Attached. Open the generated SRT with Alt+O. {instruction}")
+        pot_status.set(f"Attached. Relay will load the first translated subtitles. {instruction}")
 
     ttk.Button(pot, text="Select media and start pre-reading…", command=attach).pack(anchor="w", pady=8)
     ttk.Label(pot, textvariable=pot_status, wraplength=550).pack(anchor="w")
@@ -327,6 +404,12 @@ def gui(initial_media=None):
     ttk.Button(footer, text="View service log", command=lambda: os.startfile(LOG) if LOG.exists() else None).pack(side="right")
 
     def tick():
+        for process in pot_jobs[:]:
+            code = process.poll()
+            if code is not None:
+                pot_jobs.remove(process)
+                if code:
+                    pot_status.set(f"PotPlayer action failed ({code}). Open the attachment log for details.")
         if setup_process and setup_process.poll() is not None:
             setup_status.set("Engine dependencies ready" if setup_process.returncode == 0 else
                              f"Setup failed. See {DATA / 'setup.log'}")
@@ -352,22 +435,12 @@ if __name__ == "__main__":
         prepare()
     elif "--background" in sys.argv:
         background_start()
-    elif "--pot-media-b64" in sys.argv:
-        encoded = "".join(sys.argv[sys.argv.index("--pot-media-b64") + 1:]).strip('"')
-        media = None
+    elif len(sys.argv) >= 3 and sys.argv[1] == "--pot-toggle":
         try:
-            value = base64.b64decode(encoded)
-        except ValueError:
-            value = b""
-        encodings = ("utf-16-le", "utf-8-sig", "mbcs") if b"\0" in value else ("utf-8-sig", "mbcs")
-        for encoding in encodings:
-            try:
-                candidate = Path(value.decode(encoding).strip('\0\r\n"'))
-                if candidate.is_absolute() and candidate.is_file():
-                    media = str(candidate)
-                    break
-            except (UnicodeError, OSError):
-                continue
-        gui(media)
+            native_potplayer("".join(sys.argv[2:]).strip('"'))
+        except EOFError:
+            pass
+        except Exception as exc:
+            ctypes.windll.user32.MessageBoxW(None, str(exc), "Subtitle Relay", 0x10)
     else:
         gui()

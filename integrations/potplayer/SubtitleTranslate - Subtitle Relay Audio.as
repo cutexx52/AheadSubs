@@ -1,8 +1,8 @@
-string GetTitle() { return "Subtitle Relay (audio pre-read setup)"; }
+string GetTitle() { return "Subtitle Relay - Start/stop audio pre-read"; }
 string GetVersion() { return "1"; }
-string GetDesc() { return "Open the audio pre-read controls for the current local video."; }
+string GetDesc() { return "Start or stop audio pre-read for the current PotPlayer window."; }
 string GetLoginTitle() { return "Subtitle Relay audio pre-read"; }
-string GetLoginDesc() { return "Click OK to open the controls. No account is needed."; }
+string GetLoginDesc() { return "Click OK to start or stop audio pre-read for this window."; }
 string GetUserText() { return "Optional"; }
 string GetPasswordText() { return ""; }
 array<string> GetSrcLangs() { array<string> languages = {"en"}; return languages; }
@@ -12,7 +12,7 @@ void ServerLogout() {}
 void OpenRelayAudioControls(any@ argument) {
     string encoded;
     if (argument !is null && argument.retrieve(encoded)) {
-        HostExecuteProgram("@RELAY_PYTHONW@", "\"@RELAY_LAUNCHER@\" --pot-media-b64 \"" + encoded + "\"");
+        HostExecuteProgram("@RELAY_PYTHONW@", "\"@RELAY_LAUNCHER@\" --pot-toggle \"" + encoded + "\"");
     }
 }
 

@@ -20,7 +20,7 @@ The service listens on IPv4 loopback, port 8769 by default. The player and servi
 }
 ```
 
-Only `session`, `path` and `position` are required. Audio is the zero-based embedded FFmpeg audio-stream ordinal, not the player's track ID. An omitted or null source enables detection. Each window sends playback updates about twice per second. A new path, track, language, or a discontinuous position supersedes that window's earlier scheduling preferences. A session expires after 10 seconds without updates.
+Only `session`, `path` and `position` are required. The path may be a local disk file or an accessible Windows share (UNC). Audio is the zero-based embedded FFmpeg audio-stream ordinal, not the player's track ID. An omitted or null source enables detection. Each window sends playback updates about twice per second. A new path, track, language, or a discontinuous position supersedes that window's earlier scheduling preferences. A session expires after 10 seconds without updates.
 
 Reply:
 

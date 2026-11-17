@@ -1,5 +1,7 @@
 import ctypes as ct
 import json
+import os
+import struct
 import subprocess
 import time
 from ctypes import wintypes as win
@@ -53,20 +55,26 @@ def find_reload_command(executable):
         kernel.FreeLibrary(module)
 
 
-def list_windows():
+def list_windows(pid=None):
     user = ct.WinDLL("user32", use_last_error=True)
     callback_type = ct.WINFUNCTYPE(win.BOOL, win.HWND, win.LPARAM)
     user.EnumWindows.argtypes = [callback_type, win.LPARAM]
     user.IsWindowVisible.argtypes = [win.HWND]
     user.GetWindowTextW.argtypes = [win.HWND, win.LPWSTR, ct.c_int]
     user.GetClassNameW.argtypes = [win.HWND, win.LPWSTR, ct.c_int]
+    user.GetWindowThreadProcessId.argtypes = [win.HWND, ct.POINTER(win.DWORD)]
     result = []
 
     @callback_type
     def add(hwnd, _):
+        if pid is not None:
+            owner = win.DWORD()
+            user.GetWindowThreadProcessId(hwnd, ct.byref(owner))
+            if owner.value != pid:
+                return True
         kind = ct.create_unicode_buffer(128)
         user.GetClassNameW(hwnd, kind, len(kind))
-        if kind.value in {"PotPlayer64", "PotPlayer"} and user.IsWindowVisible(hwnd):
+        if kind.value in {"PotPlayer64", "PotPlayer"} and (pid is not None or user.IsWindowVisible(hwnd)):
             title = ct.create_unicode_buffer(1024)
             user.GetWindowTextW(hwnd, title, len(title))
             result.append((hwnd, title.value))
@@ -74,6 +82,59 @@ def list_windows():
 
     user.EnumWindows(add, 0)
     return result
+
+
+def caller_potplayer():
+    """Identify the launching PotPlayer through the Python launcher process chain."""
+    class ProcessEntry(ct.Structure):
+        _fields_ = [("size", win.DWORD), ("usage", win.DWORD), ("pid", win.DWORD),
+                    ("heap", ct.c_size_t), ("module", win.DWORD), ("threads", win.DWORD),
+                    ("parent", win.DWORD), ("priority", win.LONG), ("flags", win.DWORD),
+                    ("name", win.WCHAR * 260)]
+
+    kernel = ct.WinDLL("kernel32", use_last_error=True)
+    kernel.CreateToolhelp32Snapshot.argtypes = [win.DWORD, win.DWORD]
+    kernel.CreateToolhelp32Snapshot.restype = win.HANDLE
+    kernel.Process32FirstW.argtypes = [win.HANDLE, ct.POINTER(ProcessEntry)]
+    kernel.Process32NextW.argtypes = kernel.Process32FirstW.argtypes
+    kernel.CloseHandle.argtypes = [win.HANDLE]
+    handle = kernel.CreateToolhelp32Snapshot(2, 0)
+    if handle == ct.c_void_p(-1).value:
+        raise ct.WinError(ct.get_last_error())
+    entries = {}
+    entry = ProcessEntry()
+    entry.size = ct.sizeof(entry)
+    try:
+        found = kernel.Process32FirstW(handle, ct.byref(entry))
+        while found:
+            entries[entry.pid] = (entry.parent, entry.name.casefold())
+            found = kernel.Process32NextW(handle, ct.byref(entry))
+    finally:
+        kernel.CloseHandle(handle)
+    pid = os.getpid()
+    for _ in range(12):
+        pid, name = entries.get(pid, (0, ""))
+        if not pid:
+            break
+        if name.startswith(("potplayermini", "potplayer")):
+            return pid
+    return None
+
+
+def current_media(pid, filename):
+    """Resolve PotPlayer's filename within the calling process's open media files."""
+    import psutil
+
+    hint = Path(filename)
+    if hint.is_absolute() and hint.is_file():
+        return hint
+    candidates = {path for opened in psutil.Process(pid).open_files()
+                  if (path := Path(opened.path)).name.casefold() == hint.name.casefold()
+                  and path.is_file()}
+    if len(candidates) == 1:
+        return candidates.pop()
+    raise RuntimeError("PotPlayer reported only the filename and Relay could not uniquely resolve it. "
+                       "Use the Subtitle Relay helper to attach this file.")
 
 
 class PotPlayer:
@@ -126,11 +187,39 @@ class PotPlayer:
         if self.subtitle != path:
             if Path(path).stat().st_size <= 1:
                 return
-            print(f"Load this external subtitle into the bound PotPlayer window: {path}", flush=True)
+            self.load_subtitle(Path(path))
+            print(f"Loaded subtitle into PotPlayer: {path}", flush=True)
             self.subtitle, self.revision = path, revision
         elif self.revision != revision and self.reload_command is not None:
             self._send(0x111, self.reload_command)
             self.revision = revision
+
+    def load_subtitle(self, path):
+        if self._pid() != self.pid or path.suffix.lower() != ".srt":
+            raise ValueError("The target window or subtitle is no longer available")
+        # Send the shell's standard single-file drop to this HWND, never the active window.
+        data = struct.pack("<IiiII", 20, 0, 0, 0, 1) + (str(path) + "\0\0").encode("utf-16-le")
+        kernel = ct.WinDLL("kernel32", use_last_error=True)
+        kernel.GlobalAlloc.argtypes = [win.UINT, ct.c_size_t]
+        kernel.GlobalAlloc.restype = win.HGLOBAL
+        kernel.GlobalLock.argtypes = [win.HGLOBAL]
+        kernel.GlobalLock.restype = ct.c_void_p
+        kernel.GlobalUnlock.argtypes = [win.HGLOBAL]
+        kernel.GlobalFree.argtypes = [win.HGLOBAL]
+        kernel.GlobalFree.restype = win.HGLOBAL
+        self.user.PostMessageW.argtypes = [win.HWND, win.UINT, win.WPARAM, win.LPARAM]
+        drop = kernel.GlobalAlloc(0x42, len(data))
+        if not drop:
+            raise ct.WinError(ct.get_last_error())
+        address = kernel.GlobalLock(drop)
+        if address:
+            ct.memmove(address, data, len(data))
+            kernel.GlobalUnlock(drop)
+            if self.user.PostMessageW(self.hwnd, 0x233, drop, 0):
+                return
+        error = ct.get_last_error()
+        kernel.GlobalFree(drop)
+        raise ct.WinError(error)
 
 
 def open_with_subtitles(executable, path, client, audio, source, target, ahead, muted=False):
@@ -204,7 +293,7 @@ def open_with_subtitles(executable, path, client, audio, source, target, ahead, 
     finally:
         try:
             client.send("close", {"session": session})
-        except OSError:
+        except (OSError, RuntimeError):
             pass
         if subtitle and (process is None or process.poll() is not None):
             try:

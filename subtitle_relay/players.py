@@ -88,13 +88,15 @@ class Mpv:
         self.subtitle, self.revision = path, revision
 
 
-def run_adapter(player, client, source, target, ahead, interval):
+def run_adapter(player, client, source, target, ahead, interval, stop=None, idle_limit=None):
     session = uuid4().hex
     previous_error = None
+    last_active = time.monotonic()
     try:
-        while True:
+        while stop is None or not stop.exists():
             state = player.state()
             if state:
+                last_active = time.monotonic()
                 response = client.send("playback", {
                     **state, "session": session, "source": source, "target": target, "ahead": ahead,
                 })
@@ -105,9 +107,11 @@ def run_adapter(player, client, source, target, ahead, interval):
                 previous_error = response["error"]
             else:
                 client.send("close", {"session": session})
+                if idle_limit is not None and time.monotonic() - last_active >= idle_limit:
+                    return
             time.sleep(interval)
     finally:
         try:
             client.send("close", {"session": session})
-        except OSError:
+        except (OSError, RuntimeError):
             pass
