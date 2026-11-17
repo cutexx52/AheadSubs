@@ -45,6 +45,7 @@ public partial class MainWindow : Window
         previewMode = preview;
         InitializeComponent();
         LoadAutomationText();
+        InitializeFolderTasks();
         SourceLanguage.ItemsSource = new Choice[] { new("自动识别", ""), new("日语", "ja"),
             new("英语", "en"), new("中文", "zh"), new("韩语", "ko") };
         TargetLanguage.ItemsSource = new Choice[] { new("简体中文", "zh"), new("繁體中文", "zh-TW"),
@@ -90,6 +91,7 @@ public partial class MainWindow : Window
                  "mcp_config":{"mcpServers":{"aheadsubs":{"command":"C:\\AheadSubs\\runtime\\python.exe",
                  "args":["-m","subtitle_relay.cli","mcp","--desktop"]}}}}
                 """)!.AsObject());
+            PreviewFolderTasks();
             return;
         }
         tray.ContextMenuStrip.Items.Add("打开设置", null, (_, _) => Dispatcher.Invoke(ShowSettings));
@@ -171,6 +173,7 @@ public partial class MainWindow : Window
     private async void PageChanged(object sender, SelectionChangedEventArgs e)
     {
         if (e.Source != SettingsPanel || previewMode) return;
+        await SelectFolderTasksPage();
         if (SettingsPanel.SelectedItem == InspectTab && initialized) await Inspect();
         if (SettingsPanel.SelectedItem == AutomationTab) await ChangeAutomation();
         if (initialized && SettingsPanel.SelectedItem == TranslationTab && PresetDisclosure.IsExpanded) await CheckPreset();
@@ -732,10 +735,10 @@ public partial class MainWindow : Window
         VerifyControls();
         Directory.CreateDirectory(directory);
         string[] pages = ["translation", "subtitles", "players", "models", "keys", "advanced", "advanced-vad",
-                          "advanced-read-ahead", "translation-context", "chatgpt-oauth", "automation", "presets"];
+                          "advanced-read-ahead", "translation-context", "chatgpt-oauth", "automation", "presets", "folder-tasks"];
         for (int index = 0; index < pages.Length; index++)
         {
-            SettingsPanel.SelectedIndex = index switch { 8 or 11 => 0, 9 => 4, 10 => 6, _ => Math.Min(index, 5) };
+            SettingsPanel.SelectedIndex = index switch { 8 or 11 => 0, 9 => 4, 10 => 6, 12 => 7, _ => Math.Min(index, 5) };
             if (index is 6 or 7 && AdvancedTab.Content is ScrollViewer advanced)
                 advanced.ScrollToVerticalOffset(index == 6 ? 600 : 1100);
             if (index == 8)

@@ -180,6 +180,10 @@ MESSAGES = {
         "Unknown AheadSubs integration action.",
         "不支持的 AheadSubs 接入操作。",
     ),
+    "error.folder_task_invalid": (
+        "Check the folder rule field {field}.",
+        "请检查目录规则中的 {field} 字段。",
+    ),
 }
 
 

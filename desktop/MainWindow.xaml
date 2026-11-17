@@ -234,6 +234,74 @@
     </StackPanel></Border>
     <TextBlock x:Name="AutomationStatus" Style="{StaticResource Hint}" AutomationProperties.LiveSetting="Polite"/>
    </StackPanel></ScrollViewer></TabItem>
+   <TabItem x:Name="FolderTasksTab" Header="{local:TaskText FolderTitle}">
+    <ScrollViewer Style="{StaticResource PageScroll}"><StackPanel>
+     <TextBlock Text="{local:TaskText FolderTitle}" Style="{StaticResource PageTitle}"/>
+     <TextBlock Text="{local:TaskText FolderIntro}" Style="{StaticResource Hint}" Margin="0,0,0,16"/>
+     <DockPanel Margin="0,0,0,12">
+      <Button x:Name="NewFolderRuleButton" Content="{local:TaskText FolderNew}" Click="NewFolderRule" DockPanel.Dock="Right" Margin="12,0,0,0"/>
+      <ComboBox x:Name="FolderRuleChoice" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="FolderRuleChanged" AutomationProperties.Name="{local:TaskText FolderRules}"/>
+     </DockPanel>
+     <Border x:Name="FolderRuleDetails" Style="{StaticResource Card}"><StackPanel>
+      <TextBlock x:Name="FolderQueueStatus" Style="{StaticResource Hint}" AutomationProperties.LiveSetting="Polite"/>
+      <ScrollViewer MaxHeight="125" VerticalScrollBarVisibility="Auto"><ItemsControl x:Name="FolderQueueItems" Margin="0,6,0,0">
+       <ItemsControl.ItemTemplate><DataTemplate><StackPanel Margin="0,4,0,4">
+        <TextBlock Text="{Binding Path}" TextWrapping="Wrap"/>
+        <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Foreground="#596273" FontSize="12"/>
+       </StackPanel></DataTemplate></ItemsControl.ItemTemplate>
+      </ItemsControl></ScrollViewer>
+      <Button x:Name="FolderRetryButton" Content="{local:TaskText FolderRetry}" Click="RetryFolderJobs" HorizontalAlignment="Left" Visibility="Collapsed"/>
+     </StackPanel></Border>
+     <TextBlock x:Name="FolderActionStatus" Style="{StaticResource Hint}" AutomationProperties.LiveSetting="Polite"/>
+     <Border x:Name="FolderRuleEditor" Style="{StaticResource Card}" Visibility="Collapsed"><StackPanel>
+      <TextBlock Text="{local:TaskText FolderRuleName}" Style="{StaticResource Label}"/>
+      <TextBox x:Name="FolderRuleName" MaxLength="80" AutomationProperties.Name="{local:TaskText FolderRuleName}"/>
+      <TextBlock Text="{local:TaskText FolderPath}" Style="{StaticResource Label}" Margin="0,12,0,6"/>
+      <DockPanel>
+       <Button Content="{local:TaskText FolderBrowse}" Click="BrowseWatchFolder" DockPanel.Dock="Right" Margin="12,0,0,0"/>
+       <TextBox x:Name="FolderRulePath" AutomationProperties.Name="{local:TaskText FolderPath}"/>
+      </DockPanel>
+      <WrapPanel Margin="0,12,0,0">
+       <CheckBox x:Name="FolderRuleEnabled" Content="{local:TaskText FolderEnabled}" Margin="0,0,18,8"/>
+       <CheckBox x:Name="FolderRuleRecursive" Content="{local:TaskText FolderRecursive}" Margin="0,0,18,8"/>
+       <CheckBox x:Name="FolderRuleExisting" Content="{local:TaskText FolderExisting}" Margin="0,0,0,8"/>
+      </WrapPanel>
+      <Expander Header="{local:TaskText FolderFilters}" Margin="0,8,0,8"><StackPanel Margin="0,10,0,0">
+       <TextBlock Text="{local:TaskText FolderRegex}" Style="{StaticResource Label}"/>
+       <TextBox x:Name="FolderRuleRegex" MaxLength="512" AutomationProperties.Name="{local:TaskText FolderRegex}"/>
+       <TextBlock Text="{local:TaskText FolderTypes}" Style="{StaticResource Label}" Margin="0,10,0,6"/>
+       <TextBox x:Name="FolderRuleTypes" MaxLength="300" AutomationProperties.Name="{local:TaskText FolderTypes}"/>
+       <Grid Margin="0,10,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/></Grid.ColumnDefinitions>
+        <StackPanel><TextBlock Text="{local:TaskText FolderMin}" Style="{StaticResource Label}"/><TextBox x:Name="FolderRuleMin" AutomationProperties.Name="{local:TaskText FolderMin}"/></StackPanel>
+        <StackPanel Grid.Column="2"><TextBlock Text="{local:TaskText FolderMax}" Style="{StaticResource Label}"/><TextBox x:Name="FolderRuleMax" AutomationProperties.Name="{local:TaskText FolderMax}"/></StackPanel>
+       </Grid>
+      </StackPanel></Expander>
+      <Expander Header="{local:TaskText FolderSubtitle}" Margin="0,0,0,8"><StackPanel Margin="0,10,0,0">
+       <TextBlock Text="{local:TaskText FolderModels}" Style="{StaticResource Hint}" Margin="0,0,0,10"/>
+       <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/></Grid.ColumnDefinitions>
+        <StackPanel><TextBlock Text="{local:TaskText FolderSource}" Style="{StaticResource Label}"/><ComboBox x:Name="FolderRuleSource" DisplayMemberPath="Label" SelectedValuePath="Value" AutomationProperties.Name="{local:TaskText FolderSource}"/></StackPanel>
+        <StackPanel Grid.Column="2"><TextBlock Text="{local:TaskText FolderTarget}" Style="{StaticResource Label}"/><ComboBox x:Name="FolderRuleTarget" DisplayMemberPath="Label" SelectedValuePath="Value" AutomationProperties.Name="{local:TaskText FolderTarget}"/></StackPanel>
+       </Grid>
+       <Grid Margin="0,10,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/></Grid.ColumnDefinitions>
+        <StackPanel><TextBlock Text="{local:TaskText FolderAudio}" Style="{StaticResource Label}"/><TextBox x:Name="FolderRuleAudio" AutomationProperties.Name="{local:TaskText FolderAudio}"/></StackPanel>
+        <StackPanel Grid.Column="2"><TextBlock Text="{local:TaskText FolderStyle}" Style="{StaticResource Label}"/><ComboBox x:Name="FolderRuleStyle" DisplayMemberPath="Label" SelectedValuePath="Value" AutomationProperties.Name="{local:TaskText FolderStyle}"/></StackPanel>
+       </Grid>
+       <TextBlock Text="{local:TaskText FolderDestination}" Style="{StaticResource Label}" Margin="0,10,0,6"/>
+       <DockPanel><Button Content="{local:TaskText FolderBrowse}" Click="BrowseSubtitleFolder" DockPanel.Dock="Right" Margin="12,0,0,0"/>
+        <TextBox x:Name="FolderRuleDestination" AutomationProperties.Name="{local:TaskText FolderDestination}"/>
+       </DockPanel>
+       <TextBlock Text="{local:TaskText FolderSuffix}" Style="{StaticResource Label}" Margin="0,10,0,6"/>
+       <TextBox x:Name="FolderRuleSuffix" MaxLength="64" AutomationProperties.Name="{local:TaskText FolderSuffix}"/>
+      </StackPanel></Expander>
+      <TextBlock Text="{local:TaskText FolderIdle}" Style="{StaticResource Label}" Margin="0,2,0,6"/>
+      <TextBox x:Name="FolderRuleIdle" AutomationProperties.Name="{local:TaskText FolderIdle}" Width="100" HorizontalAlignment="Left"/>
+      <WrapPanel Margin="0,14,0,0">
+       <Button x:Name="SaveFolderRuleButton" Content="{local:TaskText FolderSave}" Click="SaveFolderRule" Background="#2E59AE" Foreground="White" BorderBrush="#2E59AE"/>
+       <Button x:Name="DeleteFolderRuleButton" Content="{local:TaskText FolderDelete}" Click="DeleteFolderRule"/>
+      </WrapPanel>
+     </StackPanel></Border>
+    </StackPanel></ScrollViewer>
+   </TabItem>
   </TabControl>
   <Border Grid.Row="2" Background="White" BorderBrush="#E3E7ED" BorderThickness="0,1,0,0" Padding="28,14"><StackPanel>
    <TextBlock x:Name="ActionStatus" TextWrapping="Wrap" Margin="176,0,0,8" Visibility="Collapsed" AutomationProperties.LiveSetting="Assertive"/><ProgressBar x:Name="Progress" Height="3" IsIndeterminate="True" Visibility="Collapsed" Margin="176,0,0,10"/>

@@ -178,6 +178,10 @@ def smoke_test(stage, cuda):
         state = json.loads(reply)
         if not state.get("ok") or not state.get("ffmpeg_detected") or "credentials" not in state:
             raise RuntimeError("Bundled desktop control bridge failed its smoke check")
+        reply = subprocess.check_output([python, "-m", "subtitle_relay.desktop.bridge", "folder-tasks"],
+                                        env=env, cwd=stage.parent)
+        if json.loads(reply).get("rules") != []:
+            raise RuntimeError("Bundled folder task bridge failed its smoke check")
         reply = subprocess.check_output([python, "-m", "subtitle_relay.desktop.bridge", "automation", "mcp-enable"],
                                         env=env, cwd=stage.parent)
         config = json.loads(reply)["mcp_config"]["mcpServers"]["aheadsubs"]

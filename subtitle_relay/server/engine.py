@@ -305,6 +305,7 @@ class Relay:
         self.db.commit()
         self.pool = ThreadPoolExecutor(max_workers=workers)
         self.sessions = {}
+        self.background_session = None
         self.inflight = set()
         self.errors = {}
         self.rendered = {}
@@ -359,9 +360,11 @@ class Relay:
             self.rendered[render_key] = revision
         return path, revision
 
-    def update(self, identifier, playback):
+    def update(self, identifier, playback, *, background=False):
         key = self._identity(playback)
         with self.lock:
+            if not background and self.background_session is not None:
+                self.drop(self.background_session)
             previous = self.sessions.get(identifier)
             if previous is None or previous.key != key:
                 remember_media(self.db, key, playback, self.speech_translator is None)
@@ -398,10 +401,23 @@ class Relay:
     def drop(self, identifier):
         with self.lock:
             self.sessions.pop(identifier, None)
+            if identifier == self.background_session:
+                self.background_session = None
 
     def active_sessions(self):
         with self.lock:
-            return len(self.sessions)
+            return len(self.sessions) - (self.background_session in self.sessions)
+
+    def background_idle(self):
+        with self.lock:
+            return self.active_sessions() == 0
+
+    def update_background(self, identifier, playback):
+        with self.lock:
+            if not self.background_idle():
+                return None
+            self.background_session = identifier
+            return self.update(identifier, playback, background=True)
 
     def _run(self):
         while not self.stopping.wait(0.1):
@@ -435,18 +451,28 @@ class Relay:
                     distance = (index - first) * self.chunk / playback.speed if index >= first else 0.5
                     if job not in candidates or distance < candidates[job][0]:
                         candidates[job] = (distance, playback)
+        background = self.background_session in self.sessions
+        limit = 1 if background else self.workers
         for job in sorted(candidates, key=lambda job: candidates[job][0]):
-            if len(self.inflight) >= self.workers:
+            if len(self.inflight) >= limit:
                 break
             self.inflight.add(job)
-            future = self.pool.submit(translate_chunk, candidates[job][1], job[1], self.chunk,
+            playback = candidates[job][1]
+            future = self.pool.submit(translate_chunk, playback, job[1], self.chunk,
                                       self.recognizer, self.translator, self.speech_translator, self.segmenter,
                                       self.translation_settings, self.recognition_cache)
-            future.add_done_callback(lambda result, job=job: self._finish(job, result))
+            future.add_done_callback(lambda result, job=job, media=playback if background else None:
+                                     self._finish(job, result, media))
 
-    def _finish(self, job, future):
+    def _finish(self, job, future, background_media=None):
         with self.lock:
             try:
+                if background_media is not None:
+                    try:
+                        if self._identity(background_media) != job[0]:
+                            return
+                    except OSError:
+                        return
                 cues = future.result()
                 encoded = json.dumps([asdict(cue) for cue in cues], ensure_ascii=False)
                 self.db.execute("INSERT OR REPLACE INTO chunks VALUES (?, ?, ?)", (*job, encoded))

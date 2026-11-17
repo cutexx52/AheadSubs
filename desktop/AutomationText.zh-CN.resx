@@ -28,4 +28,67 @@
   <data name="Copied" xml:space="preserve"><value>已复制 MCP 配置。</value></data>
   <data name="ClipboardUnavailable" xml:space="preserve"><value>暂时无法访问剪贴板，可以选择配置文本手动复制。</value></data>
   <data name="Failed" xml:space="preserve"><value>无法更新接入设置。请检查应用后重试。</value></data>
+  <data name="FolderTitle" xml:space="preserve"><value>自动任务</value></data>
+  <data name="FolderIntro" xml:space="preserve"><value>监控目录中的新增媒体，在播放空闲时生成字幕。</value></data>
+  <data name="FolderNew" xml:space="preserve"><value>添加规则</value></data>
+  <data name="FolderRules" xml:space="preserve"><value>目录规则</value></data>
+  <data name="FolderRetry" xml:space="preserve"><value>重试失败文件</value></data>
+  <data name="FolderRuleName" xml:space="preserve"><value>规则名称（可选）</value></data>
+  <data name="FolderPath" xml:space="preserve"><value>监控目录</value></data>
+  <data name="FolderBrowse" xml:space="preserve"><value>浏览…</value></data>
+  <data name="FolderEnabled" xml:space="preserve"><value>启用此规则</value></data>
+  <data name="FolderRecursive" xml:space="preserve"><value>包含子目录</value></data>
+  <data name="FolderExisting" xml:space="preserve"><value>处理现有文件</value></data>
+  <data name="FolderFilters" xml:space="preserve"><value>文件过滤</value></data>
+  <data name="FolderRegex" xml:space="preserve"><value>文件名正则表达式（可选）</value></data>
+  <data name="FolderTypes" xml:space="preserve"><value>扩展名（用逗号分隔）</value></data>
+  <data name="FolderMin" xml:space="preserve"><value>最小文件大小（MiB）</value></data>
+  <data name="FolderMax" xml:space="preserve"><value>最大文件大小（MiB）</value></data>
+  <data name="FolderSubtitle" xml:space="preserve"><value>字幕配置</value></data>
+  <data name="FolderModels" xml:space="preserve"><value>使用翻译页保存的语音识别和翻译模型。</value></data>
+  <data name="FolderSource" xml:space="preserve"><value>源语言</value></data>
+  <data name="FolderTarget" xml:space="preserve"><value>字幕语言</value></data>
+  <data name="FolderAudio" xml:space="preserve"><value>音轨（1–256）</value></data>
+  <data name="FolderStyle" xml:space="preserve"><value>SRT 内容</value></data>
+  <data name="FolderDestination" xml:space="preserve"><value>输出目录（留空写入媒体同目录）</value></data>
+  <data name="FolderSuffix" xml:space="preserve"><value>文件名后缀（可选），例如 .zh</value></data>
+  <data name="FolderIdle" xml:space="preserve"><value>Windows 输入空闲分钟数（0–120，0 表示仅检查播放）</value></data>
+  <data name="FolderSave" xml:space="preserve"><value>保存规则</value></data>
+  <data name="FolderDelete" xml:space="preserve"><value>删除规则</value></data>
+  <data name="FolderDefault" xml:space="preserve"><value>沿用翻译设置</value></data>
+  <data name="FolderAuto" xml:space="preserve"><value>自动识别</value></data>
+  <data name="FolderTranslated" xml:space="preserve"><value>仅译文</value></data>
+  <data name="FolderBilingual" xml:space="preserve"><value>双语</value></data>
+  <data name="FolderLang_zh" xml:space="preserve"><value>简体中文</value></data>
+  <data name="FolderLang_zh-TW" xml:space="preserve"><value>繁体中文</value></data>
+  <data name="FolderLang_en" xml:space="preserve"><value>英语</value></data>
+  <data name="FolderLang_ja" xml:space="preserve"><value>日语</value></data>
+  <data name="FolderLang_ko" xml:space="preserve"><value>韩语</value></data>
+  <data name="FolderLang_fr" xml:space="preserve"><value>法语</value></data>
+  <data name="FolderLang_de" xml:space="preserve"><value>德语</value></data>
+  <data name="FolderLang_es" xml:space="preserve"><value>西班牙语</value></data>
+  <data name="FolderLoading" xml:space="preserve"><value>正在读取目录规则…</value></data>
+  <data name="FolderSaved" xml:space="preserve"><value>已保存目录规则。</value></data>
+  <data name="FolderRetried" xml:space="preserve"><value>已重新排队失败文件。</value></data>
+  <data name="FolderUnavailable" xml:space="preserve"><value>读取自动任务失败，请稍后重试。</value></data>
+  <data name="FolderStopped" xml:space="preserve"><value>请启动字幕服务以扫描目录并生成字幕。</value></data>
+  <data name="FolderSelect" xml:space="preserve"><value>添加或选择规则以查看队列。</value></data>
+  <data name="FolderPaused" xml:space="preserve"><value>此规则已暂停。</value></data>
+  <data name="FolderCounts" xml:space="preserve"><value>等待 {0:N0} · 进行中 {1:N0} · 已完成 {2:N0} · 失败 {3:N0} · 跳过 {4:N0}</value></data>
+  <data name="FolderRunning" xml:space="preserve"><value>正在生成字幕…</value></data>
+  <data name="FolderFailureCode" xml:space="preserve"><value>字幕生成失败（{0}）。</value></data>
+  <data name="FolderInvalid" xml:space="preserve"><value>请检查「{0}」的值。</value></data>
+  <data name="FolderInvalidSize" xml:space="preserve"><value>最大文件大小必须大于零，并且不小于最小文件大小。</value></data>
+  <data name="FolderIssue_regex_timeout" xml:space="preserve"><value>文件名正则匹配超时，请简化表达式后保存。</value></data>
+  <data name="FolderIssue_folder_unavailable" xml:space="preserve"><value>无法扫描此目录，请检查路径和权限。</value></data>
+  <data name="FolderIssue_output_exists" xml:space="preserve"><value>已有同名 SRT，已跳过。</value></data>
+  <data name="FolderIssue_invalid_media" xml:space="preserve"><value>FFprobe 无法读取媒体时长或音轨。</value></data>
+  <data name="FolderIssue_invalid_audio" xml:space="preserve"><value>媒体中没有所选的音轨。</value></data>
+  <data name="FolderIssue_invalid_output" xml:space="preserve"><value>输出目录或文件名无效。</value></data>
+  <data name="FolderIssue_ffprobe_not_found" xml:space="preserve"><value>找不到 FFprobe。</value></data>
+  <data name="FolderIssue_operation_failed" xml:space="preserve"><value>请检查媒体、输出目录和文件权限。</value></data>
+  <data name="FolderIssue_generation_changed" xml:space="preserve"><value>生成字幕时媒体文件发生变化。</value></data>
+  <data name="FolderIssue_generation_timeout" xml:space="preserve"><value>字幕生成超过 24 小时。</value></data>
+  <data name="FolderIssue_request_timeout" xml:space="preserve"><value>读取媒体超时。</value></data>
+  <data name="FolderIssue_content_blocked" xml:space="preserve"><value>服务提供商返回了内容审核错误。</value></data>
 </root>
