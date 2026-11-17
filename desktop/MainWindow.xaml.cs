@@ -34,6 +34,7 @@ public partial class MainWindow : Window
     private JsonObject integrations = new();
     private JsonArray chatGptAccounts = new();
     private string miniMaxModel = "MiniMax-M3.1-Flash";
+    private bool mcpEnabled, cliInstalled;
     private bool busy, refreshing, initialized, exiting, trayExplained, inspecting, loadingMedia;
     private string previousVad = "silero";
     private sealed record SubtitleRow(string Time, string Original, string Translation);
@@ -82,6 +83,11 @@ public partial class MainWindow : Window
             SubtitleRows.ItemsSource = new SubtitleRow[] { new("00:12.4", "今日はいい天気ですね。", "今天天气真好。"),
                 new("00:16.8", "少し散歩に行きませんか。", "要不要出去散散步？"), new("00:21.2", "いいですね。駅の近くに新しいお店ができたそうです。", "好啊。听说车站附近开了一家新店。") };
             InspectStatus.Text = "预览示例 · 3 条字幕。运行时显示已生成的真实结果。";
+            UpdateAutomation(JsonNode.Parse("""
+                {"mcp_enabled":true,"cli_available":true,"cli_installed":false,
+                 "mcp_config":{"mcpServers":{"aheadsubs":{"command":"C:\\AheadSubs\\runtime\\python.exe",
+                 "args":["-m","subtitle_relay.cli","mcp","--desktop"]}}}}
+                """)!.AsObject());
             return;
         }
         tray.ContextMenuStrip.Items.Add("打开设置", null, (_, _) => Dispatcher.Invoke(ShowSettings));
@@ -162,8 +168,62 @@ public partial class MainWindow : Window
 
     private async void PageChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (e.Source == SettingsPanel && SettingsPanel.SelectedItem == InspectTab && initialized && !previewMode)
-            await Inspect();
+        if (e.Source != SettingsPanel || previewMode) return;
+        if (SettingsPanel.SelectedItem == InspectTab && initialized) await Inspect();
+        if (SettingsPanel.SelectedItem == AutomationTab) await ChangeAutomation();
+    }
+
+    private void UpdateAutomation(JsonObject result)
+    {
+        mcpEnabled = result["mcp_enabled"]?.GetValue<bool>() == true;
+        cliInstalled = result["cli_installed"]?.GetValue<bool>() == true;
+        bool cliAvailable = result["cli_available"]?.GetValue<bool>() == true;
+        McpStatus.Text = mcpEnabled ? "已开启" : "已关闭";
+        McpToggle.Content = mcpEnabled ? "关闭 MCP 接入" : "开启 MCP 接入";
+        McpToggle.IsEnabled = true;
+        CopyMcpButton.IsEnabled = mcpEnabled;
+        McpConfiguration.Visibility = mcpEnabled ? Visibility.Visible : Visibility.Collapsed;
+        McpConfiguration.Text = mcpEnabled ? result["mcp_config"]?.ToJsonString(
+            new System.Text.Json.JsonSerializerOptions { WriteIndented = true }) ?? "" : "";
+        CliStatus.Text = cliInstalled ? "已添加到 PATH" : "未安装";
+        CliToggle.Content = cliInstalled ? "从 PATH 移除" : "安装 CLI";
+        CliToggle.IsEnabled = cliAvailable;
+        if (!cliAvailable) CliHint.Text = "源码运行时，在项目目录执行 python -m pip install . 安装 CLI。";
+    }
+
+    private async Task ChangeAutomation(string? action = null, string success = "")
+    {
+        McpToggle.IsEnabled = CopyMcpButton.IsEnabled = CliToggle.IsEnabled = false;
+        try
+        {
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+            UpdateAutomation(await bridge.Run("automation", action, cancellationToken: timeout.Token));
+            AutomationStatus.Text = success;
+        }
+        catch (Exception ex)
+        {
+            AutomationStatus.Text = Friendly(ex);
+            if (action is not null) await ChangeAutomation(success: AutomationStatus.Text);
+        }
+    }
+
+    private async void ToggleMcp(object sender, RoutedEventArgs e) => await ChangeAutomation(
+        mcpEnabled ? "mcp-disable" : "mcp-enable", mcpEnabled ? "已关闭 MCP 接入。" : "已开启。复制配置后重新连接客户端。");
+
+    private async void ToggleCli(object sender, RoutedEventArgs e) => await ChangeAutomation(
+        cliInstalled ? "cli-remove" : "cli-install", cliInstalled ? "已从用户 PATH 移除。" : "已添加到用户 PATH。请重新打开终端。");
+
+    private void CopyMcpConfig(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            System.Windows.Clipboard.SetText(McpConfiguration.Text);
+            AutomationStatus.Text = "已复制 MCP 配置。";
+        }
+        catch (System.Runtime.InteropServices.ExternalException)
+        {
+            AutomationStatus.Text = "暂时无法访问剪贴板，可以选择配置文本手动复制。";
+        }
     }
 
     private void LoadControls()
@@ -644,10 +704,10 @@ public partial class MainWindow : Window
         VerifyControls();
         Directory.CreateDirectory(directory);
         string[] pages = ["translation", "subtitles", "players", "models", "keys", "advanced", "advanced-vad",
-                          "advanced-read-ahead", "translation-context", "chatgpt-oauth"];
+                          "advanced-read-ahead", "translation-context", "chatgpt-oauth", "automation"];
         for (int index = 0; index < pages.Length; index++)
         {
-            SettingsPanel.SelectedIndex = index switch { 8 => 0, 9 => 4, _ => Math.Min(index, 5) };
+            SettingsPanel.SelectedIndex = index switch { 8 => 0, 9 => 4, 10 => 6, _ => Math.Min(index, 5) };
             if (index is 6 or 7 && AdvancedTab.Content is ScrollViewer advanced)
                 advanced.ScrollToVerticalOffset(index == 6 ? 600 : 1100);
             if (index == 8)
