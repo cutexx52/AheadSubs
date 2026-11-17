@@ -62,6 +62,31 @@ class DiagnosticsTest(unittest.TestCase):
             self.assertFalse((hub / "models--Systran--faster-whisper-small").exists())
             self.assertTrue((hub / "models--Adom4600--nllb-200-distilled-600M-ct2-int8").exists())
 
+    def test_apply_minimax_with_protected_key_and_context_limit(self):
+        from subtitle_relay.desktop import bridge, credentials, runtime
+        from subtitle_relay.inference.providers import MINIMAX_MODEL
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            enhancement_key = f"minimax:{MINIMAX_MODEL}"
+            enhancements = {"enabled": True, "previous_cues": 2, "prompt": "", "context_chars": 120}
+            test_key = "sk-test-minimax"
+            with patch.object(runtime, "DATA", root), patch.object(runtime, "CONFIG", root / "settings.json"), \
+                    patch.object(runtime, "PAUSED", root / "paused"), patch.object(runtime, "service_health", return_value=None), \
+                    patch.object(runtime, "background_start") as start, patch.object(bridge.shutil, "which", return_value="ffmpeg"):
+                status = bridge.apply({
+                    "mt": "minimax",
+                    "credentials": {"minimax": {"mode": "direct", "value": test_key}},
+                    "translation_enhancements": {enhancement_key: enhancements},
+                })
+                start.assert_called_once_with(restart=True)
+                self.assertEqual(runtime.enhancement_key(runtime.config()), enhancement_key)
+                self.assertEqual(status["settings"]["translation_enhancements"][enhancement_key], enhancements)
+                self.assertEqual(credentials.resolve(runtime.config(), "minimax"), test_key)
+                self.assertEqual(status["credentials"]["minimax"]["mode"], "direct")
+                self.assertNotIn(test_key, json.dumps(status))
+                self.assertNotIn(test_key, runtime.CONFIG.read_text(encoding="utf-8"))
+
     def test_typed_credentials_are_encrypted_and_redacted_by_the_bridge(self):
         from subtitle_relay.desktop import bridge, credentials, runtime
 

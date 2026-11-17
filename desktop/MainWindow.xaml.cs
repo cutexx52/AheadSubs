@@ -33,6 +33,8 @@ public partial class MainWindow : Window
     private JsonObject settings = new();
     private JsonObject models = new();
     private JsonObject integrations = new();
+    private JsonArray chatGptAccounts = new();
+    private string miniMaxModel = "MiniMax-M3.1-Flash";
     private bool busy, refreshing, initialized, exiting, trayExplained, inspecting, loadingMedia;
     private string previousVad = "silero";
     private sealed record SubtitleRow(string Time, string Original, string Translation);
@@ -47,8 +49,9 @@ public partial class MainWindow : Window
             new("日语", "ja"), new("英语", "en"), new("韩语", "ko"), new("法语", "fr"), new("德语", "de"), new("西班牙语", "es") };
         InitializeSetup();
         Vad.ItemsSource = new Choice[] { new("Silero · 默认", "silero"), new("阿里 FSMN · 可选", "fsmn") };
-        CloudProvider.ItemsSource = new Choice[] { new("阿里云百炼 · Qwen", "dashscope"),
-            new("OpenAI", "openai"), new("自定义兼容接口", "compatible") };
+        CloudProvider.ItemsSource = new Choice[] { new("阿里云百炼 · API Key", "dashscope"),
+            new("OpenAI · API Key", "openai"), new("ChatGPT 订阅 · OAuth", "chatgpt"),
+            new("MiniMax · API Key", "minimax"), new("自定义兼容接口 · API Key", "compatible") };
         CloudProvider.SelectedIndex = 0;
         DashScopeSpeech.ItemsSource = DashScopeSpeechModels;
         DashScopeTranslation.ItemsSource = DashScopeTranslationModels;
@@ -104,7 +107,7 @@ public partial class MainWindow : Window
     private void GoKeys(object sender, RoutedEventArgs e)
     {
         string speech = Selected(SpeechModel), mt = Selected(TranslationModel);
-        CloudProvider.SelectedValue = IsDashScopeSpeech(speech) || mt.StartsWith("qwen-mt-", StringComparison.Ordinal)
+        CloudProvider.SelectedValue = mt is "chatgpt" or "minimax" ? mt : IsDashScopeSpeech(speech) || mt.StartsWith("qwen-mt-", StringComparison.Ordinal)
             ? "dashscope" : speech == "compatible" || mt == "compatible" ? "compatible" : "openai";
         SettingsPanel.SelectedItem = KeysTab;
     }
@@ -177,6 +180,7 @@ public partial class MainWindow : Window
         LlmModel.Text = Setting("llm_model");
         WhisperDevice.SelectedValue = Setting("asr_device") is { Length: > 0 } asrDevice ? asrDevice : Setting("device", "cpu");
         NllbDevice.SelectedValue = Setting("mt_device") is { Length: > 0 } mtDevice ? mtDevice : Setting("device", "cpu");
+        LoadChatGptAccounts(chatGptAccounts, Setting("chatgpt_account"), Setting("chatgpt_model"));
         PopulateModels();
         SourceLanguage.SelectedValue = Setting("source"); TargetLanguage.SelectedValue = Setting("target", "zh");
         Bilingual.IsChecked = Setting("bilingual", "0") is "1" or "true" or "True";
@@ -239,16 +243,23 @@ public partial class MainWindow : Window
             if (loadSettings || !initialized)
             {
                 settings = result["settings"] as JsonObject ?? new();
+                chatGptAccounts = result["chatgpt_accounts"] as JsonArray ?? new();
+                miniMaxModel = result["minimax_model"]?.ToString() ?? miniMaxModel;
                 LoadControls();
                 LoadKeys(result["credentials"]);
                 initialized = true;
             }
-            else if (previousModels != models.ToJsonString())
+            else
             {
-                string speech = Selected(SpeechModel), translation = Selected(TranslationModel);
-                PopulateModels();
-                if (speech.Length > 0) SpeechModel.SelectedValue = speech;
-                if (translation.Length > 0) TranslationModel.SelectedValue = translation;
+                if (result["chatgpt_accounts"] is JsonArray accounts && !JsonNode.DeepEquals(chatGptAccounts, accounts))
+                    LoadChatGptAccounts(accounts, Selected(ChatGptAccount), Selected(ChatGptModel));
+                if (previousModels != models.ToJsonString())
+                {
+                    string speech = Selected(SpeechModel), translation = Selected(TranslationModel);
+                    PopulateModels();
+                    if (speech.Length > 0) SpeechModel.SelectedValue = speech;
+                    if (translation.Length > 0) TranslationModel.SelectedValue = translation;
+                }
             }
             UpdateModelDownloads();
             if (PresetDisclosure.IsExpanded) UpdatePresetGuide();
@@ -280,6 +291,8 @@ public partial class MainWindow : Window
         if (Installed("nllb")) translationOptions.Add(new("[本地] NLLB-200 600M INT8 · CPU / CUDA", "nllb"));
         translationOptions.AddRange(DashScopeTranslationModels);
         translationOptions.Add(new("[云端] OpenAI GPT-4.1 mini", "gpt-4.1-mini"));
+        translationOptions.Add(new("[云端] ChatGPT 订阅", "chatgpt"));
+        translationOptions.Add(new("[云端] " + miniMaxModel, "minimax"));
         if (Setting("mt") == "openai" && !translationOptions.Any(m => m.Value == translation))
             translationOptions.Add(new("[云端] OpenAI " + translation, translation));
         if (translation == "compatible") translationOptions.Add(new("[自定义] 已配置的翻译 API", "compatible"));
@@ -302,6 +315,8 @@ public partial class MainWindow : Window
         bool contextual = mt.Length > 0 && mt != "nllb" && !qwen;
         bool styleOnly = mt is "qwen-mt-flash" or "qwen-mt-plus";
         string? key = mt == "compatible" ? "compatible:" + LlmModel.Text.Trim()
+            : mt == "chatgpt" ? (Selected(ChatGptModel) is { Length: > 0 } model ? "chatgpt:" + model : null)
+            : mt == "minimax" ? "minimax:" + miniMaxModel
             : contextual ? "openai:" + mt : styleOnly ? "qwen-mt:" + mt : null;
         if (enhancementModel != key)
         {
@@ -320,7 +335,9 @@ public partial class MainWindow : Window
         TranslationCapabilityHint.Text = contextual
             ? "参考前文有助于译准指代和术语，也可能增加 token 用量和延迟。片段数填 0 时只用提示词。"
             : "用英文提示词指定领域或字幕风格。";
-        TranslationHint.Text = mt == "nllb" ? "本地运行"
+        TranslationHint.Text = mt == "chatgpt" ? "使用 ChatGPT 订阅额度 · " + (ChatGptModel.SelectedItem is Choice modelChoice ? modelChoice.Label : "请先登录并选择模型")
+            : mt == "minimax" ? "用量由 MiniMax Key 类型决定。"
+            : mt == "nllb" ? "本地运行"
             : mt.Length == 0 ? "请选择已安装的本地模型，或使用自己的云端 API 账户。"
             : "";
         UpdateCompute();
@@ -437,7 +454,9 @@ public partial class MainWindow : Window
             ["vad_threshold"] = VadThreshold.Text.Trim(), ["backfill"] = Backfill.Text.Trim(), ["min_speech"] = MinSpeech.Text.Trim(),
             ["asr"] = IsDashScopeSpeech(speech) ? "dashscope"
                 : speech.StartsWith("qwen-") ? "qwen" : speech == "whisper-small" ? "local" : speech,
-            ["mt"] = translation == "nllb" ? "local" : translation.StartsWith("qwen-mt-") ? "qwen-mt" : translation == "compatible" ? "compatible" : "openai",
+            ["mt"] = translation == "nllb" ? "local" : translation.StartsWith("qwen-mt-") ? "qwen-mt"
+                : translation is "compatible" or "chatgpt" or "minimax" ? translation : "openai",
+            ["chatgpt_account"] = Selected(ChatGptAccount), ["chatgpt_model"] = Selected(ChatGptModel),
             ["credentials"] = CollectKeyEdits(),
             ["qwen_mt_url"] = QwenUrl.Text.Trim(), ["diagnostics"] = Diagnostics.IsChecked == true ? "1" : "0",
             ["chunk"] = ChunkSeconds.Text.Trim(), ["max_speech"] = MaxSpeech.Text.Trim(), ["vad_model"] = Selected(Vad),
@@ -449,7 +468,7 @@ public partial class MainWindow : Window
         else if (speech.StartsWith("qwen-")) value["qwen_size"] = speech[5..];
         if (speech == "whisper-small") value["whisper_model"] = "small";
         if (translation.StartsWith("qwen-mt-")) value["qwen_mt_model"] = translation;
-        else if (translation is not "nllb" and not "compatible") value["llm_model"] = translation;
+        else if (translation is not "nllb" and not "compatible" and not "chatgpt" and not "minimax") value["llm_model"] = translation;
         else if (translation == "compatible") value["llm_model"] = LlmModel.Text.Trim();
         return value;
     }
@@ -554,6 +573,7 @@ public partial class MainWindow : Window
     {
         yield return ("openai", OpenAiKey);
         yield return ("dashscope", QwenKey);
+        yield return ("minimax", MiniMaxKey);
         yield return ("compatible-asr", CustomAsrKey);
         yield return ("compatible-mt", CustomMtKey);
     }
@@ -630,10 +650,10 @@ public partial class MainWindow : Window
         VerifyControls();
         Directory.CreateDirectory(directory);
         string[] pages = ["translation", "subtitles", "players", "models", "keys", "advanced", "advanced-vad",
-                          "advanced-read-ahead", "translation-context", "presets"];
+                          "advanced-read-ahead", "translation-context", "chatgpt-oauth", "presets"];
         for (int index = 0; index < pages.Length; index++)
         {
-            SettingsPanel.SelectedIndex = index >= 8 ? 0 : Math.Min(index, 5);
+            SettingsPanel.SelectedIndex = index switch { 8 or 10 => 0, 9 => 4, _ => Math.Min(index, 5) };
             if (index is 6 or 7 && AdvancedTab.Content is ScrollViewer advanced)
                 advanced.ScrollToVerticalOffset(index == 6 ? 600 : 1100);
             if (index == 8)
@@ -642,7 +662,8 @@ public partial class MainWindow : Window
                 TranslationEnhancement.IsExpanded = true;
                 TranslationScroll.ScrollToVerticalOffset(320);
             }
-            if (index == 9)
+            if (index == 9) CloudProvider.SelectedValue = "chatgpt";
+            if (index == 10)
             {
                 TranslationModel.SelectedValue = "qwen-mt-flash";
                 TranslationEnhancement.IsExpanded = false;
@@ -741,6 +762,20 @@ public partial class MainWindow : Window
         VadThreshold.Text = "0.61"; Vad.SelectedValue = "silero";
         Require(VadThreshold.Text == "0.61", "preserve custom VAD threshold");
         VadThreshold.Text = "0.5";
+        LoadChatGptAccounts(JsonNode.Parse("""
+            [{"id":"oaiapp_test","email":"demo@example.com","connected":true,
+              "models":[{"id":"test-model","name":"Test Model"}]}]
+            """)!.AsArray(), "oaiapp_test", "test-model");
+        CloudProvider.SelectedValue = "chatgpt";
+        TranslationModel.SelectedValue = "chatgpt";
+        values = CollectSettings();
+        Require(ChatGptUse.IsEnabled && TranslationHint.Text.Contains("Test Model")
+            && values["mt"]?.ToString() == "chatgpt" && values["chatgpt_account"]?.ToString() == "oaiapp_test"
+            && values["chatgpt_model"]?.ToString() == "test-model", "ChatGPT account and model selection");
+        TranslationModel.SelectedValue = "minimax";
+        Require(CollectSettings()["mt"]?.ToString() == "minimax", "MiniMax text route");
+        CloudProvider.SelectedValue = "dashscope";
+        TranslationModel.SelectedValue = "qwen-mt-flash";
     }
 
     private static void SelectCustom(System.Windows.Controls.ComboBox box, string label)
@@ -760,8 +795,96 @@ public partial class MainWindow : Window
         string provider = Selected(CloudProvider);
         QwenMtPanel.Visibility = provider == "dashscope" ? Visibility.Visible : Visibility.Collapsed;
         OpenAiPanel.Visibility = provider == "openai" ? Visibility.Visible : Visibility.Collapsed;
+        ChatGptPanel.Visibility = provider == "chatgpt" ? Visibility.Visible : Visibility.Collapsed;
+        MiniMaxPanel.Visibility = provider == "minimax" ? Visibility.Visible : Visibility.Collapsed;
         CustomCloudPanel.Visibility = provider == "compatible" ? Visibility.Visible : Visibility.Collapsed;
     }
+
+    private void LoadChatGptAccounts(JsonArray accounts, string account, string model)
+    {
+        chatGptAccounts = accounts;
+        var choices = accounts.OfType<JsonObject>().Select(profile =>
+        {
+            string id = profile["id"]?.ToString() ?? "";
+            string email = profile["email"]?.ToString() ?? "ChatGPT";
+            return new Choice($"{email} · {id[^Math.Min(6, id.Length)..]}", id);
+        }).ToList();
+        ChatGptAccount.ItemsSource = choices;
+        ChatGptAccount.SelectedValue = account;
+        if (account.Length == 0 && choices.Count > 0) ChatGptAccount.SelectedIndex = 0;
+        UpdateChatGptAccount();
+        if (model.Length > 0 && ChatGptModel.ItemsSource is IEnumerable<Choice> models
+            && models.Any(choice => choice.Value == model))
+            ChatGptModel.SelectedValue = model;
+    }
+
+    private void ChatGptAccountChanged(object sender, SelectionChangedEventArgs e) => UpdateChatGptAccount();
+
+    private void UpdateChatGptAccount()
+    {
+        if (ChatGptModel is null || ChatGptUse is null) return;
+        string id = Selected(ChatGptAccount);
+        var profile = chatGptAccounts.OfType<JsonObject>().FirstOrDefault(item => item["id"]?.ToString() == id);
+        bool connected = profile?["connected"]?.GetValue<bool>() == true;
+        var choices = (profile?["models"] as JsonArray ?? new()).OfType<JsonObject>()
+            .Select(item => new Choice(item["name"]?.ToString() ?? "", item["id"]?.ToString() ?? "")).ToList();
+        ChatGptModel.ItemsSource = choices;
+        ChatGptModel.SelectedIndex = choices.Count > 0 ? 0 : -1;
+        ChatGptStatus.Text = connected
+            ? choices.Count > 0 ? "ChatGPT 订阅已授权。" : "ChatGPT 订阅已授权，请刷新模型。"
+            : id.Length > 0 ? "请重新授权使用 ChatGPT 订阅。" : "请在浏览器中登录并授权使用订阅。";
+        ChatGptReauthorize.IsEnabled = id.Length > 0;
+        ChatGptSignOut.IsEnabled = connected;
+        ChatGptReloadModels.IsEnabled = connected;
+        ChatGptUse.IsEnabled = connected && choices.Count > 0;
+        UpdateContext();
+    }
+
+    private async Task ChatGptAction(string command, string? account, string progress)
+    {
+        if (busy || previewMode) return;
+        busy = true; SetBusy(true); ActionStatus.Text = progress; ActionStatus.Visibility = Visibility.Visible;
+        ActionStatus.Foreground = System.Windows.Media.Brushes.DimGray;
+        try
+        {
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(command == "chatgpt-login" ? 245 : 90));
+            var result = await bridge.Run(command, account, cancellationToken: timeout.Token);
+            string model = Selected(ChatGptModel);
+            LoadChatGptAccounts(result["accounts"] as JsonArray ?? new(),
+                result["selected"]?.ToString() ?? account ?? "", model);
+            ActionStatus.Text = result["notice"]?.ToString() ?? (command == "chatgpt-logout"
+                ? result["revoked"]?.GetValue<bool>() == true ? "已退出 ChatGPT。" : "已在本机退出。请在 ChatGPT 设置中确认已撤销授权。"
+                : ChatGptStatus.Text);
+        }
+        catch (Exception ex)
+        {
+            ActionStatus.Text = Friendly(ex);
+            ActionStatus.Foreground = System.Windows.Media.Brushes.Firebrick;
+            try
+            {
+                using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                var result = await bridge.Run("chatgpt-status", cancellationToken: timeout.Token);
+                LoadChatGptAccounts(result["accounts"] as JsonArray ?? new(),
+                    Selected(ChatGptAccount), Selected(ChatGptModel));
+            }
+            catch (Exception) { }
+        }
+        finally { busy = false; SetBusy(false); }
+    }
+
+    private async void ChatGptLogin(object sender, RoutedEventArgs e) => await ChatGptAction(
+        "chatgpt-login", sender == ChatGptReauthorize ? Selected(ChatGptAccount) : null, "请在浏览器中完成 ChatGPT 登录和授权…");
+    private async void ChatGptLogout(object sender, RoutedEventArgs e) => await ChatGptAction(
+        "chatgpt-logout", Selected(ChatGptAccount), "正在退出 ChatGPT…");
+    private async void ChatGptRefreshModels(object sender, RoutedEventArgs e) => await ChatGptAction(
+        "chatgpt-models", Selected(ChatGptAccount), "正在读取 ChatGPT 模型…");
+    private void ChatGptUsage(object sender, RoutedEventArgs e) => Process.Start(
+        new ProcessStartInfo("https://chatgpt.com/settings/usage") { UseShellExecute = true });
+    private void ChooseChatGptTranslation(object sender, RoutedEventArgs e)
+    { TranslationModel.SelectedValue = "chatgpt"; SettingsPanel.SelectedItem = TranslationTab; }
+
+    private void ChooseMiniMaxTranslation(object sender, RoutedEventArgs e)
+    { TranslationModel.SelectedValue = "minimax"; SettingsPanel.SelectedItem = TranslationTab; }
 
     private void ChooseDashScopeSpeech(object sender, RoutedEventArgs e)
     { SpeechModel.SelectedValue = Selected(DashScopeSpeech); SettingsPanel.SelectedItem = TranslationTab; }

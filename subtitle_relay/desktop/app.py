@@ -18,7 +18,9 @@ def gui(initial_media=None, show_request=None):
 
     from subtitle_relay.adapters.potplayer import list_windows
     from subtitle_relay.desktop.tray import SettingsTray
-    from subtitle_relay.inference.providers import QWEN_MT_MODELS, openai_key, qwen_mt_credentials
+    from subtitle_relay.desktop.bridge import validate_chatgpt
+    from subtitle_relay.desktop.credentials import public_state, resolve
+    from subtitle_relay.inference.providers import MINIMAX_MODEL, QWEN_MT_MODELS, openai_key, qwen_mt_credentials
 
     root = tk.Tk()
     root.title(f"AheadSubs — {Path(initial_media).name}" if initial_media else "AheadSubs")
@@ -67,6 +69,10 @@ def gui(initial_media=None, show_request=None):
                  **dict.fromkeys(openai_models, "openai"),
                  **dict.fromkeys(qwen_mt_models, "qwen-mt"),
                  "[自定义] 文本翻译 API": "compatible"}
+    if settings["chatgpt_account"].get() and settings["chatgpt_model"].get():
+        mt_models[f"[远程] ChatGPT 订阅 · {settings['chatgpt_model'].get()}"] = "chatgpt"
+    if public_state(config())["minimax"]["mode"] != "default" or os.getenv("MINIMAX_API_KEY"):
+        mt_models[f"[远程] {MINIMAX_MODEL}"] = "minimax"
     speech = tk.StringVar(value=next((label for label, kind in asr_models.items()
                                      if kind == settings["asr"].get() and
                                      (kind != "qwen" or QWEN_LABELS[label] == settings["qwen_size"].get())), ""))
@@ -198,6 +204,10 @@ def gui(initial_media=None, show_request=None):
                 openai_key(settings["key_file"].get())
             if settings["mt"].get() == "qwen-mt" and settings["route"].get() != "OpenAI AST (English)":
                 qwen_mt_credentials(settings["qwen_mt_url"].get(), settings["qwen_mt_key_file"].get())
+            if settings["mt"].get() == "chatgpt" and settings["route"].get() != "OpenAI AST (English)":
+                validate_chatgpt(settings["chatgpt_account"].get(), settings["chatgpt_model"].get())
+            if settings["mt"].get() == "minimax" and settings["route"].get() != "OpenAI AST (English)":
+                resolve(config(), "minimax")
         except ValueError as exc:
             model_status.set(str(exc))
             return

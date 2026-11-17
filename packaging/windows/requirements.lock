@@ -3,8 +3,10 @@ annotated-types==0.8.0
 anyio==4.16.0
 av==18.1.0
 certifi==2026.10.23
+cffi==2.1.1
 click==8.5.1
 colorama==0.4.6
+cryptography==50.0.2
 ctranslate2==4.9.0
 faster-whisper==1.2.1
 filelock==4.2.10
@@ -25,8 +27,10 @@ packaging==26.3
 Pillow==13.0.0
 protobuf==7.36.2
 psutil==7.2.2
+pycparser==3.12
 pydantic==2.14.3
 pydantic_core==2.50.4
+PyJWT==2.15.1
 pystray==0.19.5
 PyYAML==6.0.3
 six==1.17.0
