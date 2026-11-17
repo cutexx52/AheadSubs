@@ -1,9 +1,11 @@
 AheadSubs original project code is licensed under the MIT License in LICENSE.
 Third-party software, model weights and services retain their own terms.
 
-This package uses FFmpeg and may include LGPL components, including pystray
-and FFmpeg libraries inside PyAV. CUDA variants include proprietary NVIDIA
-runtime components. NLLB model weights are separately downloaded and subject
+The Windows package uses FFmpeg under LGPL v3 or later and includes its notices
+under notices/ffmpeg. The accompanying FFmpeg source ZIP includes the exact
+source, build recipe and winpthreads source package. The package also includes
+LGPL-licensed pystray. CUDA variants include proprietary NVIDIA runtime
+components. NLLB model weights are separately downloaded and subject
 to the original model's noncommercial terms. The project MIT license does
 not override any of these licenses or grant additional model/service rights.
 

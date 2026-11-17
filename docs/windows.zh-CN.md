@@ -11,7 +11,7 @@
 - **标准版**包含 CPU 所需组件，也支持兼容硬件上的 Qwen3-ASR Vulkan 路线。
 - **CUDA 版**的文件名含 `-cuda`，额外包含 faster-whisper 与 NLLB 所用的 NVIDIA CUDA 运行库。仍需可用的 NVIDIA 驱动。
 
-发布包自带 Python 运行时、FFmpeg 和 FFprobe。模型需要首次下载，Windows GPU 驱动由系统或厂商安装。完全本地的配置在模型准备好后无需配置 API 密钥。如果启动时提示缺少 Visual C++ 运行库，请安装微软的 x64 Redistributable。维护者构建和发布步骤见[打包文档](../packaging/README.zh-CN.md)。[微软运行库下载](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist)
+发布包自带 Python 运行时及一套 LGPL FFmpeg 和 FFprobe，用于探测本地媒体并提取音轨。相应源码和构建说明随二进制发布。语音识别和翻译模型在设置时下载，云端处理使用服务凭据。GPU 推理需要另行安装兼容驱动。如提示缺少 Visual C++ 运行库，请安装微软 x64 Redistributable。构建和发布步骤见[打包文档](../packaging/README.zh-CN.md)。[微软运行库下载](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist)
 
 ## 检查更新
 

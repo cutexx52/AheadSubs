@@ -34,6 +34,12 @@ Type: dirifempty; Name: "{userprograms}\Local Video Subtitle Translator"
 Type: files; Name: "{userdesktop}\Local Video Subtitle Translator.lnk"
 Type: files; Name: "{app}\Local Video Subtitle Translator.exe"
 Type: files; Name: "{app}\UI\LocalVideoSubtitleTranslator.exe"
+; Upgrades remove the older PyAV payload and its native FFmpeg build.
+Type: filesandordirs; Name: "{app}\runtime\Lib\site-packages\av"
+Type: filesandordirs; Name: "{app}\runtime\Lib\site-packages\av.libs"
+Type: filesandordirs; Name: "{app}\runtime\Lib\site-packages\av-*.dist-info"
+Type: files; Name: "{app}\runtime\Lib\site-packages\ctranslate2\cudnn64_9.dll"
+Type: files; Name: "{app}\notices\ffmpeg\LICENSE.txt"
 #if IncludesCuda == "no"
 ; These directories contain only vendor libraries staged by the CUDA package.
 Type: filesandordirs; Name: "{app}\runtime\Lib\site-packages\nvidia\cublas"

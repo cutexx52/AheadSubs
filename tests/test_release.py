@@ -1,5 +1,6 @@
 import importlib.util
 from datetime import datetime, timedelta, timezone
+import hashlib
 from pathlib import Path
 import unittest
 from unittest.mock import patch
@@ -33,7 +34,7 @@ class ReleaseTests(unittest.TestCase):
         assets = [{"name": n, "size": 42, "state": "uploaded"} for n in release.asset_names(tag)]
         release.validate_assets(tag, assets)
         with self.assertRaises(RuntimeError):
-            release.validate_assets(tag, assets[:-1])
+            release.validate_assets(tag, [a for a in assets if a["name"] != release.source_asset(tag)])
         assets[0]["size"] = 2**31
         with self.assertRaises(RuntimeError):
             release.validate_assets(tag, assets)
@@ -117,15 +118,40 @@ class ReleaseTests(unittest.TestCase):
         tag = "v0.1.0"
         api.return_value = [[{"tag_name": tag, "draft": True, "body": f"<!-- aheadsubs-source:{sha} -->"}]]
         with tempfile.TemporaryDirectory() as folder, patch.object(release, "ROOT", Path(folder)):
-            dist = Path(folder) / "dist"
-            dist.mkdir()
-            stem = "aheadsubs-v0.1.0-windows-x64"
-            (dist / f"{stem}-setup.exe").write_bytes(b"test")
-            (dist / f"{stem}-portable.zip").write_bytes(b"test")
-            (dist / f"{stem}-SHA256.txt").write_text(f"{'0'*64}  {stem}-setup.exe\n", encoding="ascii")
-            with self.assertRaises(RuntimeError):
+            dist = self.make_distribution(Path(folder), tag, "")
+            (dist / release.source_asset(tag)).write_bytes(b"wrong source")
+            with self.assertRaisesRegex(RuntimeError, "Checksum mismatch"):
                 release.upload(tag, sha)
         run.assert_not_called()
+
+    def make_distribution(self, folder, tag, flavor):
+        dist = folder / "dist"
+        dist.mkdir()
+        names = release.variant_assets(tag, flavor) | {release.source_asset(tag)}
+        manifest, = (name for name in names if name.endswith("-SHA256.txt"))
+        checksums = []
+        for name in sorted(names - {manifest}):
+            contents = name.encode("ascii")
+            (dist / name).write_bytes(contents)
+            checksums.append(f"{hashlib.sha256(contents).hexdigest()}  {name}\n")
+        (dist / manifest).write_text("".join(checksums), encoding="ascii")
+        return dist
+
+    @patch.dict(os.environ, {"GITHUB_REPOSITORY": "owner/repo"})
+    @patch.object(release, "run")
+    @patch.object(release, "api")
+    def test_both_variants_check_source_but_only_standard_uploads_it(self, api, run):
+        sha, tag = "a" * 40, "v0.1.0"
+        api.return_value = [[{"tag_name": tag, "draft": True, "body": f"<!-- aheadsubs-source:{sha} -->"}]]
+        for flavor in ("", "-cuda"):
+            with self.subTest(flavor=flavor), tempfile.TemporaryDirectory() as folder, patch.object(release, "ROOT", Path(folder)):
+                self.make_distribution(Path(folder), tag, flavor)
+                release.upload(tag, sha)
+                uploaded = {Path(arg).name for arg in run.call_args.args[4:-3]}
+                expected = release.variant_assets(tag, flavor)
+                if not flavor:
+                    expected.add(release.source_asset(tag))
+                self.assertEqual(uploaded, expected)
 
     @patch.dict(os.environ, {"GITHUB_REPOSITORY": "owner/repo"})
     @patch.object(release, "api")

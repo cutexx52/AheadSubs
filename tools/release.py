@@ -53,15 +53,23 @@ def preview_due(releases, now, changed):
     return True, "Application changed and the release interval is satisfied."
 
 
+def source_asset(tag):
+    return f"aheadsubs-{tag}-windows-x64-ffmpeg-source.zip"
+
+
+def variant_assets(tag, flavor):
+    stem = f"aheadsubs-{tag}-windows-x64{flavor}"
+    return {f"{stem}{suffix}" for suffix in ("-setup.exe", "-portable.zip", "-SHA256.txt")}
+
+
 def asset_names(tag):
-    stem = f"aheadsubs-{tag}-windows-x64"
-    return {f"{stem}{flavor}{suffix}" for flavor in ("", "-cuda")
-            for suffix in ("-setup.exe", "-portable.zip", "-SHA256.txt")}
+    return variant_assets(tag, "") | variant_assets(tag, "-cuda") | {source_asset(tag)}
 
 
 def validate_assets(tag, assets):
-    if {a["name"] for a in assets} != asset_names(tag) or len(assets) != 6:
-        raise RuntimeError("Expected exactly two installers, two archives and two checksum files")
+    expected = asset_names(tag)
+    if {a["name"] for a in assets} != expected or len(assets) != len(expected):
+        raise RuntimeError("Expected both Windows variants, their checksums and the FFmpeg corresponding source")
     if any(a.get("state") != "uploaded" or not 0 < a["size"] < 2**31 for a in assets):
         raise RuntimeError("Assets must be uploaded, nonempty and below GitHub's 2 GiB limit")
 
@@ -128,8 +136,13 @@ def draft(tag, sha):
             raise RuntimeError("Refusing to overwrite a public or unrelated release")
         return
     notes = api(f"repos/{repo}/releases/generate-notes", "-f", f"tag_name={tag}", "-f", f"target_commitish={sha}")["body"]
+    source_url = f"https://github.com/{repo}/releases/download/{tag}/{source_asset(tag)}"
+    ffmpeg_notice = ("The Windows packages include FFmpeg under LGPL v3 or later. "
+                     f"[Corresponding source and build instructions]({source_url}).\n\n"
+                     "Windows 安装包包含按 LGPL v3 或更新版本授权的 FFmpeg。"
+                     f"[对应源码和构建说明]({source_url})。")
     args = ["gh", "release", "create", tag, "--repo", repo, "--target", sha,
-            "--draft", "--title", f"AheadSubs {tag}", "--notes", f"{marker}\n\n{notes}"]
+            "--draft", "--title", f"AheadSubs {tag}", "--notes", f"{marker}\n\n{ffmpeg_notice}\n\n{notes}"]
     if "-" in tag:
         args += ["--prerelease"]
     run(*args)
@@ -142,27 +155,29 @@ def upload(tag, sha):
         raise RuntimeError("Upload target must be our draft at the planned commit")
     files = sorted((ROOT / "dist").glob("*"))
     names = {p.name for p in files}
-    expected = asset_names(tag)
-    if len(files) != 3 or not names <= expected:
-        raise RuntimeError("Expected one flavor's installer, archive and checksum file")
-    manifests = [p for p in files if p.name.endswith("-SHA256.txt")]
-    if len(manifests) != 1:
-        raise RuntimeError("Missing checksum manifest")
+    source = source_asset(tag)
+    flavor = next((f for f in ("", "-cuda") if names == variant_assets(tag, f) | {source}), None)
+    if flavor is None:
+        raise RuntimeError("Expected one variant's installer, archive, checksum and FFmpeg source")
+    manifest, = (p for p in files if p.name.endswith("-SHA256.txt"))
     checked = set()
-    for line in manifests[0].read_text(encoding="ascii").splitlines():
+    for line in manifest.read_text(encoding="ascii").splitlines():
         digest, name = line.split("  ", 1)
-        if name not in names or name.endswith("-SHA256.txt"):
+        if name not in names or name == manifest.name or name in checked:
             raise RuntimeError("Invalid checksum filename")
         with (ROOT / "dist" / name).open("rb") as f:
             if hashlib.file_digest(f, "sha256").hexdigest() != digest:
                 raise RuntimeError("Checksum mismatch")
         checked.add(name)
-    if checked != names - {manifests[0].name}:
+    if checked != names - {manifest.name}:
         raise RuntimeError("Incomplete checksum coverage")
     if any(not 0 < p.stat().st_size < 2**31 for p in files):
         raise RuntimeError("Release files must be nonempty and below 2 GiB")
-    run("gh", "release", "upload", tag, *map(str, files), "--repo", repo, "--clobber")
-    print("Verified and uploaded:", ", ".join(sorted(names)))
+    # Both manifests cover the deterministic source ZIP. Only the standard job
+    # uploads it, so parallel uploads cannot overwrite each other's source.
+    uploads = [p for p in files if not flavor or p.name != source]
+    run("gh", "release", "upload", tag, *map(str, uploads), "--repo", repo, "--clobber")
+    print("Verified and uploaded:", ", ".join(p.name for p in uploads))
 
 
 def publish_release(tag, sha):
