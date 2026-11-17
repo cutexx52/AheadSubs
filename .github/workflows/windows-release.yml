@@ -3,19 +3,78 @@ name: Windows bundles
 on:
   push:
     tags: ['v*']
+  schedule:
+    - cron: '17 2 * * *'
   workflow_dispatch:
     inputs:
+      mode:
+        description: 'Verify packages only, or check whether a preview is due'
+        type: choice
+        options: [verify, preview]
+        default: verify
       version:
-        description: 'Distribution version, such as 0.1.0-rc.1'
-        required: true
+        description: 'Version for verification builds (preview mode chooses its own)'
+        default: '0.1.0-check'
         type: string
 
 permissions:
   contents: read
 
+concurrency:
+  group: windows-releases
+  cancel-in-progress: false
+
 jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      build: ${{ steps.plan.outputs.build }}
+      publish: ${{ steps.plan.outputs.publish }}
+      sha: ${{ steps.plan.outputs.sha }}
+      tag: ${{ steps.plan.outputs.tag }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.11'
+      - id: plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_MODE: ${{ inputs.mode }}
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: python tools/release.py plan
+
+  draft:
+    needs: plan
+    if: needs.plan.outputs.build == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ needs.plan.outputs.sha }}
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.11'
+      - if: needs.plan.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.plan.outputs.tag }}
+          RELEASE_SHA: ${{ needs.plan.outputs.sha }}
+        run: python tools/release.py draft
+
   bundle:
+    needs: [plan, draft]
     strategy:
+      fail-fast: false
       matrix:
         include:
           - flavor: standard
@@ -23,11 +82,16 @@ jobs:
           - flavor: cuda
             flags: '--cuda'
     runs-on: windows-2025
+    timeout-minutes: 45
+    permissions:
+      contents: write
     defaults:
       run:
-        shell: cmd
+        shell: pwsh
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ needs.plan.outputs.sha }}
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: '3.11'
@@ -37,43 +101,39 @@ jobs:
           dotnet-version: '10.0.x'
       - run: python -m pip install .
       - run: python -m unittest discover -s tests -v
-      - name: Stage and verify the distribution
+      - name: Build and verify installation
         env:
-          SUBTITLE_RELAY_RELEASE_VERSION: ${{ inputs.version || github.ref_name }}
+          SUBTITLE_RELAY_RELEASE_VERSION: ${{ needs.plan.outputs.tag }}
           RELEASE_FLAGS: ${{ matrix.flags }}
-        run: python packaging\windows\build.py --native --verify-install %RELEASE_FLAGS%
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
-        with:
-          name: windows-x64-${{ matrix.flavor }}
-          path: dist/*
-          if-no-files-found: error
-          compression-level: 0
+        run: |
+          $buildArgs = @('--native', '--verify-install')
+          if ($env:RELEASE_FLAGS -eq '--cuda') { $buildArgs += '--cuda' }
+          python packaging/windows/build.py @buildArgs
+      - name: Upload verified files directly to the draft release
+        if: needs.plan.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.plan.outputs.tag }}
+          RELEASE_SHA: ${{ needs.plan.outputs.sha }}
+        run: python tools/release.py upload
 
   release:
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    needs: bundle
+    needs: [plan, bundle]
+    if: needs.plan.outputs.publish == 'true'
     runs-on: ubuntu-24.04
+    timeout-minutes: 5
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
-          pattern: windows-x64-*
-          path: dist
-          merge-multiple: true
-      - name: Publish tagged GitHub release
-        shell: bash
+          ref: ${{ needs.plan.outputs.sha }}
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.11'
+      - name: Publish only the complete release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          shopt -s nullglob
-          files=(dist/*.exe dist/*.zip dist/*-SHA256.txt)
-          if (( ${#files[@]} != 6 )); then
-            echo "Expected two installers, two portable archives, and two checksum files." >&2
-            exit 1
-          fi
-          options=(--verify-tag --generate-notes)
-          if [[ "$GITHUB_REF_NAME" == *-* ]]; then
-            options+=(--prerelease)
-          fi
-          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" "${options[@]}" "${files[@]}"
+          RELEASE_TAG: ${{ needs.plan.outputs.tag }}
+          RELEASE_SHA: ${{ needs.plan.outputs.sha }}
+        run: python tools/release.py publish

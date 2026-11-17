@@ -1,0 +1,188 @@
+"""Budget-aware release planning and draft publication; uses only stdlib and gh."""
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timedelta, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+import tomllib
+
+ROOT = Path(__file__).resolve().parents[1]
+VERSION = re.compile(r"v?\d+\.\d+\.\d+(?:-[A-Za-z0-9]+(?:[.-][A-Za-z0-9]+)*)?\Z")
+# Documentation and tests do not change shipped behavior. Unknown files default to relevant.
+DOC_NAMES = {".github/pull_request_template.md", ".github/copilot-instructions.md"}
+
+
+def run(*args):
+    return subprocess.check_output(args, cwd=ROOT, text=True, encoding="utf-8").strip()
+
+
+def api(route, *args):
+    return json.loads(run("gh", "api", route, *args))
+
+
+def relevant(path):
+    return not (path.endswith(".md") or path.startswith(("docs/", "tests/")) or path in DOC_NAMES)
+
+
+def published(releases):
+    return sorted((r for r in releases if not r["draft"] and r.get("published_at")),
+                  key=lambda r: r["published_at"], reverse=True)
+
+
+def preview_due(releases, now, changed):
+    history = published(releases)
+    if history:
+        last = datetime.fromisoformat(history[0]["published_at"].replace("Z", "+00:00"))
+        if now - last < timedelta(hours=72):
+            return False, "Last successful release was less than 72 hours ago."
+    if not any(relevant(p) for p in changed):
+        return False, "No distributed application changes since the last release."
+    return True, "Application changed and the release interval is satisfied."
+
+
+def asset_names(tag):
+    stem = f"aheadsubs-{tag}-windows-x64"
+    return {f"{stem}{flavor}{suffix}" for flavor in ("", "-cuda")
+            for suffix in ("-setup.exe", "-portable.zip", "-SHA256.txt")}
+
+
+def validate_assets(tag, assets):
+    if {a["name"] for a in assets} != asset_names(tag) or len(assets) != 6:
+        raise RuntimeError("Expected exactly two installers, two archives and two checksum files")
+    if any(a.get("state") != "uploaded" or not 0 < a["size"] < 2**31 for a in assets):
+        raise RuntimeError("Assets must be uploaded, nonempty and below GitHub's 2 GiB limit")
+
+
+def output(values):
+    for key, value in values.items():
+        print(f"{key}={value}")
+    if os.environ.get("GITHUB_OUTPUT"):
+        with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+            for key, value in values.items():
+                f.write(f"{key}={value}\n")
+
+
+def plan():
+    repo = os.environ["GITHUB_REPOSITORY"]
+    event = os.environ["GITHUB_EVENT_NAME"]
+    sha = run("git", "rev-parse", "HEAD")
+    metadata = api(f"repos/{repo}")
+    if metadata["private"]:
+        output({"build": "false", "reason": "Private repository: automatic builds disabled for budget safety."})
+        return
+    preview = event == "schedule" or os.environ.get("RELEASE_MODE") == "preview"
+    publish = preview or event == "push"
+    if preview:
+        if sha != api(f"repos/{repo}/commits/{metadata['default_branch']}")["sha"]:
+            raise RuntimeError("Previews may only use the current default branch commit")
+        pages = api(f"repos/{repo}/releases?per_page=100", "--paginate", "--slurp")
+        history = published([r for page in pages for r in page])
+        if history:
+            baseline = history[0]["tag_name"]
+            # checkout fetches full history and tags; reject missing/non-ancestor release bases.
+            run("git", "merge-base", "--is-ancestor", baseline, sha)
+            changed = run("git", "diff", "--name-only", baseline, sha).splitlines()
+        else:
+            changed = run("git", "ls-files").splitlines()
+        now = datetime.now(timezone.utc)
+        due, reason = preview_due(history, now, changed)
+        if not due:
+            output({"build": "false", "reason": reason})
+            return
+        runs = api(f"repos/{repo}/actions/workflows/ci.yml/runs?head_sha={sha}&event=push&per_page=100")["workflow_runs"]
+        if not runs or runs[0]["status"] != "completed" or runs[0]["conclusion"] != "success":
+            output({"build": "false", "reason": "Waiting for successful default-branch CI at this exact commit."})
+            return
+        version = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
+        # Commit identity makes failure retries idempotent, even on a later day.
+        tag = f"v{version.split('-')[0]}-preview.{sha[:12]}"
+    else:
+        tag = os.environ.get("GITHUB_REF_NAME", "") if event == "push" else os.environ["RELEASE_VERSION"]
+        tag = "v" + tag.removeprefix("v")
+    if not VERSION.fullmatch(tag):
+        raise RuntimeError("Invalid release version")
+    output({"build": "true", "publish": str(publish).lower(), "sha": sha,
+            "tag": tag, "prerelease": str("-" in tag).lower()})
+
+
+def draft(tag, sha):
+    repo = os.environ["GITHUB_REPOSITORY"]
+    # Enumerate instead of interpreting every API failure as a missing release.
+    pages = api(f"repos/{repo}/releases?per_page=100", "--paginate", "--slurp")
+    existing = next((r for page in pages for r in page if r["tag_name"] == tag), None)
+    marker = f"<!-- aheadsubs-source:{sha} -->"
+    if existing:
+        if not existing["draft"] or marker not in (existing.get("body") or ""):
+            raise RuntimeError("Refusing to overwrite a public or unrelated release")
+        return
+    notes = api(f"repos/{repo}/releases/generate-notes", "-f", f"tag_name={tag}", "-f", f"target_commitish={sha}")["body"]
+    args = ["gh", "release", "create", tag, "--repo", repo, "--target", sha,
+            "--draft", "--title", f"AheadSubs {tag}", "--notes", f"{marker}\n\n{notes}"]
+    if "-" in tag:
+        args += ["--prerelease"]
+    run(*args)
+
+
+def upload(tag, sha):
+    repo = os.environ["GITHUB_REPOSITORY"]
+    release = api(f"repos/{repo}/releases/tags/{tag}")
+    if not release["draft"] or f"<!-- aheadsubs-source:{sha} -->" not in release["body"]:
+        raise RuntimeError("Upload target must be our draft at the planned commit")
+    files = sorted((ROOT / "dist").glob("*"))
+    names = {p.name for p in files}
+    expected = asset_names(tag)
+    if len(files) != 3 or not names <= expected:
+        raise RuntimeError("Expected one flavor's installer, archive and checksum file")
+    manifests = [p for p in files if p.name.endswith("-SHA256.txt")]
+    if len(manifests) != 1:
+        raise RuntimeError("Missing checksum manifest")
+    checked = set()
+    for line in manifests[0].read_text(encoding="ascii").splitlines():
+        digest, name = line.split("  ", 1)
+        if name not in names or name.endswith("-SHA256.txt"):
+            raise RuntimeError("Invalid checksum filename")
+        with (ROOT / "dist" / name).open("rb") as f:
+            if hashlib.file_digest(f, "sha256").hexdigest() != digest:
+                raise RuntimeError("Checksum mismatch")
+        checked.add(name)
+    if checked != names - {manifests[0].name}:
+        raise RuntimeError("Incomplete checksum coverage")
+    if any(not 0 < p.stat().st_size < 2**31 for p in files):
+        raise RuntimeError("Release files must be nonempty and below 2 GiB")
+    run("gh", "release", "upload", tag, *map(str, files), "--repo", repo, "--clobber")
+    print("Verified and uploaded:", ", ".join(sorted(names)))
+
+
+def publish_release(tag, sha):
+    repo = os.environ["GITHUB_REPOSITORY"]
+    release = api(f"repos/{repo}/releases/tags/{tag}")
+    if not release["draft"] or f"<!-- aheadsubs-source:{sha} -->" not in release["body"]:
+        raise RuntimeError("Release is not the expected draft")
+    validate_assets(tag, release["assets"])
+    # For existing stable tags, verify they still point at the built commit.
+    refs = run("git", "ls-remote", "origin", f"refs/tags/{tag}", f"refs/tags/{tag}^{{}}").splitlines()
+    if refs:
+        target = next((line.split()[0] for line in refs if line.endswith("^{}")), refs[0].split()[0])
+        if target != sha:
+            raise RuntimeError("Release tag no longer matches the built commit")
+    run("gh", "release", "edit", tag, "--repo", repo, "--draft=false",
+        "--latest=false" if "-" in tag else "--latest")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("command", choices=("plan", "draft", "upload", "publish"))
+    parser.add_argument("--tag", default=os.environ.get("RELEASE_TAG"))
+    parser.add_argument("--sha", default=os.environ.get("RELEASE_SHA"))
+    args = parser.parse_args()
+    if args.command == "plan":
+        plan()
+    else:
+        if not args.tag or not VERSION.fullmatch(args.tag) or not re.fullmatch(r"[0-9a-f]{40}", args.sha or ""):
+            parser.error("Valid tag and full source SHA required")
+        {"draft": draft, "upload": upload, "publish": publish_release}[args.command](args.tag, args.sha)
