@@ -16,8 +16,8 @@ import zipfile
 
 SCRIPTS = Path(__file__).resolve().parent
 ROOT = SCRIPTS.parents[1]
-APP = "Local Video Subtitle Translator"
-SLUG = "local-video-subtitle-translator"
+APP = "AheadSubs"
+SLUG = "aheadsubs"
 FFMPEG_RELEASE = "https://github.com/FFmpeg-Builds/FFmpeg-Builds/releases/tag/autobuild-2026-10-31-12-59"
 FFMPEG_URL = FFMPEG_RELEASE.replace("/tag/", "/download/") + "/ffmpeg-n8.1.3-27-g8dca1586f4-win64-lgpl-shared-8.1.zip"
 FFMPEG_SHA256 = "5cef7bc48e513f3cee7c881e8b2999d835541edb1846c3e89443a67f8f8556ab"
@@ -139,7 +139,7 @@ def stage_app(stage, dotnet):
     if dotnet:
         run(dotnet, "publish", WPF_PROJECT, "-c", "Release", "-r", "win-x64", "--self-contained", "true",
             "-p:DebugType=None", "-p:DebugSymbols=false", "-o", stage / "UI", cwd=ROOT)
-        if not (stage / "UI" / "LocalVideoSubtitleTranslator.exe").is_file():
+        if not (stage / "UI" / "AheadSubs.exe").is_file():
             raise RuntimeError("Native desktop entry point is absent from publish output")
 
 
@@ -167,7 +167,7 @@ def smoke_test(stage, cuda):
         reply = subprocess.check_output([python, "-m", "subtitle_relay.desktop.bridge", "status"],
                                         env={**env, "LOCALAPPDATA": data}, cwd=stage.parent)
         state = json.loads(reply)
-        if not state.get("ok") or not state.get("ffmpeg_detected") or "models" not in state:
+        if not state.get("ok") or not state.get("ffmpeg_detected") or "credentials" not in state:
             raise RuntimeError("Bundled desktop control bridge failed its smoke check")
     for exe in ("ffmpeg.exe", "ffprobe.exe"):
         run(stage / "bin" / exe, "-version", env=env, cwd=stage.parent, stdout=subprocess.DEVNULL)

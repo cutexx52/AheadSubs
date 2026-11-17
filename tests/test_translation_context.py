@@ -28,7 +28,7 @@ class TranslationContextTest(unittest.TestCase):
         ])
         recognizer = Mock()
         recognizer.recognize.side_effect = [
-            ("ja", [Cue(0.1, 0.4, "older"), Cue(0.5, 1.5, "previous")]),
+            ("ja", [Cue(0.1, 0.4, "older"), Cue(0.5, 1.5, "preamble with a long preceding cue")]),
             ("ja", [Cue(0.8, 1.6, "one"), Cue(2, 3.4, "two")]),
             ("ja", [Cue(0.4, 1, "following")]),
         ]
@@ -38,13 +38,13 @@ class TranslationContextTest(unittest.TestCase):
         with patch("subtitle_relay.server.engine.extract_audio", return_value=silence(20)) as extract:
             result = translate_chunk(Playback(media, 22, source="ja"), 2, 10, recognizer, translator,
                                      segmenter=segmenter,
-                                     translation_settings=TranslationSettings(1, "Use casual wording"))
+                                     translation_settings=TranslationSettings(1, "Use casual wording", 20))
 
         extract.assert_called_once_with(media, 0, 16, 16)
         payload = json.loads(client.chat.completions.create.call_args.kwargs["messages"][1]["content"])
         self.assertEqual(payload, {
             "source": "ja", "target": "zh", "lines": {"0": "one", "1": "two"},
-            "previous": ["previous"], "style": "Use casual wording",
+            "previous": ["a long preceding cue"], "style": "Use casual wording",
         })
         self.assertEqual(result, [Cue(20.8, 21.6, "一", "one", source_language="ja"),
                                   Cue(22, 23.4, "二", "two", source_language="ja")])
@@ -135,4 +135,5 @@ class TranslationContextTest(unittest.TestCase):
             self.assertEqual(contextual, identity(TranslationSettings(3, " plain ")))
             self.assertNotEqual(contextual, old_key)
             self.assertNotEqual(contextual, identity(TranslationSettings(4, "plain")))
+            self.assertNotEqual(contextual, identity(TranslationSettings(3, "plain", 120)))
             self.assertNotEqual(contextual, identity(TranslationSettings(3, "formal")))

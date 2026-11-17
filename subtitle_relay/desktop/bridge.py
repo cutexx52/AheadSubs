@@ -6,10 +6,10 @@ import sqlite3
 import sys
 from contextlib import redirect_stdout
 
-from . import assets, runtime
+from . import assets, credentials, runtime
 from ..inference.chatgpt_auth import ChatGPTAccounts
 from ..inference.dashscope import DASHSCOPE_ASR_MODELS
-from ..inference.providers import MINIMAX_MODEL, QWEN_MT_MODELS, minimax_key, openai_key, qwen_mt_credentials
+from ..inference.providers import MINIMAX_MODEL, QWEN_MT_MODELS, qwen_mt_credentials
 from ..server.engine import TranslationSettings
 from ..server.history import inspect_cache
 
@@ -31,18 +31,22 @@ def status():
     except (OSError, ValueError, sqlite3.Error):
         accounts = []
     return {"running": health is not None, "active_sessions": (health or {}).get("active_sessions"),
-            "settings": settings, "models": {model: assets.model_ready(label) for model, label in MODELS.items()},
-            "chatgpt_accounts": accounts,
-            "minimax_model": MINIMAX_MODEL,
+            "settings": {key: settings[key] for key in runtime.DEFAULTS},
+            "credentials": credentials.public_state(settings),
+            "chatgpt_accounts": accounts, "minimax_model": MINIMAX_MODEL,
+            "models": {model: assets.model_ready(label) for model, label in MODELS.items()},
             "potplayer_detected": integrations["potplayer"]["detected"], "integrations": integrations,
             "ffmpeg_detected": bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))}
 
 
 def apply(updates):
-    if not isinstance(updates, dict) or not updates.keys() <= runtime.DEFAULTS.keys():
+    if not isinstance(updates, dict) or not updates.keys() <= (runtime.DEFAULTS.keys() | {"credentials"}):
         raise ValueError("设置包含未知选项。")
     settings = runtime.config()
     for key, value in updates.items():
+        if key == "credentials":
+            credentials.update(settings, value)
+            continue
         if key == "translation_enhancements":
             settings[key] = validate_enhancements(value)
             continue
@@ -80,14 +84,20 @@ def apply(updates):
         settings[key] = str(int(numbers[key]))
     if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
         raise ValueError("未找到 FFmpeg 和 FFprobe。请使用 Windows 发布包，或为源码运行配置 PATH。")
-    if settings["route"] == "OpenAI AST (English)" or "openai" in (settings["asr"], settings["mt"]):
-        openai_key(settings["key_file"])
-    if settings["route"] == "asr+mt" and settings["mt"] == "chatgpt":
-        validate_chatgpt(settings["chatgpt_account"], settings["chatgpt_model"])
-    if (settings["mt"] == "qwen-mt" or settings["asr"] == "dashscope") and settings["route"] != "OpenAI AST (English)":
-        qwen_mt_credentials(settings["qwen_mt_url"], settings["qwen_mt_key_file"])
-    if settings["mt"] == "minimax" and settings["route"] == "asr+mt":
-        minimax_key(settings["minimax_key_file"])
+    ast = settings["route"] == "OpenAI AST (English)"
+    if ast or "openai" in (settings["asr"], settings["mt"]):
+        credentials.resolve(settings, "openai")
+    if not ast:
+        if settings["mt"] == "qwen-mt" or settings["asr"] == "dashscope":
+            qwen_mt_credentials(settings["qwen_mt_url"], api_key=credentials.resolve(settings, "dashscope"))
+        if settings["asr"] == "compatible":
+            credentials.resolve(settings, "compatible-asr", settings["asr_url"])
+        if settings["mt"] == "compatible":
+            credentials.resolve(settings, "compatible-mt", settings["llm_url"])
+        if settings["mt"] == "chatgpt":
+            validate_chatgpt(settings["chatgpt_account"], settings["chatgpt_model"])
+        if settings["mt"] == "minimax":
+            credentials.resolve(settings, "minimax")
     runtime.save_config(settings)
     runtime.PAUSED.unlink(missing_ok=True)
     runtime.background_start(restart=True)
@@ -99,10 +109,12 @@ def validate_enhancements(values):
         raise ValueError("翻译增强设置格式无效。")
     for model, value in values.items():
         if not (model.partition(":")[0] in {"openai", "compatible", "qwen-mt", "chatgpt", "minimax"}
-                and isinstance(value, dict) and value.keys() == {"enabled", "previous_cues", "prompt"}
+                and isinstance(value, dict)
+                and value.keys() - {"context_chars"} == {"enabled", "previous_cues", "prompt"}
                 and isinstance(value["enabled"], bool) and isinstance(value["prompt"], str)):
             raise ValueError("翻译增强设置格式无效。")
-        TranslationSettings(value["previous_cues"], value["prompt"])
+        TranslationSettings(value["previous_cues"], value["prompt"],
+                            value.get("context_chars", TranslationSettings.context_chars))
     return values
 
 
@@ -144,6 +156,11 @@ def run_command(command, item=None, folder=None):
         return status()
     if command == "apply":
         return apply(json.load(sys.stdin))
+    if command == "save-credentials":
+        settings = runtime.config()
+        credentials.update(settings, json.load(sys.stdin))
+        runtime.save_config(settings)
+        return {"credentials": credentials.public_state(settings)}
     if command == "stop":
         runtime.background_stop()
         return {"running": False}
@@ -170,7 +187,8 @@ def run_command(command, item=None, folder=None):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("status", "install", "apply", "stop", "integrate", "unintegrate", "logs", "inspect",
+    parser.add_argument("command", choices=("status", "install", "apply", "save-credentials", "stop",
+                                           "integrate", "unintegrate", "logs", "inspect",
                                            "pot-windows", "pot-start", "pot-stop", "chatgpt-status", "chatgpt-login",
                                            "chatgpt-models", "chatgpt-logout"))
     parser.add_argument("item", nargs="?")

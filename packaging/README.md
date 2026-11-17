@@ -15,7 +15,7 @@ python packaging\windows\build.py --native --cuda --version 0.1.0
 
 Repeat builds reuse the private Python runtime under `.relay/packaging-tools` only when the Python binary and pinned dependency inputs match. Player integrations, UI and Python application sources are staged anew on every build. The builder replaces release files only after its verification steps pass.
 
-The standard artifacts use names such as `local-video-subtitle-translator-v0.1.0-windows-x64-setup.exe` and `local-video-subtitle-translator-v0.1.0-windows-x64-portable.zip`, with a matching `-SHA256.txt`. The CUDA flavor adds `-cuda` before the artifact suffix and brings its own CUDA math libraries. The machine still needs a compatible graphics driver for GPU inference. The `.zip` contains one application directory. Launch `Local Video Subtitle Translator.exe` from that directory.
+The standard artifacts use names such as `aheadsubs-v0.1.0-windows-x64-setup.exe` and `aheadsubs-v0.1.0-windows-x64-portable.zip`, with a matching `-SHA256.txt`. The CUDA flavor adds `-cuda` before the artifact suffix and brings its own CUDA math libraries. The machine still needs a compatible graphics driver for GPU inference. The `.zip` contains one application directory. Launch `AheadSubs.exe` from that directory.
 
 ## Release and support scope
 

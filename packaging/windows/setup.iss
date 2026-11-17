@@ -4,10 +4,12 @@
 
 [Setup]
 AppId=LocalVideoSubtitleTranslator
-AppName=Local Video Subtitle Translator
+AppName=AheadSubs
 AppVersion={#ReleaseVersion}
-DefaultDirName={localappdata}\Programs\Local Video Subtitle Translator
-DefaultGroupName=Local Video Subtitle Translator
+DefaultDirName={localappdata}\Programs\AheadSubs
+DefaultGroupName=AheadSubs
+UsePreviousGroup=no
+AppMutex=Local\LocalVideoSubtitleTranslator.Settings
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64os
 ArchitecturesInstallIn64BitMode=x64os
@@ -19,15 +21,20 @@ WizardStyle=modern
 SetupIconFile=..\..\assets\aheadsubs.ico
 OutputDir={#ReleaseDir}
 OutputBaseFilename={#ArtifactName}-setup
-UninstallDisplayIcon={app}\Local Video Subtitle Translator.exe
+UninstallDisplayIcon={app}\AheadSubs.exe
 CloseApplications=yes
 RestartApplications=no
 
 [Files]
 Source: "{#StageDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
-#if IncludesCuda == "no"
 [InstallDelete]
+Type: files; Name: "{userprograms}\Local Video Subtitle Translator\Local Video Subtitle Translator.lnk"
+Type: dirifempty; Name: "{userprograms}\Local Video Subtitle Translator"
+Type: files; Name: "{userdesktop}\Local Video Subtitle Translator.lnk"
+Type: files; Name: "{app}\Local Video Subtitle Translator.exe"
+Type: files; Name: "{app}\UI\LocalVideoSubtitleTranslator.exe"
+#if IncludesCuda == "no"
 ; These directories contain only vendor libraries staged by the CUDA package.
 Type: filesandordirs; Name: "{app}\runtime\Lib\site-packages\nvidia\cublas"
 Type: filesandordirs; Name: "{app}\runtime\Lib\site-packages\nvidia\cudnn"
@@ -36,11 +43,11 @@ Type: filesandordirs; Name: "{app}\runtime\Lib\site-packages\nvidia_cudnn_cu12-9
 #endif
 
 [Icons]
-Name: "{group}\Local Video Subtitle Translator"; Filename: "{app}\Local Video Subtitle Translator.exe"; WorkingDir: "{app}"
-Name: "{userdesktop}\Local Video Subtitle Translator"; Filename: "{app}\Local Video Subtitle Translator.exe"; Tasks: desktopicon
+Name: "{group}\AheadSubs"; Filename: "{app}\AheadSubs.exe"; WorkingDir: "{app}"
+Name: "{userdesktop}\AheadSubs"; Filename: "{app}\AheadSubs.exe"; Tasks: desktopicon
 
 [Tasks]
 Name: desktopicon; Description: "Create a desktop shortcut"; Flags: unchecked
 
 [Run]
-Filename: "{app}\Local Video Subtitle Translator.exe"; Description: "Open Local Video Subtitle Translator"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\AheadSubs.exe"; Description: "Open AheadSubs"; Flags: nowait postinstall skipifsilent

@@ -206,6 +206,7 @@ def background_start(on_wait=None, restart=False):
         settings = config()
         CONTROL.write_text(secrets.token_urlsafe(32), encoding="ascii")
         args = ["serve", "--port", str(PORT), "--cache", str(DATA / "cache"), "--control-token-file", str(CONTROL),
+                "--desktop-config", str(CONFIG),
                 "--default-target", settings["target"]]
         if settings["source"]:
             args.extend(["--default-source", settings["source"]])
@@ -213,7 +214,7 @@ def background_start(on_wait=None, restart=False):
             args.append("--default-bilingual")
         for name in DEFAULTS:
             if name in {"source", "target", "bilingual", "translation_enhancements",
-                        "potplayer_directory", "mpv_directory"}:
+                        "potplayer_directory", "mpv_directory", "key_file", "qwen_mt_key_file", "minimax_key_file"}:
                 continue
             if name == "pot_hotkey":
                 if settings[name] == "1":
@@ -234,6 +235,8 @@ def background_start(on_wait=None, restart=False):
         if enhancement.get("enabled"):
             args.extend(["--translation-previous-cues", str(enhancement["previous_cues"]),
                          f"--translation-prompt={enhancement['prompt']}"])
+            if "context_chars" in enhancement:
+                args.extend(["--translation-context-chars", str(enhancement["context_chars"])])
         if settings["asr"] == "qwen":
             args.extend(["--qwen-root", str(QWEN)])
         process = spawn(args)

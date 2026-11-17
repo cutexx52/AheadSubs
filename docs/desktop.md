@@ -2,9 +2,13 @@
 
 ## 日常使用
 
-第一次使用时，**本地模型**提供 Vulkan Qwen3-ASR + CPU NLLB 的入门方案，也提供 Whisper Small + NLLB 的纯 CPU 方案。安装前可查看各模型的硬件要求。**翻译**首页显示当前组合的运行设备。Whisper 和 NLLB 默认用 CPU，兼容的 NVIDIA 显卡可选 CUDA。Windows 版 Qwen3-ASR 使用 Vulkan GPU。
+**本地模型**提供 Vulkan Qwen3-ASR + CPU NLLB 和 Whisper Small + NLLB 两套入门方案。下载列表显示每个模型的状态、硬件要求和大致磁盘占用。两款 Qwen3-ASR 共享约 0.63 GB 的对齐模型和运行库；首次下载时需要为压缩包额外预留临时空间。**翻译**首页显示当前组合的运行设备。
 
-**云端模型**按供应商和授权方式展示可用模型。选择 **ChatGPT 订阅 · OAuth** 可以在浏览器授权 AheadSubs 使用 ChatGPT 订阅做字幕文本翻译。MiniMax 支持 M Plan 专用 Key 和按量 API Key。百炼 Qwen-Audio ASR 和 Qwen-MT 共用同一个百炼 API Key 和区域地址。选用模型后，点击 **保存并应用** 即可切换当前服务。**上下文增强**在翻译模型下方，按模型分开保存并显示支持的功能。参见[推理与翻译后端](providers.md)。
+**云端模型**可按供应商选择 **密钥文件** 或 **直接填写**。直填内容用 Windows 当前用户的 [DPAPI](https://learn.microsoft.com/en-us/windows/win32/api/dpapi/nf-dpapi-cryptprotectdata) 加密保存。文件模式保存所选文件的路径。删除直填密钥时，切回 **默认（环境变量）** 并保存。百炼的识别和翻译共用密钥及区域地址，自定义识别和翻译可以各用一把。远程自定义接口发送密钥时使用 HTTPS，本机回环地址支持 HTTP。可以先 **保存密钥**，再应用翻译设置切换当前服务。
+
+选择 **ChatGPT 订阅 · OAuth** 可以在浏览器授权 AheadSubs 使用 ChatGPT 订阅做字幕文本翻译。MiniMax 支持 M Plan 专用 Key 和按量 API Key。参见[推理与翻译后端](providers.md)。
+
+**上下文增强**按翻译模型保存。支持前文的模型可参考 0–8 个已识别的前文片段，每段默认最多 250 字符，可设为 20–1000 字符。请求优先保留最近的前文，总计最多 1000 字符，输出仍对应当前字幕。前文有助于改善指代和术语的翻译，也可能增加 token 用量和延迟。设为 0 时仍可使用翻译提示词。Qwen-MT Flash 和 Plus 只提供风格提示词。
 
 设置窗口为单实例。关闭窗口后可双击 Windows 托盘图标重新打开。托盘菜单的 **停止字幕服务** 释放模型资源并保留窗口入口，**停止并退出** 同时关闭助手。退出后重新运行助手并启动服务，播放器才能继续提交新任务。已经写入磁盘的缓存可复用。
 
@@ -16,13 +20,14 @@
 
 ## 模块接口
 
-打包启动器运行 `UI/LocalVideoSubtitleTranslator.exe`。WPF 界面使用 `python -m subtitle_relay.desktop.bridge` 管理后台。该入口与播放器使用的 [HTTP 会话接口](server.md) 各自独立。
+打包启动器运行 `UI/AheadSubs.exe`。WPF 界面使用 `python -m subtitle_relay.desktop.bridge` 管理后台。该入口与播放器使用的 [HTTP 会话接口](server.md) 各自独立。
 
 | 命令 | 输入与行为 |
 | --- | --- |
-| `status` | 输出 `settings`、`models`、`running`、`active_sessions`、`potplayer_detected` 和 `ffmpeg_detected`。FFmpeg 探测同时检查 `ffmpeg` 和 `ffprobe`。 |
+| `status` | 输出 `settings`、`models`、`credentials`、`integrations`、`chatgpt_accounts` 和服务状态。API Key 状态只包含模式、文件路径和是否已保存直填密钥。 |
 | `install <model>` | 准备指定本地模型。标识见控制模块中的 `MODELS`。 |
-| `apply` | 从 stdin 读 JSON 对象，验证并应用设置。必要时重启后台。 |
+| `apply` | 从 stdin 读 JSON 设置，支持同时提交可选的 `credentials` 更新。验证后重启后台。 |
+| `save-credentials` | 从 stdin 接收 `{供应商标识: {mode, value}}`。`openai`、`dashscope`、`minimax`、`compatible-asr` 和 `compatible-mt` 支持 `direct`、`file` 和 `default`。保存后返回凭据状态，正在运行的服务继续用启动时加载的密钥。 |
 | `chatgpt-status` | 列出已保存的 ChatGPT 账号、授权状态及缓存的模型。 |
 | `chatgpt-login [account]` | 在系统浏览器打开 ChatGPT 授权。带账号标识时重新授权对应注册。 |
 | `chatgpt-models <account>` | 刷新账号的可用模型。 |

@@ -19,10 +19,11 @@ def gui(initial_media=None, show_request=None):
     from subtitle_relay.adapters.potplayer import list_windows
     from subtitle_relay.desktop.tray import SettingsTray
     from subtitle_relay.desktop.bridge import validate_chatgpt
-    from subtitle_relay.inference.providers import MINIMAX_MODEL, QWEN_MT_MODELS, minimax_key, openai_key, qwen_mt_credentials
+    from subtitle_relay.desktop.credentials import public_state, resolve
+    from subtitle_relay.inference.providers import MINIMAX_MODEL, QWEN_MT_MODELS, openai_key, qwen_mt_credentials
 
     root = tk.Tk()
-    root.title(f"Subtitle Relay — {Path(initial_media).name}" if initial_media else "Subtitle Relay")
+    root.title(f"AheadSubs — {Path(initial_media).name}" if initial_media else "AheadSubs")
     root.minsize(640, 530)
     outer = ttk.Frame(root, padding=18)
     outer.pack(fill="both", expand=True)
@@ -34,7 +35,7 @@ def gui(initial_media=None, show_request=None):
     tabs.add(setup, text="模型")
     tabs.add(advanced, text="高级设置")
     tabs.add(pot, text="PotPlayer")
-    ttk.Label(setup, text="Subtitle Relay", font=("Segoe UI", 18, "bold")).grid(row=0, columnspan=3, sticky="w")
+    ttk.Label(setup, text="AheadSubs", font=("Segoe UI", 18, "bold")).grid(row=0, columnspan=3, sticky="w")
     ttk.Label(setup, text="选择模型后启动服务。在 PotPlayer 中按 Ctrl+Alt+J。").grid(
         row=1, columnspan=3, sticky="w", pady=(0, 12))
     settings = {key: tk.StringVar(value=value) for key, value in config().items()
@@ -70,7 +71,7 @@ def gui(initial_media=None, show_request=None):
                  "[自定义] 文本翻译 API": "compatible"}
     if settings["chatgpt_account"].get() and settings["chatgpt_model"].get():
         mt_models[f"[远程] ChatGPT 订阅 · {settings['chatgpt_model'].get()}"] = "chatgpt"
-    if settings["minimax_key_file"].get() or os.getenv("MINIMAX_API_KEY"):
+    if public_state(config())["minimax"]["mode"] != "default" or os.getenv("MINIMAX_API_KEY"):
         mt_models[f"[远程] {MINIMAX_MODEL}"] = "minimax"
     speech = tk.StringVar(value=next((label for label, kind in asr_models.items()
                                      if kind == settings["asr"].get() and
@@ -195,7 +196,7 @@ def gui(initial_media=None, show_request=None):
             settings["qwen_mt_model"].set(qwen_mt_models[translation.get()])
         settings["source"].set(languages[language.get()])
         if not PYTHON.is_file():
-            messagebox.showerror("Subtitle Relay", "The project .venv is missing. See the installation in README.md.")
+            messagebox.showerror("AheadSubs", "The project .venv is missing. See the installation in README.md.")
             return
         try:
             if ("openai" in (settings["asr"].get(), settings["mt"].get())
@@ -206,7 +207,7 @@ def gui(initial_media=None, show_request=None):
             if settings["mt"].get() == "chatgpt" and settings["route"].get() != "OpenAI AST (English)":
                 validate_chatgpt(settings["chatgpt_account"].get(), settings["chatgpt_model"].get())
             if settings["mt"].get() == "minimax" and settings["route"].get() != "OpenAI AST (English)":
-                minimax_key(settings["minimax_key_file"].get())
+                resolve(config(), "minimax")
         except ValueError as exc:
             model_status.set(str(exc))
             return
@@ -237,10 +238,10 @@ def gui(initial_media=None, show_request=None):
         try:
             install_mpv(destination)
         except OSError as exc:
-            messagebox.showerror("Subtitle Relay", str(exc))
+            messagebox.showerror("AheadSubs", str(exc))
             return
-        messagebox.showinfo("Subtitle Relay",
-                            f"Installed in {destination}. Restart mpv 0.42+, then right-click → Subtitle Relay.")
+        messagebox.showinfo("AheadSubs",
+                            f"Installed in {destination}. Restart mpv 0.42+, then right-click → AheadSubs.")
 
     def install_dependencies():
         nonlocal setup_process
@@ -260,9 +261,9 @@ def gui(initial_media=None, show_request=None):
                 destination = Path(selection)
             install_potplayer(destination)
         except OSError as exc:
-            messagebox.showerror("Subtitle Relay", str(exc))
+            messagebox.showerror("AheadSubs", str(exc))
             return
-        messagebox.showinfo("Subtitle Relay", "Restart PotPlayer and choose Subtitle Relay under real-time subtitle translation.")
+        messagebox.showinfo("AheadSubs", "Restart PotPlayer and choose AheadSubs under real-time subtitle translation.")
 
     toolbar = ttk.Frame(setup)
     toolbar.grid(row=10, columnspan=3, sticky="w", pady=(12, 0))
@@ -358,7 +359,7 @@ def gui(initial_media=None, show_request=None):
             stop_process = None
             if code:
                 show_window()
-                messagebox.showerror("Subtitle Relay", "无法停止字幕服务，请查看后台日志。")
+                messagebox.showerror("AheadSubs", "无法停止字幕服务，请查看后台日志。")
             elif quit_after_stop:
                 root.destroy()
                 return
@@ -432,7 +433,7 @@ def gui(initial_media=None, show_request=None):
 
 
 def open_settings():
-    windows_ui = ROOT / "UI" / "LocalVideoSubtitleTranslator.exe"
+    windows_ui = ROOT / "UI" / "AheadSubs.exe"
     if windows_ui.is_file():
         subprocess.Popen([str(windows_ui)], cwd=ROOT)
         return
@@ -472,6 +473,6 @@ def main():
             pass
         except Exception as exc:
             pot_event("launch-failed", str(exc))
-            ctypes.windll.user32.MessageBoxW(None, str(exc), "Subtitle Relay", 0x10)
+            ctypes.windll.user32.MessageBoxW(None, str(exc), "AheadSubs", 0x10)
     else:
         open_settings()

@@ -32,7 +32,7 @@ Qwen3-ASR 由服务管理一个共享的本地进程。CLI 的 `--device` 控制
 
 **ChatGPT** 在 Windows 助手的 **云端模型 → ChatGPT 订阅 · OAuth** 中配置。点击 **使用 ChatGPT 继续**，在浏览器登录并同意使用订阅，回到助手选择账号和模型，点击 **用于翻译 → 保存并应用**。OpenAI 只接收待翻译的字幕文本和启用的翻译上下文。语音识别仍使用 **翻译** 页上选定的识别模型。可从设置里的 **管理 ChatGPT 用量** 查看额度，并在需要时重新授权。CLI 使用 `--mt chatgpt --chatgpt-account <账号标识> --chatgpt-model <模型标识>`，对应标识可通过桌面桥接查询。[OpenAI 官方接入指南](https://developers.openai.com/siwc/token-sharing-open-source)
 
-**MiniMax** 在 **云端模型 → MiniMax · API Key** 中选择密钥文件，也可设置 `MINIMAX_API_KEY`。CLI 使用 `--mt minimax`，可选 `--minimax-key-file`。MiniMax 的通用第三方接入文档提供 M Plan 专用 Key，OAuth 指南对应 OpenClaw。[MiniMax 第三方配置](https://platform.minimax.io/docs/m-plan/other-tools.md) · [MiniMax OpenClaw 指南](https://platform.minimax.io/docs/m-plan/openclaw.md)
+**MiniMax** 在 **云端模型 → MiniMax · API Key** 中直接填写密钥或选择密钥文件，也可设置 `MINIMAX_API_KEY`。CLI 使用 `--mt minimax`，可选 `--minimax-key-file`。MiniMax 的通用第三方接入文档提供 M Plan 专用 Key，OAuth 指南对应 OpenClaw。[MiniMax 第三方配置](https://platform.minimax.io/docs/m-plan/other-tools.md) · [MiniMax OpenClaw 指南](https://platform.minimax.io/docs/m-plan/openclaw.md)
 
 Claude 订阅授权限用于 Anthropic 官方产品。Gemini CLI 的 OAuth 和 Qwen Code 的订阅登录面向各自的客户端。GitHub Copilot 提供第三方 SDK 登录，其文档以编程场景为主。[Claude Code 使用说明](https://code.claude.com/docs/en/legal-and-compliance) · [Gemini CLI FAQ](https://github.com/google-gemini/gemini-cli/blob/main/docs/resources/faq.md) · [Qwen Code 认证文档](https://github.com/QwenLM/qwen-code/blob/main/docs/users/configuration/auth.md) · [GitHub Copilot SDK](https://docs.github.com/en/copilot/how-tos/copilot-sdk/setup/github-oauth)
 
