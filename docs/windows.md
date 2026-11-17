@@ -11,6 +11,10 @@
 
 发布包自带 Python 运行时、FFmpeg 和 FFprobe。模型需要首次下载，Windows GPU 驱动由系统或厂商安装。完全本地的配置在模型准备好后无需配置 API 密钥。如果启动时提示缺少 Visual C++ 运行库，请安装微软的 x64 Redistributable。维护者构建和发布步骤见[打包文档](../packaging/README.md)。[微软运行库下载](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist)
 
+## 检查更新
+
+在 **高级设置** 的 **软件更新** 中检查 GitHub 上的正式版本。安装版从当前使用的标准版或 CUDA 版升级。便携版可以打开对应的 ZIP 下载链接。
+
 ## 支持范围
 
 | 系统 | 范围 |
