@@ -82,7 +82,7 @@ class TranslationContextTest(unittest.TestCase):
         with patch("subtitle_relay.server.engine.extract_audio", return_value=silence(8)):
             result = translate_chunk(Playback(Path("movie.mp4"), 0, source="ja"),
                                      0, 8, recognizer, translator)
-        self.assertEqual(result, [Cue(2, 3, "", "recognized line", "content_blocked")])
+        self.assertEqual(result, [Cue(2, 3, "", "recognized line", "content_blocked", "ja")])
 
     def test_failed_translation_retains_original_cue_and_provider_cause(self):
         recognizer = Mock()
@@ -94,7 +94,7 @@ class TranslationContextTest(unittest.TestCase):
              self.assertRaises(TranslationFailure) as failure:
             translate_chunk(Playback(Path("movie.mp4"), 9, source="ja"), 1, 8, recognizer, translator)
         self.assertIs(failure.exception.__cause__, provider_error)
-        self.assertEqual(failure.exception.cues, [Cue(8, 9, "recognized line")])
+        self.assertEqual(failure.exception.cues, [Cue(8, 9, "recognized line", source_language="ja")])
 
     def test_qwen_flash_sends_english_style_separately_and_lite_omits_it(self):
         prompt = "Use conversational subtitle wording."

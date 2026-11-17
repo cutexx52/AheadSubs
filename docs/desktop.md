@@ -25,6 +25,16 @@ Context enhancement (上下文增强) is saved per translator: 0–8 previous re
 
 Settings are single-instance. Closing hides the window; double-click the tray to reopen. Stop subtitle service (停止字幕服务) releases models but retains the helper. Stop and exit (停止并退出) closes both. Relaunch/start the service for new playback work. Disk caches remain reusable.
 
+## Subtitle inspection
+
+Open **Subtitle inspection** to search by file name or path and filter by primary source language. History groups records by their stored path and opens the newest version by default. You can switch to an older version. Moving a file creates a new entry. Older records with only a file name stay separate until a playback with the same cache settings records their path.
+
+Coverage is the share of the selected version's media duration that has been processed, including silence. It is unknown when duration is unavailable. The primary source language is based on the duration of the recognized cues with a reported language. The filter uses the most recent version with a reported language for each file. The listed subtitle languages reflect the available target subtitles across versions of the file.
+
+**Regenerate** creates a fresh version using the selected version's audio track and languages and the running service's models. The service accepts one regeneration at a time and starts the next chunk only while playback sessions are idle. If generation stops or the service exits, previously saved chunks and versions remain available. Refresh to check the status and retry. Play moved or replaced media to record it again.
+
+**Open SRT** opens the selected version's target subtitles in Notepad. **Save SRT** exports all generated target subtitles for that version, including partial results. Recorded paths, generation state, and subtitles are kept in the local cache.
+
 ## Status
 
 Open **Status** in the sidebar. It updates immediately and every three seconds while the page and window are visible. **Refresh now** checks on demand.
@@ -66,6 +76,10 @@ The launcher starts `UI/AheadSubs.exe`. WPF uses `python -m subtitle_relay.deskt
 | `pot-windows` | Lists controllable PotPlayer windows. |
 | `pot-start <window>` / `pot-stop <window>` | Starts/stops that window's look-ahead. |
 | `logs` | Returns log paths. |
+| `inspect-library` | Reads the local cache and returns `files` grouped by path with versions, coverage, and language summaries. |
+| `inspect-rows <key>` | Returns recent originals, subtitle text, and failed rows for the selected version. |
+| `inspect-regenerate <key>` | Queues regeneration on the desktop-managed service and returns the new version's `key`. |
+| `inspect-srt <key>` | Reads `{"output":"…"}` from stdin and returns the `subtitle` path. A `null` output writes a copy for viewing in the cache. |
 | `automation [mcp-enable\|mcp-disable\|cli-install\|cli-remove]` | Reads or updates MCP access, client configuration and CLI user-PATH registration. See [integrations](automation.md). |
 
 Each invocation writes one JSON object with `ok` to stdout. Failure adds `error` and a nonzero exit code. External adapters should use HTTP v1 rather than this internal desktop interface.
