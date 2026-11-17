@@ -1,18 +1,20 @@
-# 早期实测记录
+# Early validation record
 
-新版推荐方案、RTX 4090 并发结果与复测命令见[性能与设备建议](docs/performance.md)。本页记录较早的合成素材与播放器接入验证。
+[English](VALIDATION.md) | [简体中文](VALIDATION.zh-CN.md)
 
-测试机器为 Windows 和 RTX 4090（24 GB）。只使用了 Windows SAPI 合成语音及由 FFmpeg 生成的黑色视频。
+Current presets, RTX 4090 concurrency and reproduction commands are in [performance](docs/performance.md). This historical record covers synthetic media and player integration.
 
-| 验证 | 实测结果 |
-|---|---|
-| 共享 GPU 后台 | faster-whisper small 和 NLLB 600M INT8，同一个进程服务四个独立文件路径。空缓存启动，四路连续推进 45 秒。预缓冲 4.28 秒，四路最少已译余量分别为 18.66、18.99、18.78、18.66 秒。四路均无缓冲耗尽样本。四个输入是同一合成 WAV 的独立副本，缓存和推理任务不共享。 |
-| mpv 0.42.0 | Windows 原生右键菜单项可由播放器读取。开关触发后台任务，加载中文 SRT。跳到未处理区间后播放器加载更新，查询当前字幕得到该时间点的中文文本。 |
-| 四个真实 mpv 窗口 | 用独立的合成 MP4 文件分别打开窗口，完成预缓冲后一起播放至约 20.1 秒。四个窗口都读取到了画面当前时间对应的中文字幕。四路最小已译余量分别为 10.7、11.4、12.1、10.5 秒，无耗尽。测试同时包含视频播放、IPC 和 SRT 重载。 |
-| PotPlayer 261021 | 两个实际 PotPlayer 窗口返回各自的播放位置。读取已安装 DLL 的原生菜单资源得到字幕重载命令。替换一个测试窗口的 SRT 后发送命令，界面截图显示了更新后的文字。用适配器预缓冲再启动的 PotPlayer 也显示了生成的中文字幕。确认了两个入口出现在原生实时字幕翻译设置中，并从音频预读入口唤起了设置窗口。 |
-| OpenAI ASR 和翻译 | 用合成语音跑 `whisper-1` 和 `gpt-4.1-mini`，后台生成带时间戳的中文 SRT。直接语音翻译到英语也返回了有效起止时间。 |
-| 磁盘缓存 | 测试两个窗口请求同一媒体区间只处理一次。关闭后台、重开后直接得到已有字幕版本。 |
-| 图形助手 | 通过 Windows GUI 启动本地后台，并确认界面显示服务已就绪。 |
-| PotPlayer 现有窗口启动预读 | 从实时字幕翻译扩展触发。确认了 PotPlayer 在当前版本只传文件名时，适配器能从播放器打开的文件中定位测试视频，生成并投递 SRT。也验证了针对既有窗口的单文件拖放消息能显示字幕。 |
+Machine: Windows, RTX 4090 24 GB. Inputs were Windows SAPI speech and FFmpeg-generated black video only.
 
-四路指标是合成语音上的管线吞吐。复杂配乐影片、多语言混播、翻译质量和长时间运行还需用真实片源评估。目标预读值是调度参数，实际字幕余量受识别速度、请求延迟、暂停、倍速及跳转影响。字幕按对白片段显示。译文词序可以不同于原对白，因此当前界面提供片段级同步。
+| Check | Observed result |
+| --- | --- |
+| Shared GPU service | faster-whisper Small + NLLB 600M INT8 in one process, four independent paths, empty cache, 45 s moving playheads. Prebuffer 4.28 s; minimum ready-ahead values 18.66, 18.99, 18.78, 18.66 s; no exhaustion samples. Inputs were independent copies of one synthetic WAV, with no shared tasks/cache. |
+| mpv 0.42.0 | Native context menu loaded; controls started background work and Chinese SRT. Seeking to unprocessed time loaded updates and returned the corresponding Chinese cue. |
+| Four real mpv windows | Independent synthetic MP4s, prebuffered and played to about 20.1 s. All read the current Chinese cue; minima 10.7, 11.4, 12.1, 10.5 s, no exhaustion. Includes playback, IPC and SRT reload. |
+| PotPlayer 261021 | Two real windows returned independent positions. Native DLL menu resources identified reload; replacing SRT and sending the command showed new text in screenshots. Adapter-prebuffered playback showed generated Chinese subtitles. Both native translation entries appeared; audio look-ahead opened settings. |
+| OpenAI ASR/translation | Synthetic speech through whisper-1 and gpt-4.1-mini produced timestamped Chinese SRT. Direct English speech translation returned valid start/end times. |
+| Disk cache | Two windows requesting one interval processed it once; restarting reused the subtitle version. |
+| GUI helper | Started the local service through Windows GUI and showed readiness. |
+| Existing PotPlayer window | Translation extension triggered look-ahead; when the player supplied only a filename, the adapter found the open video and delivered SRT. Single-file drag/drop messages also displayed subtitles. |
+
+Four-session figures measure synthetic-speech pipeline throughput. Real films with music, mixed languages, translation quality and long runs require separate evaluation. Look-ahead is a scheduling target; actual coverage depends on recognition, requests, pauses, speed and seeks. Subtitle timing is segment-level; translated word order may differ from speech.

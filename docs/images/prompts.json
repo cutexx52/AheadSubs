@@ -1,0 +1,29 @@
+{
+  "tool": "built-in image_gen",
+  "english_prompt_summary": "Use case: infographic-diagram. Asset type: GitHub README product workflow explainer for AheadSubs. Create a precise, polished wide technical infographic, white/light slate background, flat crisp typography, navy text, teal and amber highlights. No people, no scenic illustration. Title: AheadSubs. Subtitle: Read ahead. Transcribe. Translate. Stay in sync. Four cards: PLAYER (PotPlayer · mpv, Playback position); AUDIO LOOK-AHEAD (Bounded audio buffer, Speech segments); TRANSCRIBE + TRANSLATE (Local models, Cloud APIs); TIMED SUBTITLES (Original media timestamps, SRT + reusable cache). Return arrow: Load / refresh subtitles. Media timeline: PLAYHEAD, Already Played, READ-AHEAD WINDOW, Subtitle Cue 1/2/3. Footer: CLI + HTTP API for integrations. Legible at 1100px, no zero-latency claims, no MCP logo.",
+  "chinese_edit": "Use the English image as reference. Translate text only using the following mapping. Preserve layout, arrows, timeline, icons, colors and whitespace. Keep AheadSubs and PotPlayer · mpv unchanged.",
+  "labels": {
+    "Read ahead. Transcribe. Translate. Stay in sync.": "提前读取 · 识别翻译 · 同步显示",
+    "PLAYER": "播放器",
+    "Playback position": "当前播放位置",
+    "AUDIO LOOK-AHEAD": "音频预读",
+    "Bounded audio buffer": "有界音频缓冲",
+    "Speech segments": "语音分段",
+    "TRANSCRIBE + TRANSLATE": "识别与翻译",
+    "Local models": "本地模型",
+    "Cloud APIs": "云端 API",
+    "TIMED SUBTITLES": "时间轴字幕",
+    "Original media timestamps": "原媒体时间戳",
+    "SRT + reusable cache": "SRT 与可复用缓存",
+    "Load / refresh subtitles": "加载 / 刷新字幕",
+    "PLAYHEAD": "播放头",
+    "Media Timeline": "媒体时间轴",
+    "Already Played": "已播放",
+    "READ-AHEAD WINDOW": "预读区间",
+    "Subtitle Cues": "字幕片段",
+    "Subtitle Cue 1": "字幕片段 1",
+    "Subtitle Cue 2": "字幕片段 2",
+    "Subtitle Cue 3": "字幕片段 3",
+    "CLI + HTTP API for integrations": "通过 CLI 与 HTTP API 扩展接入"
+  }
+}

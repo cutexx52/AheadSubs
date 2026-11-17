@@ -51,6 +51,39 @@ class ReleaseTests(unittest.TestCase):
         self.assertEqual(output.call_args.args[0]["build"], "false")
         self.assertEqual(api.call_count, 1)
 
+    @patch.dict(os.environ, {"GITHUB_REPOSITORY": "owner/repo", "GITHUB_EVENT_NAME": "schedule"})
+    def test_first_preview_requires_successful_exact_head_ci(self):
+        sha = "a" * 40
+        for conclusion in ("failure", "cancelled", "success"):
+            with self.subTest(conclusion=conclusion), patch.object(release, "run", side_effect=[sha, "pyproject.toml"]), \
+                    patch.object(release, "api", side_effect=[
+                        {"private": False, "default_branch": "main"}, {"sha": sha}, [[]],
+                        {"workflow_runs": [{"status": "completed", "conclusion": conclusion}]},
+                    ]), patch.object(release, "output") as output:
+                release.plan()
+                result = output.call_args.args[0]
+                self.assertEqual(result["build"], str(conclusion == "success").lower())
+                if conclusion == "success":
+                    self.assertEqual(result["sha"], sha)
+                    self.assertTrue(result["tag"].endswith("-preview." + sha[:12]))
+                    self.assertEqual(result["publish"], "true")
+
+    @patch.dict(os.environ, {"GITHUB_REPOSITORY": "owner/repo", "GITHUB_EVENT_NAME": "schedule"})
+    def test_preview_rejects_non_default_head(self):
+        with patch.object(release, "run", return_value="a" * 40), patch.object(release, "api", side_effect=[
+            {"private": False, "default_branch": "main"}, {"sha": "b" * 40},
+        ]), self.assertRaises(RuntimeError):
+            release.plan()
+
+    @patch.dict(os.environ, {"GITHUB_REPOSITORY": "owner/repo", "GITHUB_EVENT_NAME": "workflow_dispatch",
+                            "RELEASE_MODE": "verify", "RELEASE_VERSION": "0.1.0-check"})
+    def test_manual_verification_never_publishes(self):
+        with patch.object(release, "run", return_value="a" * 40), \
+                patch.object(release, "api", return_value={"private": False}), patch.object(release, "output") as output:
+            release.plan()
+            self.assertEqual(output.call_args.args[0]["publish"], "false")
+            self.assertEqual(output.call_args.args[0]["build"], "true")
+
     @patch.dict(os.environ, {"GITHUB_REPOSITORY": "owner/repo"})
     @patch.object(release, "run")
     @patch.object(release, "api")

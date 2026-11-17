@@ -1,22 +1,24 @@
-## 目标与范围
+## Goal and scope
 
-<!-- Draft 创建时填写：解决什么问题、预期行为、影响范围；关联 issue（如有）。 -->
+[English](pull_request_template.md) | [简体中文](pull_request_template.zh-CN.md)
 
-## 验收标准
+<!-- Fill when opening Draft: problem, expected behavior, scope, related issue. -->
 
-<!-- 用可观察的行为定义完成条件；大改动列出简短实施步骤。 -->
+## Acceptance criteria
 
-## 验证
+<!-- Observable completion criteria; a short plan for substantial changes. -->
 
-<!-- 持续更新实际命令、结果和未覆盖限制；不要把计划写成通过。 -->
+## Validation
 
-## 文档、多语言与兼容性
+<!-- Update with actual commands, outcomes and gaps. Plans are not passes. -->
 
-<!-- 列出更新入口、中文/英文覆盖、迁移或回退方式；不适用请说明。 -->
+## Documentation, languages and compatibility
 
-## Ready / 合并检查
+<!-- English/Chinese pages and text-bearing images, entry points, migration/rollback. Explain N/A. -->
 
-- [ ] 验收完成；文档、翻译和相关测试已更新，或说明不适用原因。
-- [ ] 当前 head 的必需检查通过；实际播放器/安装验证按改动范围完成。
-- [ ] 当前 head 的独立审查完成；有效问题已修复，异议有证据且获确认。
-- [ ] 无未解决的阻断讨论；满足分支保护及任务授权。
+## Ready / merge checks
+
+- [ ] Acceptance complete; documentation, both languages/images and relevant tests updated or N/A explained.
+- [ ] Current-head required checks pass; player/install checks completed as applicable.
+- [ ] Current-head independent review complete; valid findings fixed, disputes confirmed with evidence.
+- [ ] No unresolved blocking discussions; branch protection and task authorization satisfied.

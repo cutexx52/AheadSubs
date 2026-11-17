@@ -1,5 +1,7 @@
 # Subtitle Relay local protocol v1
 
+[English](PROTOCOL.md) | [简体中文](PROTOCOL.zh-CN.md)
+
 See the maintained [HTTP v1 contract](docs/server.md) for current client behavior, error codes and authenticated shutdown. This original reference remains available for existing links.
 
 The service listens on IPv4 loopback, port 8769 by default. The player and service share a filesystem. All times are seconds on the original media timeline.
@@ -22,7 +24,7 @@ The service listens on IPv4 loopback, port 8769 by default. The player and servi
 }
 ```
 
-Only `session`, `path` and `position` are required. The path may be a local disk file or an accessible Windows share (UNC). Audio is the zero-based embedded FFmpeg audio-stream ordinal, not the player's track ID. An omitted or null source enables detection. Each window sends playback updates about twice per second. A new path, track, language, or a discontinuous position supersedes that window's earlier scheduling preferences. A session expires after 10 seconds without updates.
+Only `session`, `path` and `position` are required. The path may be a local disk file or an accessible Windows share (UNC). Audio is the zero-based embedded FFmpeg audio-stream ordinal, not the player's track ID. In this original contract, an omitted or null source enabled detection; see the current HTTP v1 contract for startup-setting defaults. Each window sends playback updates about twice per second. A new path, track, language, or a discontinuous position supersedes that window's earlier scheduling preferences. A session expires after 10 seconds without updates.
 
 Reply:
 

@@ -1,33 +1,35 @@
-# 播放器适配接口
+# Player integrations
 
-在 **播放器** 页使用 **一键配置** 或 **一键卸载**。自动识别失败会提示选择位置，便携版可用 **更改位置**。PotPlayer 选安装目录，mpv 选配置目录或含有 `portable_config` 的目录。操作完成后重开播放器。
+[English](adapters.md) | [简体中文](adapters.zh-CN.md)
+
+In Players (播放器), use One-click setup (一键配置) or One-click uninstall (一键卸载). If detection fails, choose a location; Change location (更改位置) supports portable installs. Choose PotPlayer's installation directory or mpv's configuration directory / directory containing `portable_config`. Restart the player afterwards.
 
 ## PotPlayer
 
-启动后台后，在正在播放的 PotPlayer 窗口按 **Ctrl+Alt+J** 开启预读，按 **Ctrl+Alt+K** 停止。各窗口单独控制，重载字幕保留播放位置。左上角提示确认启停。适配器常态每 600 ms 查询一次后台，跳转后短暂改用 150 ms。
+With the background service running, press **Ctrl+Alt+J** in a playing PotPlayer window to start look-ahead, or **Ctrl+Alt+K** to stop. Each window is independent. Reloading subtitles preserves playback time; an upper-left notification confirms the operation. The adapter normally polls every 600 ms, temporarily using 150 ms after a seek.
 
-后台需要可读取的文件路径。适配器尝试用标题上的文件名定位已打开的文件，然后查找该窗口已确认的目录。仍无法定位时会请用户选择正在播放的文件。PotPlayer 快捷键使用第一条内嵌音轨，沿用助手里的源语言、目标语言和双语设置。需要指定其他音轨时，可运行 `python -m subtitle_relay potplayer --help` 或 `python -m subtitle_relay potplayer-open --help` 查看手动绑定和开播命令。
+The service needs a readable file path. The adapter first locates an open file using the title's filename, then searches directories confirmed for that window. If unresolved, it asks you to select the playing file. Hotkeys use the first embedded audio track and the helper's source, target and bilingual settings. For another track or manual binding, see `python -m subtitle_relay potplayer --help` and `python -m subtitle_relay potplayer-open --help`.
 
-用鼠标也可以控制。Windows 托盘右键选择 **PotPlayer 预读 → 开启预读 / 关闭预读**。多个窗口打开时先选窗口。也可以从助手安装 PotPlayer 的 AngelScript 扩展，在 PotPlayer 的 **字幕 → 实时字幕翻译** 下选择 **AheadSubs - Start audio pre-read** 或 **AheadSubs - Stop audio pre-read**，通过对应扩展的登录确认窗执行。使用预读字幕时，保持 PotPlayer 的实时字幕翻译条件为 **不使用**，让播放器按原样显示已生成的两行字幕。**AheadSubs (local service)** 是用于已有字幕的文字翻译入口，使用 [`/v1/text`](server.md#文本翻译)。
+Mouse controls are available from the Windows tray: PotPlayer look-ahead (PotPlayer 预读) → start / stop; choose a window when several are open. The helper can also install AngelScript extensions. Under PotPlayer's subtitle → real-time subtitle translation menu, choose **AheadSubs - Start audio pre-read** or **AheadSubs - Stop audio pre-read**, then confirm the extension's login dialog. When displaying generated bilingual subtitles, leave PotPlayer's real-time translation condition disabled (不使用) so the two lines are shown unchanged. **AheadSubs (local service)** translates existing subtitle text through [`/v1/text`](server.md#text-translation).
 
 ## mpv
 
-mpv 0.42+ 的原生右键菜单可载入 `integrations/mpv/subtitle_relay.lua`。在助手里选择 **一键配置**，指定配置目录并重启 mpv，在 **AheadSubs** 菜单启用。便携版应选择对应的 `portable_config` 目录。菜单可调整来源、目标语言和预读时长。
+mpv 0.42+ can load `integrations/mpv/subtitle_relay.lua` in its native right-click menu. Use One-click setup, choose the configuration directory, restart mpv, then enable AheadSubs in the menu. For portable installs choose `portable_config`. The menu includes source/target languages and look-ahead duration.
 
-独立 IPC 适配器也可由 CLI 启动。多个 mpv 窗口应各用一个管道名。
+The standalone IPC adapter is also available from the CLI. Give each window a different pipe name.
 
 ```cmd
 mpv.exe --input-ipc-server=relay-window-1 D:\video\clip.mkv
 python -m subtitle_relay mpv relay-window-1 --source ja --target zh --ahead 20
 ```
 
-## 实现新适配器
+## Adding an adapter
 
-Python 共享循环 `run_adapter()` 接受实现以下方法的播放器对象。
+The shared Python loop `run_adapter()` accepts a player object implementing:
 
-| 方法 | 合约 |
+| Method | Contract |
 | --- | --- |
-| `state()` | 返回 `path`、`position`，并尽量提供 `audio`、`duration` 和 `speed`。尚未就绪时返回 `None`。位置使用原媒体时间，单位秒。 |
-| `publish(path, revision)` | 将指定 SRT 加载到当前窗口。用 `(path, revision)` 抑制重复重载，首条字幕出现后才首次加载。 |
+| `state()` | Return `path` and `position`, plus `audio`, `duration` and `speed` when available. Return `None` before readiness. Positions are seconds on the original media timeline. |
+| `publish(path, revision)` | Load that SRT in the current window. Deduplicate with `(path, revision)` and wait for actual subtitle text before the initial load. |
 
-播放文件、音轨、语言或位置变化时，更新同一窗口的会话；播放器退出或用户停止时释放会话。非 Python 适配器可以直接使用[后台 HTTP v1](server.md)。调试后台时，可运行 `python -m subtitle_relay clock D:\video\clip.mkv --position 45 --target zh` 模拟播放头，使用 `--realtime` 可按真实时间推进。
+Update the same window's session when media, track, language or position changes. Release it when the player exits or the user stops. Non-Python adapters can use [HTTP v1](server.md) directly. To test the service without a player, run `python -m subtitle_relay clock D:\video\clip.mkv --position 45 --target zh`; add `--realtime` for a moving playhead.
