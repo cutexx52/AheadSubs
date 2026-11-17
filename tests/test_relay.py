@@ -14,6 +14,33 @@ from subtitle_relay.providers import Cue, OpenAIWhisper
 
 
 class RelayTest(unittest.TestCase):
+    def test_adapter_reports_seek_immediately_then_briefly_polls_faster(self):
+        now = 0.0
+        sent = []
+
+        def read_state():
+            if now >= 8:
+                raise EOFError()
+            return {"path": "movie.mp4", "position": now + (60 if now >= 3.35 else 0)}
+
+        def send(route, request):
+            if route == "playback":
+                sent.append((now, request["position"]))
+            return {"subtitle": None, "error": None}
+
+        def sleep(seconds):
+            nonlocal now
+            now += seconds + 1e-9
+
+        with patch("subtitle_relay.players.time.monotonic", side_effect=lambda: now), \
+             patch("subtitle_relay.players.time.sleep", side_effect=sleep), self.assertRaises(EOFError):
+            run_adapter(Mock(state=read_state), Mock(send=send), "ja", "zh", 20, 0.6, seek_interval=0.15)
+
+        after_seek = [time for time, position in sent if position >= 60]
+        self.assertLessEqual(after_seek[0] - 3.35, 0.15)
+        self.assertAlmostEqual(after_seek[1] - after_seek[0], 0.15)
+        self.assertAlmostEqual(after_seek[-1] - after_seek[-2], 0.6)
+
     @unittest.skipUnless(os.name == "nt", "PotPlayer requires Windows")
     def test_potplayer_playback_status_does_not_open_an_overlay(self):
         from subtitle_relay.feedback import PotFeedback

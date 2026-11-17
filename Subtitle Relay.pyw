@@ -419,7 +419,7 @@ def run_native_adapter(hwnd, media, stop, report, resolve_media):
             return
         report("on", "预读已开启")
         run_adapter(player, RelayClient(PORT), lambda: config()["source"] or None, "zh", 20, 0.6, stop,
-                    report=report)
+                    report=report, seek_interval=0.15)
 
 
 def gui(initial_media=None, show_request=None):

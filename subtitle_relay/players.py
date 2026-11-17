@@ -88,19 +88,43 @@ class Mpv:
         self.subtitle, self.revision = path, revision
 
 
-def run_adapter(player, client, source, target, ahead, interval, stop=None, idle_limit=None, report=None, session=None):
+def run_adapter(player, client, source, target, ahead, interval, stop=None, idle_limit=None,
+                report=None, session=None, seek_interval=None):
     session = session or uuid4().hex
     previous_error = None
     last_active = time.monotonic()
     disconnected_at = None
     attached = False
+    previous_position = None
+    next_poll = fast_until = 0
     try:
         while stop is None or not stop.exists():
             state = player.state()
+            delay = interval
             if state:
-                last_active = time.monotonic()
+                now = last_active = time.monotonic()
+                if seek_interval is not None:
+                    media = (state.get("path"), state.get("audio"))
+                    position = state["position"]
+                    if previous_position is None:
+                        jumped = True
+                    else:
+                        old_media, old_time, old_position = previous_position
+                        elapsed = (now - old_time) * max(1, state.get("speed", 1))
+                        advance = position - old_position
+                        jumped = media != old_media or advance < -0.15 or advance > elapsed + 0.55
+                    previous_position = (media, now, position)
+                    if jumped:
+                        fast_until, next_poll = now + 2.5, now
+                    if now < next_poll:
+                        time.sleep(min(seek_interval, next_poll - now))
+                        continue
+                    delay = seek_interval
+                    next_poll = now + (seek_interval if now < fast_until else interval)
             elif idle_limit is not None and time.monotonic() - last_active >= idle_limit:
                 return
+            else:
+                previous_position = None
             try:
                 if state:
                     response = client.send("playback", {
@@ -139,7 +163,7 @@ def run_adapter(player, client, source, target, ahead, interval, stop=None, idle
             else:
                 if report:
                     report("waiting", "等待活动音轨或播放位置…")
-            time.sleep(interval)
+            time.sleep(delay)
     finally:
         try:
             client.send("close", {"session": session})

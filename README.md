@@ -13,7 +13,7 @@
 
 **PotPlayer** 标签提供两个入口：
 
-常用方式：启动 Relay 服务后，在正在播放的 PotPlayer 窗口按 **Ctrl+Alt+J** 开启预读，按 **Ctrl+Alt+K** 停止。启用后，预读会跟随同一窗口切换视频；如果 Windows 无法提供完整路径，Relay 会在该窗口已确认的目录查找对应文件，找不到时才询问。快捷键由 Relay 服务注册，可在 PotPlayer 标签关闭，重启服务后生效。先使用带文件名的 PotPlayer 标题格式；无法识别标题时可走扩展菜单或助手里的 Attach。
+常用方式：启动 Relay 服务后，在正在播放的 PotPlayer 窗口按 **Ctrl+Alt+J** 开启预读，按 **Ctrl+Alt+K** 停止。左上角仅确认开启或关闭。跳转后短暂以 150 ms 间隔刷新字幕，正常播放时每 600 ms 请求一次后台。启用后，预读会跟随同一窗口切换视频；如果 Windows 无法提供完整路径，Relay 会在该窗口已确认的目录查找对应文件，找不到时才询问。快捷键由 Relay 服务注册，可在 PotPlayer 标签关闭，重启服务后生效。先使用带文件名的 PotPlayer 标题格式；无法识别标题时可走扩展菜单或助手里的 Attach。
 
 - **Open video with translated subtitles…** 选择本地视频或 Windows 共享文件，服务先准备起始字幕，再用新 PotPlayer 窗口加载 SRT。后续更新会触发 PotPlayer 原生 Reload Subtitle 命令。已打开的视频也可用 **Select media and start pre-reading…** 手动绑定，助手会把首份 SRT 交给指定窗口。SRT 保存在后台缓存目录，默认是 `%LOCALAPPDATA%\Subtitle Relay\cache`。
 - **Install PotPlayer translation menu** 安装原生 **Subtitle Relay (local service)** 翻译引擎。重开 PotPlayer 后，在实时字幕翻译的引擎列表选择它，并指定来源和目标语言。该回调处理 PotPlayer 传入的现成字幕文本。观看已经由后台生成译文的 SRT 时，可关闭 PotPlayer 自己的字幕翻译以免重复处理。

@@ -173,7 +173,8 @@ def main():
     elif args.mode == "potplayer":
         from .potplayer import PotPlayer
 
-        run_adapter(PotPlayer(args.hwnd, args.path, args.audio, args.reload_command), *options, stop=args.stop_file)
+        run_adapter(PotPlayer(args.hwnd, args.path, args.audio, args.reload_command), *options,
+                    stop=args.stop_file, seek_interval=min(0.15, args.interval))
     elif args.mode == "potplayer-open":
         from .potplayer import open_with_subtitles
 

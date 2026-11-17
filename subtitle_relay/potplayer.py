@@ -353,7 +353,7 @@ def open_with_subtitles(executable, path, client, audio, source, target, ahead, 
         print(json.dumps({"window": hex(player.hwnd), "subtitle": str(subtitle),
                           "reload_command": reload_command}), flush=True)
         player.subtitle, player.revision = str(cache_srt), response["revision"]
-        run_adapter(player, client, source, target, ahead, 0.6, stop=stop, session=session)
+        run_adapter(player, client, source, target, ahead, 0.6, stop=stop, session=session, seek_interval=0.15)
     finally:
         try:
             client.send("close", {"session": session})
