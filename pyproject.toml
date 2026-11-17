@@ -12,7 +12,7 @@ dependencies = ["psutil>=6,<9; platform_system == 'Windows'"]
 
 [project.optional-dependencies]
 desktop = ["pystray>=0.19.5,<0.20; platform_system == 'Windows'"]
-cloud = ["openai>=1.80,<4"]
+cloud = ["openai>=1.80,<4", "PyJWT[crypto]>=2.12,<3; platform_system == 'Windows'"]
 local = ["faster-whisper>=1.2,<2", "ctranslate2>=4.5,<5", "huggingface-hub", "tokenizers"]
 fsmn-vad = ["kaldi-native-fbank>=1.20,<2", "numpy", "onnxruntime>=1.16", "huggingface-hub"]
 cuda12 = ["nvidia-cublas-cu12; platform_system == 'Windows'", "nvidia-cudnn-cu12>=9,<10; platform_system == 'Windows'"]

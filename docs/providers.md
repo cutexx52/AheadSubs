@@ -9,6 +9,8 @@
 | 本地文本翻译 | NLLB 600M INT8 | CTranslate2，可用 CPU 或 CUDA。默认 checkpoint 的基础权重采用 CC BY-NC 4.0。 |
 | 云端文本翻译 | Qwen-MT Flash / Lite / Plus | 阿里云百炼 Base URL 与 API Key。仅向该 provider 发送待翻译的字幕文本。 |
 | 云端文本翻译 | OpenAI 文本模型 | OpenAI API Key。仅向该 provider 发送待翻译的字幕文本。 |
+| 云端文本翻译 | ChatGPT 订阅 | 通过官方 OAuth 授权使用符合条件的 ChatGPT 订阅额度或积分。模型来自登录账号的可用列表。 |
+| 云端文本翻译 | MiniMax M3.1 Flash | 接受 M Plan 专用 Key 和按量 API Key。Key 类型决定用量归属。 |
 | 云端语音识别 | 百炼 Qwen-Audio 3.1 / 3.0 ASR Flash | 与 Qwen-MT 共用百炼 Key 和区域。原生接口接收短 WAV，返回句级时间戳。 |
 | 云端语音识别或直译 | OpenAI 音频 API | OpenAI API Key。识别或直译请求会发送音频片段，直译目标语言为英语。 |
 | 自定义接口 | OpenAI 兼容 ASR / 文本接口 | ASR 需要返回带分段时间戳的 `verbose_json`。文本接口需支持 JSON 模式。 |
@@ -25,6 +27,16 @@ python -m subtitle_relay serve --asr dashscope --dashscope-asr-model qwen-audio-
 Qwen3-ASR 由服务管理一个共享的本地进程。CLI 的 `--device` 控制 CTranslate2 使用 CPU 或 CUDA。Qwen3-ASR 使用其自身的 Vulkan 运行时。[CrispASR](https://github.com/CrispStrobe/CrispASR) · [NLLB 模型卡](https://huggingface.co/facebook/nllb-200-distilled-600M) · [Qwen-MT 接口](https://www.alibabacloud.com/help/en/model-studio/qwen-mt-api)
 
 百炼 ASR 原生接口可能不返回语种代码。与需要明确输入语言的 NLLB 搭配时，建议在首页选定源语言。[百炼短音频转录接口](https://help.aliyun.com/zh/model-studio/qwen-audio-asr-http-api)
+
+## 订阅与授权
+
+**ChatGPT** 在 Windows 助手的 **云端模型 → ChatGPT 订阅 · OAuth** 中配置。点击 **使用 ChatGPT 继续**，在浏览器登录并同意使用订阅，回到助手选择账号和模型，点击 **用于翻译 → 保存并应用**。OpenAI 只接收待翻译的字幕文本和启用的翻译上下文。语音识别仍使用 **翻译** 页上选定的识别模型。可从设置里的 **管理 ChatGPT 用量** 查看额度，并在需要时重新授权。CLI 使用 `--mt chatgpt --chatgpt-account <账号标识> --chatgpt-model <模型标识>`，对应标识可通过桌面桥接查询。[OpenAI 官方接入指南](https://developers.openai.com/siwc/token-sharing-open-source)
+
+**MiniMax** 在 **云端模型 → MiniMax · API Key** 中直接填写密钥或选择密钥文件，也可设置 `MINIMAX_API_KEY`。CLI 使用 `--mt minimax`，可选 `--minimax-key-file`。MiniMax 的通用第三方接入文档提供 M Plan 专用 Key，OAuth 指南对应 OpenClaw。[MiniMax 第三方配置](https://platform.minimax.io/docs/m-plan/other-tools.md) · [MiniMax OpenClaw 指南](https://platform.minimax.io/docs/m-plan/openclaw.md)
+
+Claude 订阅授权限用于 Anthropic 官方产品。Gemini CLI 的 OAuth 和 Qwen Code 的订阅登录面向各自的客户端。GitHub Copilot 提供第三方 SDK 登录，其文档以编程场景为主。[Claude Code 使用说明](https://code.claude.com/docs/en/legal-and-compliance) · [Gemini CLI FAQ](https://github.com/google-gemini/gemini-cli/blob/main/docs/resources/faq.md) · [Qwen Code 认证文档](https://github.com/QwenLM/qwen-code/blob/main/docs/users/configuration/auth.md) · [GitHub Copilot SDK](https://docs.github.com/en/copilot/how-tos/copilot-sdk/setup/github-oauth)
+
+阿里云和智谱的 Coding Plan 专用端点限用于编程。百炼通用 API 已内置，智谱通用接口可通过自定义兼容接口配置。Kimi Code 文档为第三方开发工具提供专用 Key，Kimi 开放平台另有按量 API。[阿里云 Coding Plan FAQ](https://help.aliyun.com/zh/model-studio/coding-plan-faq) · [智谱端点说明](https://zcode.z.ai/cn/docs/configuration) · [Kimi Code 概览](https://www.kimi.com/code/docs/)
 
 ## 每小时估价
 

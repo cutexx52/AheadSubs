@@ -10,6 +10,8 @@ from pathlib import Path
 from urllib.error import URLError
 from urllib.request import ProxyHandler, build_opener
 
+from ..inference.providers import MINIMAX_MODEL
+
 ROOT = Path(__file__).resolve().parents[2]
 LAUNCHER = ROOT / "Subtitle Relay.pyw"
 DATA = Path(os.environ["LOCALAPPDATA"]) / "Subtitle Relay"
@@ -31,6 +33,8 @@ DEFAULTS = {
     "asr_url": "http://127.0.0.1:8000/v1", "asr_model": "qwen3-asr",
     "asr": "local", "mt": "local", "device": "cpu", "whisper_model": "small",
     "llm_model": "gpt-4.1-mini", "llm_url": "http://127.0.0.1:11434/v1", "key_file": "",
+    "chatgpt_account": "", "chatgpt_model": "",
+    "minimax_key_file": "",
     "qwen_mt_model": "qwen-mt-flash", "qwen_mt_url": "", "qwen_mt_key_file": "",
     "dashscope_asr_model": "qwen-audio-3.1-asr-flash",
     "potplayer_directory": "", "mpv_directory": "",
@@ -46,6 +50,10 @@ def enhancement_key(settings):
         return f"qwen-mt:{settings['qwen_mt_model']}"
     if provider in {"openai", "compatible"}:
         return f"{provider}:{settings['llm_model']}"
+    if provider == "chatgpt" and settings["chatgpt_model"]:
+        return f"chatgpt:{settings['chatgpt_model']}"
+    if provider == "minimax":
+        return f"minimax:{MINIMAX_MODEL}"
     return None
 
 
@@ -206,7 +214,7 @@ def background_start(on_wait=None, restart=False):
             args.append("--default-bilingual")
         for name in DEFAULTS:
             if name in {"source", "target", "bilingual", "translation_enhancements",
-                        "potplayer_directory", "mpv_directory", "key_file", "qwen_mt_key_file"}:
+                        "potplayer_directory", "mpv_directory", "key_file", "qwen_mt_key_file", "minimax_key_file"}:
                 continue
             if name == "pot_hotkey":
                 if settings[name] == "1":

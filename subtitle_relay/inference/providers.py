@@ -79,6 +79,10 @@ def openai_key(key_file=None):
     return provider_key(key_file, "OPENAI_API_KEY", "OpenAI")
 
 
+def minimax_key(key_file=None):
+    return provider_key(key_file, "MINIMAX_API_KEY", "MiniMax")
+
+
 QWEN_MT_MODELS = ("qwen-mt-flash", "qwen-mt-lite", "qwen-mt-plus")
 DASHSCOPE_DEFAULT_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
 
@@ -175,20 +179,48 @@ class ChatTranslation:
                 payload["previous"] = list(previous)
             if prompt:
                 payload["style"] = prompt
+        result = json.loads(self.complete(instructions, json.dumps(payload, ensure_ascii=False)) or "")
+        expected = payload["lines"].keys()
+        if (not isinstance(result, dict) or not expected <= result.keys()
+                or (contextual and result.keys() != expected)
+                or any(not isinstance(result[key], str) for key in expected)):
+            raise ValueError("Translation returned incorrect subtitle line IDs or values")
+        return [result[key] for key in expected]
+
+    def complete(self, instructions, payload):
         response = self.client.chat.completions.create(
             model=self.model, response_format={"type": "json_object"},
             **({"reasoning_effort": self.reasoning_effort} if self.reasoning_effort else {}),
             messages=[
                 {"role": "system", "content": instructions},
-                {"role": "user", "content": json.dumps(payload, ensure_ascii=False)},
+                {"role": "user", "content": payload},
             ],
         )
-        result = json.loads(completion_text(response) or "")
-        expected = payload["lines"].keys()
-        if (not isinstance(result, dict) or not expected <= result.keys()
-                or (contextual and result.keys() != expected)):
-            raise ValueError("Translation returned incorrect subtitle line IDs")
-        return [result[key] for key in expected]
+        return completion_text(response)
+
+
+MINIMAX_MODEL = "MiniMax-M3.1-Flash"
+
+
+class MiniMaxTranslation(ChatTranslation):
+    def __init__(self, key_file=None, *, api_key=None):
+        from openai import OpenAI
+
+        super().__init__(OpenAI(api_key=api_key or minimax_key(key_file), base_url="https://api.minimax.io/v1", timeout=30),
+                         MINIMAX_MODEL)
+
+    def complete(self, instructions, payload):
+        response = self.client.chat.completions.create(
+            model=self.model, reasoning_effort="low",
+            messages=[
+                {"role": "system", "content": instructions + " Output only the JSON object without Markdown fences."},
+                {"role": "user", "content": payload},
+            ],
+        )
+        content = (completion_text(response) or "").strip()
+        if content.startswith(("```json\n", "```\n")) and content.endswith("```"):
+            content = content.partition("\n")[2][:-3].strip()
+        return content
 
 
 NLLB_LANGUAGES = {

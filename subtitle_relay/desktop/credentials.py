@@ -14,6 +14,7 @@ from ..inference.providers import provider_key
 SOURCES = {
     "openai": ("key_file", "OPENAI_API_KEY", "OpenAI"),
     "dashscope": ("qwen_mt_key_file", "DASHSCOPE_API_KEY", "百炼"),
+    "minimax": ("minimax_key_file", "MINIMAX_API_KEY", "MiniMax"),
     "compatible-asr": ("asr_key_file", "RELAY_ASR_API_KEY", "自定义识别"),
     "compatible-mt": ("mt_key_file", "RELAY_LLM_API_KEY", "自定义翻译"),
 }
@@ -89,7 +90,7 @@ def update(settings, changes):
 
 def read_file(provider, path):
     _, variable, label = SOURCES[provider]
-    if provider in {"openai", "dashscope"}:
+    if not provider.startswith("compatible-"):
         return provider_key(path, variable, label)
     try:
         value = Path(path).read_text(encoding="utf-8-sig").strip()
@@ -119,7 +120,7 @@ def resolve(settings, provider, endpoint=None):
         value = read_file(provider, path)
     else:
         value = os.getenv(variable, "").strip()
-        if not value and provider in {"openai", "dashscope"}:
+        if not value and not provider.startswith("compatible-"):
             raise ValueError(f"请在云端模型页配置 {label} API Key。")
     if value and provider.startswith("compatible-"):
         url = urlsplit(endpoint or "")

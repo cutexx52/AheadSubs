@@ -7,12 +7,13 @@ from dataclasses import asdict
 from pathlib import Path
 
 from .inference.audio import Segmentation, Segmenter, VAD_THRESHOLDS
+from .inference.chatgpt import ChatGPTTranslation
 from .inference.dashscope import DASHSCOPE_ASR_MODELS, DashScopeAudio
 from .server.engine import MAX_CONTEXT_CUES, Relay, TranslationSettings
 from .adapters.players import Mpv, run_adapter
 from .client import RelayClient
 from .server.protocol import serve
-from .inference.providers import (DASHSCOPE_DEFAULT_URL, ChatTranslation, FasterWhisper, NllbTranslation, OpenAIWhisper,
+from .inference.providers import (DASHSCOPE_DEFAULT_URL, ChatTranslation, FasterWhisper, MiniMaxTranslation, NllbTranslation, OpenAIWhisper,
                         QWEN_MT_MODELS, QwenMtTranslation, configure_cuda, openai_client, qwen_mt_client)
 
 
@@ -75,6 +76,10 @@ def make_relay(args):
             translator = QwenMtTranslation(qwen_mt_client(dashscope_url, args.qwen_mt_key_file,
                                                           api_key=desktop_key("dashscope")),
                                            args.qwen_mt_model)
+        elif args.mt == "chatgpt":
+            translator = ChatGPTTranslation(args.chatgpt_account, args.chatgpt_model)
+        elif args.mt == "minimax":
+            translator = MiniMaxTranslation(args.minimax_key_file, api_key=desktop_key("minimax"))
         else:
             client = cloud if args.mt == "openai" else openai_client(
                 endpoint=args.llm_url, api_key=desktop_key("compatible-mt", args.llm_url))
@@ -88,6 +93,8 @@ def make_relay(args):
         profile.extend([args.asr_url if args.asr == "compatible" else args.qwen_size, args.asr_model])
     if args.mt == "qwen-mt" and not args.ast:
         profile.extend([args.qwen_mt_model, dashscope_url])
+    if args.mt in {"chatgpt", "minimax"} and not args.ast:
+        profile.append(translator.model)
     if args.asr == "dashscope" and not args.ast:
         profile.extend([args.dashscope_asr_model, dashscope_url])
     if settings.enabled and args.vad_model != "silero":
@@ -108,7 +115,10 @@ def main():
     server.add_argument("--qwen-root", type=Path)
     server.add_argument("--asr-url", default="http://127.0.0.1:8000/v1")
     server.add_argument("--asr-model", default="qwen3-asr")
-    server.add_argument("--mt", choices=["local", "openai", "compatible", "qwen-mt"], default="local")
+    server.add_argument("--mt", choices=["local", "openai", "compatible", "qwen-mt", "chatgpt", "minimax"], default="local")
+    server.add_argument("--chatgpt-account", default="")
+    server.add_argument("--chatgpt-model", default="")
+    server.add_argument("--minimax-key-file")
     server.add_argument("--qwen-mt-model", choices=QWEN_MT_MODELS, default=QWEN_MT_MODELS[0])
     server.add_argument("--qwen-mt-url", default="")
     server.add_argument("--qwen-mt-key-file")
