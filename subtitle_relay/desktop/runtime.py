@@ -33,6 +33,7 @@ DEFAULTS = {
     "llm_model": "gpt-4.1-mini", "llm_url": "http://127.0.0.1:11434/v1", "key_file": "",
     "qwen_mt_model": "qwen-mt-flash", "qwen_mt_url": "", "qwen_mt_key_file": "",
     "dashscope_asr_model": "qwen-audio-3.1-asr-flash",
+    "potplayer_directory": "", "mpv_directory": "",
     "chunk": "8", "before": "2", "after": "2", "min_speech": "3", "max_speech": "12",
     "min_silence_ms": "450", "pad_ms": "80", "vad_threshold": "0.5", "backfill": "4",
     "vad_model": "silero",
@@ -203,7 +204,8 @@ def background_start(on_wait=None, restart=False):
         if settings["bilingual"] == "1":
             args.append("--default-bilingual")
         for name in DEFAULTS:
-            if name in {"source", "target", "bilingual", "translation_enhancements"}:
+            if name in {"source", "target", "bilingual", "translation_enhancements",
+                        "potplayer_directory", "mpv_directory"}:
                 continue
             if name == "pot_hotkey":
                 if settings[name] == "1":

@@ -1,6 +1,6 @@
 <Window x:Class="LocalVideoSubtitleTranslator.MainWindow"
  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
- Title="Local Video Subtitle Translator" Icon="/Assets/AheadSubs.ico" Width="1040" Height="820" MinWidth="880" MinHeight="650"
+ Title="Local Video Subtitle Translator" Language="zh-CN" Icon="/Assets/AheadSubs.ico" Width="1040" Height="820" MinWidth="880" MinHeight="650"
  FontFamily="Microsoft YaHei UI, Segoe UI" FontSize="14" Background="#F5F6F8" Foreground="#242A35"
  WindowStartupLocation="CenterScreen" Closing="OnClosing" UseLayoutRounding="True">
  <Window.Resources>
@@ -21,12 +21,12 @@
   <TabControl x:Name="SettingsPanel" Grid.Row="1" TabStripPlacement="Left" BorderThickness="0" Background="#F5F6F8" SelectionChanged="PageChanged">
    <TabControl.Template><ControlTemplate TargetType="TabControl"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="176"/><ColumnDefinition/></Grid.ColumnDefinitions><Border Background="#F0F2F5" BorderBrush="#E3E7ED" BorderThickness="0,0,1,0"><StackPanel Margin="0,22,0,0"><TabPanel IsItemsHost="True"/></StackPanel></Border><ContentPresenter Grid.Column="1" ContentSource="SelectedContent"/></Grid></ControlTemplate></TabControl.Template>
    <TabItem Header="翻译" x:Name="TranslationTab"><ScrollViewer x:Name="TranslationScroll" Style="{StaticResource PageScroll}"><StackPanel>
-    <TextBlock Text="翻译设置" Style="{StaticResource PageTitle}"/><TextBlock Text="PotPlayer：Ctrl+Alt+J 开启，Ctrl+Alt+K 关闭当前窗口翻译。" Style="{StaticResource Hint}" Margin="0,0,0,16"/>
+    <TextBlock Text="翻译设置" Style="{StaticResource PageTitle}"/>
     <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="语言与显示" Style="{StaticResource Section}"/>
      <Grid Margin="0,10,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="24"/><ColumnDefinition/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="视频语言" Margin="0,0,0,8" Foreground="#596273"/><ComboBox x:Name="SourceLanguage" DisplayMemberPath="Label" SelectedValuePath="Value" AutomationProperties.Name="视频语言"/></StackPanel><StackPanel Grid.Column="2"><TextBlock Text="翻译为" Margin="0,0,0,8" Foreground="#596273"/><ComboBox x:Name="TargetLanguage" DisplayMemberPath="Label" SelectedValuePath="Value" AutomationProperties.Name="目标字幕语言"/></StackPanel></Grid>
      <CheckBox x:Name="Bilingual" Content="双语字幕 · 原文在上，译文在下" Margin="0,20,0,0"/>
     </StackPanel></Border>
-    <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="使用的模型" Style="{StaticResource Section}"/><TextBlock Text="语音识别" Margin="0,10,0,8" Foreground="#596273"/><ComboBox x:Name="SpeechModel" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="SelectionChanged" AutomationProperties.Name="语音识别模型"/><TextBlock Text="字幕翻译" Margin="0,18,0,8" Foreground="#596273"/><ComboBox x:Name="TranslationModel" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="SelectionChanged" AutomationProperties.Name="字幕翻译模型"/>
+    <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="使用的模型" Style="{StaticResource Section}"/><TextBlock Text="语音识别" Margin="0,10,0,8" Foreground="#596273"/><ComboBox x:Name="SpeechModel" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="SelectionChanged" AutomationProperties.Name="语音识别模型"/><TextBlock x:Name="SpeechCost" Style="{StaticResource Hint}" Margin="0,6,0,0"/><TextBlock Text="字幕翻译" Margin="0,18,0,8" Foreground="#596273"/><ComboBox x:Name="TranslationModel" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="SelectionChanged" AutomationProperties.Name="字幕翻译模型"/><TextBlock x:Name="TranslationCost" Style="{StaticResource Hint}" Margin="0,6,0,0"/>
      <DockPanel Margin="0,12,0,0"><Button x:Name="CloudKeysButton" Content="云端配置" Click="GoKeys" DockPanel.Dock="Right" FontSize="12" Padding="10,5" MinHeight="28" Margin="12,0,0,0"/><TextBlock x:Name="TranslationHint" Style="{StaticResource Hint}" VerticalAlignment="Center"/></DockPanel>
      <Expander x:Name="TranslationEnhancement" Header="上下文增强" Margin="0,14,0,0" Visibility="Collapsed">
       <StackPanel Margin="0,10,0,0">
@@ -56,16 +56,21 @@
     </DataGrid><TextBlock x:Name="InspectStatus" Grid.Row="3" Text="点击刷新，读取最近的视频字幕。" Style="{StaticResource Hint}" Margin="0,12,0,0" AutomationProperties.LiveSetting="Polite"/>
    </Grid></TabItem>
    <TabItem Header="播放器" x:Name="PlayersTab"><ScrollViewer Style="{StaticResource PageScroll}"><StackPanel>
-    <TextBlock Text="连接你的播放器" Style="{StaticResource PageTitle}"/><TextBlock Text="各个播放窗口独立控制，共用同一套模型。" Style="{StaticResource Hint}" Margin="0,0,0,24"/>
-    <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="PotPlayer" Style="{StaticResource Section}"/><TextBlock Text="正常打开视频后，在当前播放窗口使用快捷键。使用预读字幕时，将 PotPlayer 自带的实时字幕翻译设为「不使用」。" Style="{StaticResource Hint}"/>
-     <Grid Margin="0,20,0,20"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="开启翻译" Foreground="#596273"/><TextBlock Text="Ctrl + Alt + J" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" Margin="0,8,0,0"/></StackPanel><StackPanel Grid.Column="1"><TextBlock Text="关闭翻译" Foreground="#596273"/><TextBlock Text="Ctrl + Alt + K" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" Margin="0,8,0,0"/></StackPanel></Grid>
-     <Button Content="安装 PotPlayer 菜单" Click="InstallPotPlayer" HorizontalAlignment="Left"/><TextBlock x:Name="PlayerDetection" Style="{StaticResource Hint}" Margin="0,12,0,0"/>
+    <TextBlock Text="播放器" Style="{StaticResource PageTitle}"/>
+    <Border Style="{StaticResource Card}"><StackPanel>
+     <DockPanel><TextBlock x:Name="PlayerDetection" Style="{StaticResource Hint}" DockPanel.Dock="Right"/><TextBlock Text="PotPlayer" Style="{StaticResource Section}"/></DockPanel>
+     <WrapPanel Margin="0,6,0,14"><Button Content="一键配置" Tag="potplayer" Click="ConfigurePlayer"/><Button x:Name="RemovePotPlayer" Content="一键卸载" Tag="potplayer" Click="RemovePlayer"/><Button Content="更改位置" Tag="potplayer" Click="PickPlayerFolder"/></WrapPanel>
+     <TextBlock Text="托盘右键 → PotPlayer 预读。快捷键 Ctrl+Alt+J 开启，Ctrl+Alt+K 关闭。" Style="{StaticResource Hint}"/>
+     <TextBlock Text="PotPlayer 的「实时字幕翻译」设为「不使用」。" Style="{StaticResource Hint}"/>
     </StackPanel></Border>
-    <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="mpv" Style="{StaticResource Section}"/><TextBlock Text="安装播放器脚本，通过菜单开启或关闭当前窗口的字幕翻译。" Style="{StaticResource Hint}" Margin="0,0,0,16"/><Button Content="安装 mpv 菜单" Click="InstallMpv" HorizontalAlignment="Left"/></StackPanel></Border>
-    <TextBlock Text="首次无法读取完整文件路径时，可能需要选择一次当前视频。同目录内的后续视频会自动匹配。" Style="{StaticResource Hint}"/>
+    <Border Style="{StaticResource Card}"><StackPanel>
+     <DockPanel><TextBlock x:Name="MpvIntegration" Style="{StaticResource Hint}" DockPanel.Dock="Right"/><TextBlock Text="mpv" Style="{StaticResource Section}"/></DockPanel>
+     <WrapPanel Margin="0,6,0,14"><Button Content="一键配置" Tag="mpv" Click="ConfigurePlayer"/><Button x:Name="RemoveMpv" Content="一键卸载" Tag="mpv" Click="RemovePlayer"/><Button Content="更改位置" Tag="mpv" Click="PickPlayerFolder"/></WrapPanel>
+     <TextBlock Text="右键菜单 → Subtitle Relay。" Style="{StaticResource Hint}"/>
+    </StackPanel></Border>
    </StackPanel></ScrollViewer></TabItem>
    <TabItem Header="本地模型" x:Name="ModelsTab"><ScrollViewer Style="{StaticResource PageScroll}"><StackPanel>
-    <TextBlock Text="模型留在你的电脑上" Style="{StaticResource PageTitle}"/><TextBlock Text="只需下载一次。安装完成的模型会出现在翻译页。" Style="{StaticResource Hint}" Margin="0,0,0,24"/>
+    <TextBlock Text="本地模型" Style="{StaticResource PageTitle}"/>
     <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="从一套完整方案开始" Style="{StaticResource Section}"/><TextBlock Text="Qwen3-ASR 0.6B 识别 + NLLB 本地翻译" Margin="0,6,0,8"/><TextBlock Text="识别需要支持 Vulkan 的显卡，翻译默认使用 CPU。可在翻译页调整 NLLB 的运算设备。" Style="{StaticResource Hint}"/><Button Content="安装并启用本地方案" Click="SetupLocal" HorizontalAlignment="Left" Margin="0,18,0,0"/>
      <Separator Margin="0,22"/><TextBlock Text="没有合适的显卡？" FontWeight="SemiBold"/><TextBlock Text="可使用 Whisper Small + NLLB 的 CPU 方案。运行速度取决于处理器，可能无法跟上播放。" Style="{StaticResource Hint}" Margin="0,8,0,16"/><Button Content="安装并启用 CPU 方案" Click="SetupCpu" HorizontalAlignment="Left"/>
     </StackPanel></Border>
@@ -77,27 +82,31 @@
     <Border Style="{StaticResource Card}" x:Name="QwenMtPanel"><StackPanel>
      <TextBlock Text="百炼 API Key" Style="{StaticResource Section}"/><DockPanel><Button Content="选择文件" Click="BrowseQwen" DockPanel.Dock="Right" Margin="12,0,0,0"/><TextBox x:Name="QwenKey" AutomationProperties.Name="百炼密钥文件路径"/></DockPanel>
      <TextBlock Text="识别和翻译共用百炼 API Key。留空的地址使用北京公共入口。" Style="{StaticResource Hint}" Margin="0,8,0,0"/>
-     <TextBlock Text="百炼 Base URL" Style="{StaticResource Label}"/><TextBox x:Name="QwenUrl" AutomationProperties.Name="百炼服务地址"/>
+     <TextBlock Text="百炼 Base URL" Style="{StaticResource Label}"/><TextBox x:Name="QwenUrl" TextChanged="PriceChanged" AutomationProperties.Name="百炼服务地址"/>
      <TextBlock Text="语音识别（ASR）" Style="{StaticResource Label}"/>
-     <DockPanel><Button Content="用于识别" Click="ChooseDashScopeSpeech" DockPanel.Dock="Right" Margin="12,0,0,0"/><ComboBox x:Name="DashScopeSpeech" DisplayMemberPath="Label" SelectedValuePath="Value" AutomationProperties.Name="百炼识别模型"/></DockPanel>
+     <DockPanel><Button Content="用于识别" Click="ChooseDashScopeSpeech" DockPanel.Dock="Right" Margin="12,0,0,0"/><ComboBox x:Name="DashScopeSpeech" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="PriceChanged" AutomationProperties.Name="百炼识别模型"/></DockPanel>
+     <TextBlock x:Name="CloudAsrCost" Style="{StaticResource Hint}" Margin="0,6,0,0"/>
      <TextBlock Text="上传待识别音频片段，并使用服务返回的句子时间戳。" Style="{StaticResource Hint}" Margin="0,8,0,0"/>
      <TextBlock Text="专用机器翻译（NMT）" Style="{StaticResource Label}"/>
-     <DockPanel><Button Content="用于翻译" Click="ChooseDashScopeTranslation" DockPanel.Dock="Right" Margin="12,0,0,0"/><ComboBox x:Name="DashScopeTranslation" DisplayMemberPath="Label" SelectedValuePath="Value" AutomationProperties.Name="百炼翻译模型"/></DockPanel>
+     <DockPanel><Button Content="用于翻译" Click="ChooseDashScopeTranslation" DockPanel.Dock="Right" Margin="12,0,0,0"/><ComboBox x:Name="DashScopeTranslation" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="PriceChanged" AutomationProperties.Name="百炼翻译模型"/></DockPanel>
+     <TextBlock x:Name="CloudNmtCost" Style="{StaticResource Hint}" Margin="0,6,0,0"/>
     </StackPanel></Border>
     <Border Style="{StaticResource Card}" x:Name="OpenAiPanel" Visibility="Collapsed"><StackPanel>
      <TextBlock Text="OpenAI API Key" Style="{StaticResource Section}"/><DockPanel><Button Content="选择文件" Click="BrowseOpenAi" DockPanel.Dock="Right" Margin="12,0,0,0"/><TextBox x:Name="OpenAiKey" AutomationProperties.Name="OpenAI 密钥文件路径"/></DockPanel>
      <TextBlock Text="语音识别（ASR）" Style="{StaticResource Label}"/><DockPanel><Button Content="用于识别" Click="ChooseOpenAiSpeech" DockPanel.Dock="Right" Margin="12,0,0,0"/><TextBlock Text="Whisper · whisper-1" VerticalAlignment="Center"/></DockPanel>
+     <TextBlock x:Name="OpenAiAsrCost" Style="{StaticResource Hint}" Margin="0,6,0,0"/>
      <TextBlock Text="文本翻译（LLM）" Style="{StaticResource Label}"/><DockPanel><Button Content="用于翻译" Click="ChooseOpenAiTranslation" DockPanel.Dock="Right" Margin="12,0,0,0"/><TextBlock Text="GPT-4.1 mini · gpt-4.1-mini" VerticalAlignment="Center"/></DockPanel>
+     <TextBlock x:Name="OpenAiMtCost" Style="{StaticResource Hint}" Margin="0,6,0,0"/>
     </StackPanel></Border>
     <Border Style="{StaticResource Card}" x:Name="CustomCloudPanel" Visibility="Collapsed"><StackPanel>
      <TextBlock Text="OpenAI 兼容接口" Style="{StaticResource Section}"/><TextBlock Text="密钥从 RELAY_ASR_API_KEY 和 RELAY_LLM_API_KEY 环境变量读取。" Style="{StaticResource Hint}"/>
      <TextBlock Text="语音识别 · 地址和模型" Style="{StaticResource Label}"/><TextBox x:Name="AsrUrl" AutomationProperties.Name="自定义识别 API 地址"/><TextBox x:Name="AsrModel" AutomationProperties.Name="自定义识别模型名称" Margin="0,8,0,12"/><Button Content="选用此识别服务" HorizontalAlignment="Left" Click="ChooseCustomSpeech"/>
      <TextBlock Text="文本翻译 · 地址和模型" Style="{StaticResource Label}"/><TextBox x:Name="LlmUrl" AutomationProperties.Name="自定义翻译 API 地址"/><TextBox x:Name="LlmModel" AutomationProperties.Name="自定义翻译模型名称" Margin="0,8,0,12"/><Button Content="选用此翻译服务" HorizontalAlignment="Left" Click="ChooseCustomTranslation"/>
     </StackPanel></Border>
-    <TextBlock Text="服务商直接计费。只使用云端翻译时，向服务商发送原文字幕及已启用的参考前文。" Style="{StaticResource Hint}"/>
+    <TextBlock Text="云端翻译会发送原文字幕和已启用的前文。" Style="{StaticResource Hint}"/>
    </StackPanel></ScrollViewer></TabItem>
    <TabItem Header="高级设置" x:Name="AdvancedTab"><ScrollViewer Style="{StaticResource PageScroll}"><StackPanel>
-    <TextBlock Text="按需调整细节" Style="{StaticResource PageTitle}"/><TextBlock Text="调整语音检测、预读范围和诊断选项。" Style="{StaticResource Hint}" Margin="0,0,0,24"/>
+    <TextBlock Text="高级设置" Style="{StaticResource PageTitle}"/>
     <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="语音检测（VAD）" Style="{StaticResource Section}"/><TextBlock Text="先判断哪里有人说话，再把这些音频交给识别模型。" Style="{StaticResource Hint}"/><ComboBox x:Name="Vad" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="VadChanged" AutomationProperties.Name="语音活动检测模型" Margin="0,16,0,0"/>
      <TextBlock Text="语音门槛（0–1）" Style="{StaticResource Label}"/><TextBox x:Name="VadThreshold" AutomationProperties.Name="语音检测门槛"/><TextBlock Text="越高越严格，可能漏掉轻声。" Style="{StaticResource Hint}" Margin="0,6,0,0"/>
      <Grid Margin="0,16,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="20"/><ColumnDefinition/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="最短片段（秒）" Margin="0,0,0,8"/><TextBox x:Name="MinSpeech" AutomationProperties.Name="最短语音片段秒数"/><TextBlock Text="优先避免过碎的短段，仍会考虑实际停顿。" Style="{StaticResource Hint}" Margin="0,6,0,0"/></StackPanel><StackPanel Grid.Column="2"><TextBlock Text="单段最长（2–20 秒）" Margin="0,0,0,8"/><TextBox x:Name="MaxSpeech" AutomationProperties.Name="最长语音段秒数"/><TextBlock Text="连续讲话过长时分段，限制单次识别。" Style="{StaticResource Hint}" Margin="0,6,0,0"/></StackPanel></Grid>

@@ -8,6 +8,40 @@ from unittest.mock import patch
 
 @unittest.skipUnless(os.name == "nt", "Desktop runtime requires Windows")
 class DiagnosticsTest(unittest.TestCase):
+    def test_manual_player_folder_is_remembered_and_uninstall_removes_only_integration(self):
+        from subtitle_relay.desktop import assets, runtime
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            player = root / "PotPlayer Custom"
+            player.mkdir()
+            (player / "PotPlayerMini64.exe").touch()
+            with patch.object(runtime, "DATA", root), patch.object(runtime, "CONFIG", root / "settings.json"):
+                assets.configure_player("potplayer", str(player))
+                self.assertEqual(assets.potplayer_directory(), player)
+                self.assertTrue(assets.integration_status("potplayer")["configured"])
+                keep = player / "Extension" / "Subtitle" / "Translate" / "Other extension.as"
+                keep.touch()
+                assets.unconfigure_player("potplayer")
+                self.assertTrue(keep.is_file())
+                self.assertFalse(assets.integration_status("potplayer")["installed"])
+
+    def test_mpv_manual_portable_configuration_leaves_user_files(self):
+        from subtitle_relay.desktop import assets, runtime
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            portable = root / "portable_config"
+            portable.mkdir()
+            (portable / "mpv.conf").touch()
+            with patch.object(runtime, "DATA", root), patch.object(runtime, "CONFIG", root / "settings.json"):
+                assets.configure_player("mpv", str(root))
+                self.assertEqual(assets.mpv_directory(), portable)
+                self.assertTrue(assets.integration_status("mpv")["configured"])
+                assets.unconfigure_player("mpv")
+                self.assertTrue((portable / "mpv.conf").is_file())
+                self.assertFalse(assets.integration_status("mpv")["installed"])
+
     def test_legacy_translation_settings_move_into_active_model_only(self):
         from subtitle_relay.desktop import runtime
 

@@ -18,7 +18,7 @@ internal sealed class EngineBridge
     }
 
     public async Task<JsonObject> Run(string command, string? argument = null,
-        JsonObject? input = null, CancellationToken cancellationToken = default)
+        JsonObject? input = null, CancellationToken cancellationToken = default, string? folder = null)
     {
         string python = new[] { Path.Combine(Root, "runtime", "python.exe"),
             Path.Combine(Root, ".venv", "Scripts", "python.exe") }.FirstOrDefault(File.Exists)
@@ -35,6 +35,11 @@ internal sealed class EngineBridge
         info.ArgumentList.Add("subtitle_relay.desktop.bridge");
         info.ArgumentList.Add(command);
         if (argument is not null) info.ArgumentList.Add(argument);
+        if (folder is not null)
+        {
+            info.ArgumentList.Add("--folder");
+            info.ArgumentList.Add(folder);
+        }
         using var process = Process.Start(info) ?? throw new IOException("无法启动字幕服务。");
         using var registration = cancellationToken.Register(() =>
         {

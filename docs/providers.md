@@ -26,7 +26,11 @@ Qwen3-ASR 由服务管理一个共享的本地进程。CLI 的 `--device` 控制
 
 百炼 ASR 原生接口可能不返回语种代码。与需要明确输入语言的 NLLB 搭配时，建议在首页选定源语言。[百炼短音频转录接口](https://help.aliyun.com/zh/model-studio/qwen-audio-asr-http-api)
 
-全本地组合没有 provider API 用量费用。作为云翻译预算参考，2026 年 11 月的北京 Qwen-MT Flash 费率是每百万输入／输出 token **US$0.101／US$0.280**。五条日译中样例的平均用量约为每条 47 输入和 12 输出 token。若每小时有 600 条类似字幕，估算翻译费约 **US$0.005**。真实账单取决于字幕条数、长度、地区和最新费率。[阿里云计费](https://www.alibabacloud.com/help/en/model-studio/model-pricing)
+## 每小时估价
+
+界面只显示区间。每小时指一小时视频。按 2026 年 11 月 17 日牌价，识别按实际发送 30–60 分钟音频作示例。Qwen-Audio 3.1 的公开日语短样本用量约为每秒 13.1 个输入 token 与 2 个输出 token。Qwen-MT 按每小时 300–900 条字幕、每条 47 输入与 12 输出 token 估算。GPT-4.1 mini 使用相同条数，每条约 120–400 输入和 12–20 输出 token，以覆盖指令及部分前文。美元按当日中间价 1 美元约 6.7132 元换算。百炼按配置中的北京或新加坡端点选价，未知区域与自定义模型留空。免费额度、重试、重处理、上下文及对白密度都可能改变实际账单。
+
+全本地组合没有 API 用量费用。[百炼牌价](https://help.aliyun.com/zh/model-studio/model-pricing) · [OpenAI Whisper](https://developers.openai.com/api/docs/models/whisper-1) · [OpenAI GPT-4.1 mini](https://developers.openai.com/api/docs/models/gpt-4.1-mini) · [人民币汇率中间价](https://www.safe.gov.cn/AppStructured/hlw/RMBQuery.do)
 
 ## VAD 与时间轴
 

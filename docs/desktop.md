@@ -24,7 +24,8 @@
 | `install <model>` | 准备指定本地模型。标识见控制模块中的 `MODELS`。 |
 | `apply` | 从 stdin 读 JSON 对象，验证并应用设置。必要时重启后台。 |
 | `stop` | 停止助手管理的服务。 |
-| `integrate potplayer\|mpv` | 将对应播放器脚本安装到默认目录。 |
+| `integrate potplayer\|mpv [--folder PATH]` | 配置播放器接入。可指定并记住自定义位置。 |
+| `unintegrate potplayer\|mpv` | 移除所选位置的 AheadSubs 扩展文件。 |
 | `pot-windows` | 列出当前可操作的 PotPlayer 窗口。 |
 | `pot-start <window>` / `pot-stop <window>` | 开启或停止对应窗口的预读。 |
 | `logs` | 输出可以查看的日志路径。 |

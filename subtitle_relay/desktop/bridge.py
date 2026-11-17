@@ -23,10 +23,10 @@ MODELS = {
 def status():
     settings = runtime.config()
     health = runtime.service_health()
-    folder = assets.potplayer_directory()
+    integrations = {player: assets.integration_status(player) for player in ("potplayer", "mpv")}
     return {"running": health is not None, "active_sessions": (health or {}).get("active_sessions"),
             "settings": settings, "models": {model: assets.model_ready(label) for model, label in MODELS.items()},
-            "potplayer_detected": any((folder / name).is_file() for name in ("PotPlayerMini64.exe", "PotPlayerMini.exe")),
+            "potplayer_detected": integrations["potplayer"]["detected"], "integrations": integrations,
             "ffmpeg_detected": bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))}
 
 
@@ -94,7 +94,7 @@ def validate_enhancements(values):
     return values
 
 
-def run_command(command, item=None):
+def run_command(command, item=None, folder=None):
     if command == "status":
         return status()
     if command == "inspect":
@@ -122,31 +122,26 @@ def run_command(command, item=None):
         runtime.spawn([str(runtime.LAUNCHER), switches[command], item], runtime.DATA / "potplayer.log")
         return {}
     if command == "integrate":
-        if item == "potplayer":
-            destination = assets.potplayer_directory() / "Extension" / "Subtitle" / "Translate"
-            if not destination.is_dir():
-                raise ValueError("未找到 PotPlayer 的扩展目录，请先安装 PotPlayer。")
-            assets.install_potplayer(destination)
-        elif item == "mpv":
-            destination = assets.mpv_directory()
-            assets.install_mpv(destination)
-        else:
-            raise ValueError("请选择 PotPlayer 或 mpv。")
+        assets.configure_player(item, folder)
         return {"installed": item}
+    if command == "unintegrate":
+        assets.unconfigure_player(item)
+        return {"removed": item}
     return {"logs": {"server": str(runtime.LOG), "player": str(runtime.DATA / "potplayer.log"),
                      "setup": str(runtime.DATA / "setup.log")}}
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("status", "install", "apply", "stop", "integrate", "logs", "inspect",
+    parser.add_argument("command", choices=("status", "install", "apply", "stop", "integrate", "unintegrate", "logs", "inspect",
                                            "pot-windows", "pot-start", "pot-stop"))
     parser.add_argument("item", nargs="?")
+    parser.add_argument("--folder")
     args = parser.parse_args()
     result = {"ok": True}
     try:
         with redirect_stdout(sys.stderr):
-            result.update(run_command(args.command, args.item))
+            result.update(run_command(args.command, args.item, args.folder))
     except (ValueError, RuntimeError) as exc:
         result = {"ok": False, "error": str(exc)}
     except Exception as exc:

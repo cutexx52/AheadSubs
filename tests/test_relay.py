@@ -16,7 +16,7 @@ from unittest.mock import Mock, patch
 from subtitle_relay.inference.audio import Segmentation, Segmenter, make_wav
 from subtitle_relay.inference.errors import provider_error
 from subtitle_relay.server.engine import (
-    Playback, Relay, TranslationFailure, _translate_cues, clear_dialogue, extract_audio, merge_cues,
+    Playback, Relay, TranslationFailure, _translate_cues, clear_dialogue, display_cues, extract_audio, merge_cues,
 )
 from subtitle_relay.server.history import inspect_cache
 from subtitle_relay.adapters.players import run_adapter
@@ -273,6 +273,20 @@ class RelayTest(unittest.TestCase):
         final = Cue(7, 8, "last sentence")
         self.assertEqual(merge_cues([late, final, early]), [replace(early, end=3), late, final])
 
+    def test_short_subtitle_gets_reading_time_only_in_the_available_gap(self):
+        left, middle, right = Cue(1, 2, "left"), Cue(3, 3.1, "short"), Cue(5, 6, "right")
+        a, b, c = display_cues([left, middle, right], duration=6.2)
+        self.assertLessEqual(a.end, b.start)
+        self.assertLessEqual(b.end, c.start)
+        self.assertAlmostEqual(b.end - b.start, 1.4)
+        self.assertAlmostEqual(b.start, 2.5)
+        self.assertEqual(c.end, 6.2)
+        self.assertEqual(middle, Cue(3, 3.1, "short"))
+
+    def test_dense_dialogue_keeps_its_own_cue_boundaries(self):
+        cues = [Cue(0, 1, "one"), Cue(1, 1.2, "quick"), Cue(1.2, 2, "three")]
+        self.assertEqual(list(display_cues(cues, duration=2)), cues)
+
     @unittest.skipUnless(shutil.which("ffmpeg"), "FFmpeg required for media clock test")
     def test_audio_seek_preserves_track_start_offset(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -342,7 +356,9 @@ class RelayTest(unittest.TestCase):
                         result = relay.update("second", playback)
                     self.assertEqual(result["ready_ahead"], 8)
                     self.assertTrue(result["nearby_cues"])
-                    self.assertIn("00:00:08,250 --> 00:00:09,500", Path(result["subtitle"]).read_text("utf8"))
+                    self.assertIn("00:00:07,650 --> 00:00:10,100", Path(result["subtitle"]).read_text("utf8"))
+                    cue = inspect_cache(root / "cache.sqlite3")["rows"][0]
+                    self.assertEqual((cue["start"], cue["end"]), (8.25, 9.5))
                 finally:
                     relay.close()
                 self.assertEqual(job.call_count, 1)

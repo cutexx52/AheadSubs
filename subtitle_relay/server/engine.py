@@ -9,7 +9,7 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass, replace
-from itertools import groupby
+from itertools import chain, groupby
 from pathlib import Path
 
 from ..inference.audio import Segmentation, make_wav
@@ -19,7 +19,11 @@ from ..inference.recognition_cache import RecognitionCache
 from .history import create_history, remember_failed_cues, remember_media
 
 
-BILINGUAL_SUFFIX = "-bilingual-v2"
+BILINGUAL_SUFFIX = "-bilingual-v3"
+DISPLAY_SUFFIX = "-display-v1"
+DISPLAY_PADDING = 0.6
+MAX_DISPLAY_PADDING = 1.0
+MIN_DISPLAY_DURATION = 1.4
 MAX_CONTEXT_CUES = 8
 SUBTITLE_LABELS = {
     "ja": "JP", "jpn": "JP", "ko": "KR", "kor": "KR", "en": "EN", "eng": "EN",
@@ -251,6 +255,28 @@ def merge_ordered_cues(cues):
         yield previous
 
 
+def display_cues(cues, duration=None):
+    """Give each acoustic cue a reading window without using its neighbor's slot."""
+    cues = iter(cues)
+    current = next(cues, None)
+    if current is None:
+        return
+    left_bound = 0
+    for following in chain(cues, (None,)):
+        right_bound = ((current.end + following.start) / 2 if following is not None
+                       else duration if duration is not None else math.inf)
+        start = max(left_bound, current.start - DISPLAY_PADDING)
+        end = min(right_bound, current.end + DISPLAY_PADDING)
+        missing = max(0, MIN_DISPLAY_DURATION - (end - start))
+        end = min(right_bound, current.end + MAX_DISPLAY_PADDING, end + missing)
+        missing = max(0, MIN_DISPLAY_DURATION - (end - start))
+        start = max(left_bound, current.start - MAX_DISPLAY_PADDING, start - missing)
+        if round(end * 1000) > round(start * 1000):
+            yield replace(current, start=start, end=end)
+        left_bound = right_bound
+        current = following
+
+
 class Relay:
     def __init__(self, root, recognizer, translator, profile, workers=4, chunk=8,
                  speech_translator=None, segmenter=None, *, translation_settings=TranslationSettings()):
@@ -294,12 +320,14 @@ class Relay:
         return hashlib.sha256(json.dumps(identity).encode()).hexdigest()
 
     def _render(self, key, playback):
-        subtitle_id = f"{key}{BILINGUAL_SUFFIX}" if playback.bilingual else key
+        suffix = BILINGUAL_SUFFIX if playback.bilingual else DISPLAY_SUFFIX
+        subtitle_id = f"{key}{suffix}"
         path = self.root / f"{subtitle_id}.srt"
         revision, = self.db.execute("SELECT COUNT(*) FROM chunks WHERE key=?", (key,)).fetchone()
         if not revision:
             return path, 0
-        if self.rendered.get(subtitle_id) != revision or not path.exists():
+        render_key = (key, playback.bilingual)
+        if self.rendered.get(render_key) != revision or not path.exists():
             rows = self.db.execute(
                 "SELECT entry.value FROM chunks JOIN json_each(chunks.cues) AS entry "
                 "WHERE chunks.key=? AND json_extract(entry.value, '$.status') IS NULL "
@@ -318,10 +346,10 @@ class Relay:
             temp = path.with_suffix(f".{os.getpid()}.tmp")
             visible = (cue for cue in cues if clear_dialogue(cue.text) and clear_dialogue(cue.original or cue.text))
             with temp.open("w", encoding="utf-8", newline="\r\n") as output:
-                for index, cue in enumerate(visible, 1):
+                for index, cue in enumerate(display_cues(visible, playback.duration), 1):
                     output.write(f"{index}\n{srt_time(cue.start)} --> {srt_time(cue.end)}\n{content(cue)}\n\n")
             os.replace(temp, path)
-            self.rendered[subtitle_id] = revision
+            self.rendered[render_key] = revision
         return path, revision
 
     def update(self, identifier, playback):
@@ -377,8 +405,8 @@ class Relay:
         now = time.monotonic()
         self.sessions = {name: s for name, s in self.sessions.items() if now - s.updated < 10}
         active = {session.key for session in self.sessions.values()}
-        self.rendered = {key: revision for key, revision in self.rendered.items()
-                         if key.removesuffix(BILINGUAL_SUFFIX) in active}
+        self.rendered = {render_key: revision for render_key, revision in self.rendered.items()
+                         if render_key[0] in active}
         self.errors = {job: detail for job, detail in self.errors.items() if job[0] in active}
         if self.recognition_cache and not active:
             self.recognition_cache.clear_completed()

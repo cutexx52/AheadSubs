@@ -29,6 +29,7 @@ public partial class MainWindow : Window
     private readonly bool previewMode;
     private JsonObject settings = new();
     private JsonObject models = new();
+    private JsonObject integrations = new();
     private bool busy, refreshing, initialized, exiting, trayExplained, inspecting, loadingMedia;
     private string previousVad = "silero";
     private sealed record SubtitleRow(string Time, string Original, string Translation);
@@ -68,7 +69,8 @@ public partial class MainWindow : Window
             LoadControls(); initialized = true;
             ServiceStatus.Text = "服务已就绪"; ServiceDetail.Text = "在 PotPlayer 播放窗口按 Ctrl+Alt+J 开启，Ctrl+Alt+K 关闭。";
             SessionStatus.Text = "已连接 2 个播放窗口。"; SessionStatus.Visibility = Visibility.Visible;
-            ApplyButton.Content = "保存并应用"; PlayerDetection.Text = "已检测到 PotPlayer。";
+            ApplyButton.Content = "保存并应用"; PlayerDetection.Text = "已配置"; MpvIntegration.Text = "未配置";
+            RemoveMpv.IsEnabled = false;
             ModelSummary.Text = "已安装：Qwen3-ASR 0.6B、Qwen3-ASR 1.7B、Whisper Small、NLLB-200";
             MediaChoice.ItemsSource = new Choice[] { new("示例视频 · 日语 → 简体中文", "preview") }; MediaChoice.SelectedIndex = 0;
             SubtitleRows.ItemsSource = new SubtitleRow[] { new("00:12.4", "今日はいい天気ですね。", "今天天气真好。"),
@@ -219,8 +221,9 @@ public partial class MainWindow : Window
             tray.Text = running ? "视频字幕翻译 · 服务就绪" : "视频字幕翻译 · 已停止";
             ApplyButton.Content = running ? "保存并应用" : "保存并启动";
             StopButton.IsEnabled = running && !busy;
-            PlayerDetection.Text = result["potplayer_detected"]?.GetValue<bool>() == true
-                ? "已检测到 PotPlayer。" : "尚未检测到 PotPlayer；启动播放器后可再次安装菜单。";
+            integrations = result["integrations"] as JsonObject ?? new();
+            UpdateIntegration("potplayer", PlayerDetection, RemovePotPlayer);
+            UpdateIntegration("mpv", MpvIntegration, RemoveMpv);
             if (result["active_sessions"] is JsonValue sessionCount && sessionCount.TryGetValue<int>(out int count))
             {
                 SessionStatus.Text = count > 0 ? $"已连接 {count} 个播放会话。" : "尚未连接播放窗口。";
@@ -310,10 +313,32 @@ public partial class MainWindow : Window
         PreviousCuesPanel.Visibility = contextual ? Visibility.Visible : Visibility.Collapsed;
         TranslationCapabilityHint.Text = contextual ? "参考前面已识别的原文，输出当前字幕的译文。填 0 可只用提示词。"
             : "此模型支持英文领域或风格提示词。";
-        TranslationHint.Text = mt == "nllb" ? "本地运行，无 API 费用；字幕翻译质量因内容而异。"
+        TranslationHint.Text = mt == "nllb" ? "本地运行"
             : mt.Length == 0 ? "请选择已安装的本地模型，或使用自己的云端 API 账户。"
-            : "使用你自己的云端账户，按服务商价格计费。";
+            : "";
         UpdateCompute();
+        UpdatePrices();
+    }
+
+    private void PriceChanged(object sender, RoutedEventArgs e) => UpdatePrices();
+
+    private void UpdatePrices()
+    {
+        if (CloudNmtCost is null) return;
+        var language = Language.GetSpecificCulture();
+        string endpoint = QwenUrl.Text;
+        ShowPrice(SpeechCost, Selected(SpeechModel), endpoint, language);
+        ShowPrice(TranslationCost, Selected(TranslationModel), endpoint, language);
+        ShowPrice(CloudAsrCost, Selected(DashScopeSpeech), endpoint, language);
+        ShowPrice(CloudNmtCost, Selected(DashScopeTranslation), endpoint, language);
+        ShowPrice(OpenAiAsrCost, "openai", endpoint, language);
+        ShowPrice(OpenAiMtCost, "gpt-4.1-mini", endpoint, language);
+    }
+
+    private static void ShowPrice(TextBlock label, string model, string endpoint, CultureInfo language)
+    {
+        label.Text = CloudPrices.Hourly(model, endpoint, language);
+        label.Visibility = label.Text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private void SaveEnhancementDraft()
@@ -458,11 +483,40 @@ public partial class MainWindow : Window
         async () => { string id = Selected(InstallChoice); if (id.Length == 0) throw new InvalidOperationException("先选择要安装的模型。"); await bridge.Run("install", id); },
         "模型已安装，可在上方选择后应用。");
 
-    private async void InstallPotPlayer(object sender, RoutedEventArgs e) => await Act("正在安装 PotPlayer 菜单…",
-        async () => { await bridge.Run("integrate", "potplayer"); }, "PotPlayer 菜单已安装。重新打开播放器后生效。");
+    private void UpdateIntegration(string player, TextBlock status, System.Windows.Controls.Button remove)
+    {
+        var value = integrations[player];
+        bool installed = value?["installed"]?.GetValue<bool>() == true;
+        remove.IsEnabled = installed;
+        status.Text = value?["configured"]?.GetValue<bool>() == true ? "已配置"
+            : installed ? "部分配置" : value?["detected"]?.GetValue<bool>() == true ? "未配置" : "未找到位置";
+    }
 
-    private async void InstallMpv(object sender, RoutedEventArgs e) => await Act("正在安装 mpv 菜单…",
-        async () => { await bridge.Run("integrate", "mpv"); }, "mpv 菜单已安装。重新打开播放器后生效。");
+    private async void ConfigurePlayer(object sender, RoutedEventArgs e) =>
+        await ConfigurePlayer(((FrameworkElement)sender).Tag.ToString()!, false);
+
+    private async void PickPlayerFolder(object sender, RoutedEventArgs e) =>
+        await ConfigurePlayer(((FrameworkElement)sender).Tag.ToString()!, true);
+
+    private async Task ConfigurePlayer(string player, bool pickFolder)
+    {
+        string? folder = null;
+        if (pickFolder || integrations[player]?["detected"]?.GetValue<bool>() != true)
+        {
+            var dialog = new Microsoft.Win32.OpenFolderDialog
+            { Title = player == "potplayer" ? "选择 PotPlayer 安装文件夹" : "选择 mpv 配置文件夹" };
+            var current = integrations[player]?["folder"]?.ToString();
+            if (Directory.Exists(current)) dialog.InitialDirectory = current;
+            if (dialog.ShowDialog(this) != true) return;
+            folder = dialog.FolderName;
+        }
+        await Act("正在配置…", async () => { await bridge.Run("integrate", player, folder: folder); },
+                  "已配置。重开播放器后生效。");
+    }
+
+    private async void RemovePlayer(object sender, RoutedEventArgs e) => await Act("正在卸载…",
+        async () => { await bridge.Run("unintegrate", ((FrameworkElement)sender).Tag.ToString()); },
+        "已卸载。重开播放器后生效。");
 
     private static void Browse(System.Windows.Controls.TextBox field)
     {
@@ -570,6 +624,10 @@ public partial class MainWindow : Window
                 "NMT provider receives prompt only");
         SpeechModel.SelectedValue = "qwen-audio-3.1-asr-flash";
         Require(CollectSettings()["asr"]?.ToString() == "dashscope" && !ComputeSummary.Text.Contains("Vulkan"), "cloud ASR route");
+        Require(SpeechCost.Text.Contains("0.03–0.06"), "Chinese hourly estimate");
+        QwenUrl.Text = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1";
+        Require(SpeechCost.Text.Contains("0.04–0.08"), "regional hourly estimate");
+        QwenUrl.Text = "";
         SpeechModel.SelectedValue = "qwen-1.7b";
         TranslationModel.SelectedValue = "nllb"; Device.SelectedValue = "cuda";
         Require(ComputeSummary.Text.Contains("Vulkan") && ComputeSummary.Text.Contains("CUDA"), "separate GPU routes");

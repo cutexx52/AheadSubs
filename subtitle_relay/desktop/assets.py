@@ -1,8 +1,9 @@
 import os
+import shutil
 import winreg
 from pathlib import Path
 
-from .runtime import LAUNCHER, PORT, PYTHON, ROOT, QWEN
+from .runtime import LAUNCHER, PORT, PYTHON, ROOT, QWEN, config, save_config
 
 LOCAL_MODELS = {
     "[本地] Whisper Small": "Systran/faster-whisper-small",
@@ -36,6 +37,12 @@ def install_model(label):
 
 
 def mpv_directory():
+    if directory := config()["mpv_directory"]:
+        return Path(directory)
+    if executable := shutil.which("mpv.exe"):
+        portable = Path(executable).parent / "portable_config"
+        if portable.is_dir():
+            return portable
     return Path(os.environ["APPDATA"]) / "mpv"
 
 
@@ -52,6 +59,8 @@ def install_mpv(destination):
 
 
 def potplayer_directory():
+    if directory := config()["potplayer_directory"]:
+        return Path(directory)
     try:
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"SOFTWARE\DAUM\PotPlayer") as key:
             return Path(winreg.QueryValueEx(key, "ProgramFolder")[0])
@@ -60,7 +69,62 @@ def potplayer_directory():
 
 
 def install_potplayer(destination):
+    destination.mkdir(parents=True, exist_ok=True)
     for path in (ROOT / "integrations/potplayer").glob("*.as"):
         script = path.read_text(encoding="utf-8").replace("@RELAY_PYTHONW@", PYTHON.as_posix())
         script = script.replace("@RELAY_LAUNCHER@", LAUNCHER.as_posix())
         (destination / path.name).write_text(script, encoding="utf-8")
+
+
+def integration_directory(player):
+    if player == "potplayer":
+        return potplayer_directory()
+    if player == "mpv":
+        return mpv_directory()
+    raise ValueError("请选择播放器。")
+
+
+def integration_files(player, folder):
+    if player == "potplayer":
+        destination = folder / "Extension" / "Subtitle" / "Translate"
+        return [destination / source.name for source in (ROOT / "integrations/potplayer").glob("*.as")]
+    return [folder / "scripts/subtitle_relay.lua", folder / "script-opts/subtitle_relay.conf"]
+
+
+def player_detected(player, folder):
+    if player == "potplayer":
+        return any((folder / name).is_file() for name in ("PotPlayerMini64.exe", "PotPlayerMini.exe"))
+    return folder.is_dir() or bool(shutil.which("mpv.exe"))
+
+
+def integration_status(player):
+    folder = integration_directory(player)
+    files = integration_files(player, folder)
+    installed = sum(path.is_file() for path in files)
+    return {"folder": str(folder), "detected": player_detected(player, folder),
+            "installed": installed > 0, "configured": bool(files) and installed == len(files)}
+
+
+def configure_player(player, folder=None):
+    destination = integration_directory(player)
+    if folder:
+        destination = Path(folder).expanduser()
+        if not destination.is_absolute() or not destination.is_dir():
+            raise ValueError("请选择存在的文件夹。")
+        if player == "mpv" and (destination / "portable_config").is_dir():
+            destination /= "portable_config"
+    if not player_detected(player, destination):
+        raise ValueError("找不到播放器，请手动选择安装或配置文件夹。")
+    if player == "potplayer":
+        install_potplayer(destination / "Extension" / "Subtitle" / "Translate")
+    else:
+        install_mpv(destination)
+    if folder:
+        settings = config()
+        settings[f"{player}_directory"] = str(destination.resolve())
+        save_config(settings)
+
+
+def unconfigure_player(player):
+    for path in integration_files(player, integration_directory(player)):
+        path.unlink(missing_ok=True)
