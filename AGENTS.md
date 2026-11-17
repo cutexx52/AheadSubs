@@ -1,5 +1,7 @@
 # Development guidance
 
+[English](AGENTS.md) | [简体中文](AGENTS.zh-CN.md)
+
 ## Working agreement
 
 - Read [the contribution workflow](docs/contributing.md) before implementation or review. Keep project-wide rules here; Claude and Copilot entry files reference this source rather than maintaining competing policies.
@@ -12,6 +14,7 @@
 ## Documentation, languages and tests
 
 - Update affected documentation in the same PR as behavior, defaults, configuration, protocol or packaging changes. Keep one canonical page per topic; link rather than copy. Explain compatibility and migration for breaking changes.
+- Keep every Markdown page English-first at its existing path, with a sibling `.zh-CN.md`, reciprocal language links and synchronized content. Text-bearing documentation images need English and Chinese variants, localized references/alt text and a `docs/images/manifest.json` entry; inspect both images and run `python tools/check_docs.py`.
 - Treat Simplified Chinese and English as the baseline for new or changed user-facing features. Keep UI locale separate from speech/translation languages; use resource keys, complete translatable messages, explicit fallback and locale-aware display formatting. Preserve invariant protocol/config identifiers and numeric formats. Follow the incremental migration policy in the contribution guide.
 - Cover changed observable behavior and bug regressions with deterministic automated tests, including relevant failure and boundary cases. Mock provider/network/model boundaries; default tests must not require credentials, paid APIs, GPU or large downloads. Do not add implementation-mirroring tests or chase an arbitrary coverage percentage.
 

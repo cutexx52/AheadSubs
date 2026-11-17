@@ -1,3 +1,5 @@
 # Contributing
 
-开发环境、验证方式和问题报告格式见[开发与贡献](docs/contributing.md)。
+[English](CONTRIBUTING.md) | [简体中文](CONTRIBUTING.zh-CN.md)
+
+Start with the [development and contribution guide](docs/contributing.md) for setup, verification, issue reports and the Draft PR → review → merge workflow.

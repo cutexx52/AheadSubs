@@ -9,6 +9,7 @@ from typing import Protocol
 from urllib.parse import urlsplit
 
 from .errors import completion_text
+from .usage import measured_call
 
 
 @dataclass(frozen=True)
@@ -130,23 +131,27 @@ class OpenAIWhisper:
         return [Cue(s.start, s.end, s.text.strip()) for s in response.segments or [] if s.text.strip()]
 
     def recognize(self, wav, source):
-        response = self.client.audio.transcriptions.create(
-            file=("chunk.wav", wav), model=self.model, response_format="verbose_json",
-            timestamp_granularities=["segment"], **({"language": source} if source else {}),
-        )
-        language = (response.language or "").lower()
-        cues = self._cues(response)
-        if not cues and response.text.strip():
-            raise ValueError("The speech endpoint did not supply segment timestamps")
+        with measured_call(self, "asr") as usage:
+            response = self.client.audio.transcriptions.create(
+                file=("chunk.wav", wav), model=self.model, response_format="verbose_json",
+                timestamp_granularities=["segment"], **({"language": source} if source else {}),
+            )
+            usage.audio = max(0, len(wav) - 44) / 32000
+            language = (response.language or "").lower()
+            cues = self._cues(response)
+            if not cues and response.text.strip():
+                raise ValueError("The speech endpoint did not supply segment timestamps")
         return source or self.LANGUAGE_NAMES.get(language, language), cues
 
     def speech_translate(self, wav, source, target):
         if target not in {"en", "eng_Latn"}:
             raise ValueError("OpenAI audio translations support English output")
-        response = self.client.audio.translations.create(
-            file=("chunk.wav", wav), model="whisper-1", response_format="verbose_json",
-        )
-        return self._cues(response)
+        with measured_call(self, "ast") as usage:
+            response = self.client.audio.translations.create(
+                file=("chunk.wav", wav), model="whisper-1", response_format="verbose_json",
+            )
+            usage.audio = max(0, len(wav) - 44) / 32000
+            return self._cues(response)
 
 
 class ChatTranslation:
@@ -188,15 +193,17 @@ class ChatTranslation:
         return [result[key] for key in expected]
 
     def complete(self, instructions, payload):
-        response = self.client.chat.completions.create(
-            model=self.model, response_format={"type": "json_object"},
-            **({"reasoning_effort": self.reasoning_effort} if self.reasoning_effort else {}),
-            messages=[
-                {"role": "system", "content": instructions},
-                {"role": "user", "content": payload},
-            ],
-        )
-        return completion_text(response)
+        with measured_call(self, "mt") as usage:
+            response = self.client.chat.completions.create(
+                model=self.model, response_format={"type": "json_object"},
+                **({"reasoning_effort": self.reasoning_effort} if self.reasoning_effort else {}),
+                messages=[
+                    {"role": "system", "content": instructions},
+                    {"role": "user", "content": payload},
+                ],
+            )
+            usage.tokens(getattr(response, "usage", None))
+            return completion_text(response)
 
 
 MINIMAX_MODEL = "MiniMax-M3.1-Flash"
@@ -206,18 +213,22 @@ class MiniMaxTranslation(ChatTranslation):
     def __init__(self, key_file=None, *, api_key=None):
         from openai import OpenAI
 
-        super().__init__(OpenAI(api_key=api_key or minimax_key(key_file), base_url="https://api.minimax.io/v1", timeout=30),
+        key = api_key or minimax_key(key_file)
+        self.subscription = key.startswith("sk-cp")
+        super().__init__(OpenAI(api_key=key, base_url="https://api.minimax.io/v1", timeout=30),
                          MINIMAX_MODEL)
 
     def complete(self, instructions, payload):
-        response = self.client.chat.completions.create(
-            model=self.model, reasoning_effort="low",
-            messages=[
-                {"role": "system", "content": instructions + " Output only the JSON object without Markdown fences."},
-                {"role": "user", "content": payload},
-            ],
-        )
-        content = (completion_text(response) or "").strip()
+        with measured_call(self, "mt") as usage:
+            response = self.client.chat.completions.create(
+                model=self.model, reasoning_effort="low",
+                messages=[
+                    {"role": "system", "content": instructions + " Output only the JSON object without Markdown fences."},
+                    {"role": "user", "content": payload},
+                ],
+            )
+            usage.tokens(getattr(response, "usage", None))
+            content = (completion_text(response) or "").strip()
         if content.startswith(("```json\n", "```\n")) and content.endswith("```"):
             content = content.partition("\n")[2][:-3].strip()
         return content
@@ -260,14 +271,16 @@ class QwenMtTranslation:
             options["domains"] = prompt
         translations = []
         for line in lines:
-            response = self.client.chat.completions.create(
-                model=self.model, messages=[{"role": "user", "content": line}],
-                extra_body={"translation_options": options},
-            )
-            content = completion_text(response)
-            if not content or not content.strip():
-                raise ValueError("Qwen-MT returned an empty translation")
-            translations.append(content.strip())
+            with measured_call(self, "mt") as usage:
+                response = self.client.chat.completions.create(
+                    model=self.model, messages=[{"role": "user", "content": line}],
+                    extra_body={"translation_options": options},
+                )
+                usage.tokens(getattr(response, "usage", None))
+                content = completion_text(response)
+                if not content or not content.strip():
+                    raise ValueError("Qwen-MT returned an empty translation")
+                translations.append(content.strip())
         return translations
 
 

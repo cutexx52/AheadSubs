@@ -13,21 +13,22 @@ class RelayHTTPError(RuntimeError):
 
 
 class RelayClient:
-    def __init__(self, port):
+    def __init__(self, port, entry="http"):
         self.url = f"http://127.0.0.1:{port}/v1/"
         self.opener = build_opener(ProxyHandler({}))
+        self.entry = entry
 
     def health(self):
         return self._request(Request(self.url + "health"), timeout=1)
 
     def translate_text(self, text, source, target):
         request = Request(self.url + "text", data=urlencode({"text": text, "source": source, "target": target}).encode(),
-                          headers={"Content-Type": "application/x-subtitle-relay"})
+                          headers={"Content-Type": "application/x-subtitle-relay", "X-AheadSubs-Entry": self.entry})
         return self._request(request, timeout=120)
 
     def send(self, route, data, *, timeout=5):
         request = Request(self.url + route, data=json.dumps(data).encode(),
-                          headers={"Content-Type": "application/json"})
+                          headers={"Content-Type": "application/json", "X-AheadSubs-Entry": self.entry})
         return self._request(request, timeout=timeout)
 
     def _request(self, request, *, timeout):

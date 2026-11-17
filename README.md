@@ -1,43 +1,98 @@
 # AheadSubs
 
-Windows 本地视频语音识别与字幕翻译工具。为 PotPlayer 和 mpv 提前生成带时间轴的字幕，多个播放窗口共享推理服务。模型在本机运行时，无需 API 密钥。
+[English](README.md) | [简体中文](README.zh-CN.md)
 
-Generate translated SRT subtitles for local videos ahead of playback, using on-device speech recognition and translation on Windows.
+**Subtitles prepared ahead of playback, in the language you choose.**
 
-## 我的电脑能跑几路？
+AheadSubs reads upcoming audio, transcribes speech, translates dialogue, and sends timed subtitles back to your player. Run models on your own computer, connect cloud APIs, or combine both—without waiting for a whole video to finish processing.
 
-| 设备 | 建议的本地配置 | 当前依据 |
-| --- | --- | --- |
-| 只有 CPU | Whisper Small + NLLB 600M INT8，设备选 CPU | 从单路试起。i9-13900KF 实测单路 25 秒、零缓冲耗尽。 |
-| 有兼容 GPU，显存有限 | Qwen3-ASR 0.6B + 本地 NLLB | 从单路试起。4090 搭配 CPU 翻译实测四路，入门 GPU 并发待测。 |
-| RTX 4090 24 GB | Qwen3-ASR 1.7B Q4_K + NLLB 600M INT8 | 默认设置实测 **4 路、45 秒、零缓冲耗尽**。最低余量 **18.17 秒**。 |
+![AheadSubs workflow: player position drives bounded audio look-ahead, local or cloud transcription and translation, and timed subtitles returned to the player.](docs/images/aheadsubs-overview.png)
 
-4090 的数据来自同一公开日语样本的多个独立副本，使用 20 秒目标预读和模拟播放头。更高并发、跳转延迟、测试限制和复测方法见[性能与设备建议](docs/performance.md)。
+*The player supplies the playhead. AheadSubs processes a bounded window ahead of it and loads subtitles on the original media timeline. The illustration shows the workflow, not a screenshot or a zero-latency guarantee.*
 
-## 快速开始
+## What you get
 
-1. 按[Windows 安装指南](docs/windows.md)启动助手。首次使用需要下载本地模型。
-2. 在 **翻译** 首页展开 **快速预设**。选择方案并下载缺少的模型，然后点击 **应用方案**。没有可用 Vulkan GPU 时可选 **纯本地 · CPU**。[查看预设和模型管理](docs/desktop.md#日常使用)
-3. 在 PotPlayer 打开本地视频，按 **Ctrl+Alt+J** 开启预读，按 **Ctrl+Alt+K** 停止当前窗口的预读。mpv 可以从助手安装右键菜单，详见[播放器适配](docs/adapters.md)。
+- **Subtitles while you watch.** Audio look-ahead prepares upcoming dialogue; pause and seek without shifting subtitle timestamps away from the video.
+- **Local, cloud, or hybrid processing.** Choose recognition and translation separately. Fully local models keep processing on your computer after downloads; cloud text translation sends subtitle text, while cloud recognition sends audio segments.
+- **Readable, synchronized captions.** Speech detection finds natural boundaries. Translated text keeps the source segment's timing; optional bilingual SRT puts the original above the translation.
+- **Reusable results.** Completed cues persist to disk. Compatible sessions reuse results instead of repeatedly recognizing and translating the same material. Temporary audio buffers are bounded and released after work completes.
+- **Player integration and automation.** Use desktop setup and player controls, or integrate through MCP, the CLI, HTTP playback API and desktop control bridge. Each playback window has its own session; the background service shares models.
 
-在 **接入** 页开启 MCP 或安装 CLI，可让本机 Agent 和脚本翻译文本、生成 SRT 或控制预读。详见[Agent 与命令行接入](docs/automation.md)。
+## Quick start
 
-关闭设置窗口会隐藏到系统托盘。右键托盘图标选 **停止并退出** 会停止后台并释放模型资源。升级保留已有设置、模型和字幕缓存。
+Download a package from [Releases](https://github.com/cutexx52/AheadSubs/releases), install it or extract the entire portable archive, and open `AheadSubs.exe`. Choose a stable release for regular use; scheduled builds are marked **Pre-release**. [Windows requirements and package selection](docs/windows.md).
 
-## 使用与扩展
+Setup presets and integrations have English/Chinese labels; some existing screens remain Chinese. The instructions include both where helpful. Documentation localization does not imply every UI string is already localized.
 
-也可以从 [AheadSubs Wiki](https://github.com/cutexx52/AheadSubs/wiki) 按主题查找文档。
+### Route A — fully local, no API key
 
-| 文档 | 内容 |
+1. On the **Translation (翻译)** home page, expand **Setup presets (快速预设)**. Choose **Local · Entry GPU (纯本地 · 独显入门)** for Qwen3-ASR 0.6B + CPU NLLB, or **Local · CPU (纯本地 · CPU)** for Whisper Small + NLLB without a compatible Vulkan GPU. Select **Download now (立即下载)** for missing models, then **Apply preset (应用方案)**.
+2. Select the video's source language and your subtitle target language. Keep the preset's models, save/apply any changes and wait for service readiness.
+3. Configure your player below and start look-ahead. The first model download requires network access; subsequent fully local processing does not require a cloud API key.
+
+### Route B — local recognition + cloud translation
+
+Shortcut on compatible Vulkan hardware: choose **Recommended · Local speech + cloud translation (作者推荐 · 本地识别 + 云端翻译)** in Setup presets. It pairs Qwen3-ASR 1.7B with Qwen-MT Flash, checks missing models/credentials, then lets you apply. For another local recognizer, use the steps below.
+
+1. Install a local recognition model: Qwen3-ASR on compatible Vulkan hardware, or Whisper Small on CPU. You do not need NLLB if all translation uses a cloud provider.
+2. In **Cloud models (云端模型)**, select a provider such as **Alibaba Cloud / Qwen-MT**, enter its API key or select a key file, and choose the matching regional endpoint. Save credentials.
+3. On **Translation (翻译)**, keep the local recognition model and select **Qwen-MT Flash** for translation. Choose source/target languages, save/apply, then enable your player.
+
+This hybrid route uploads subtitle text and any enabled text context, not the audio used by the local recognizer. API usage may be billed by your provider. OpenAI, MiniMax and compatible endpoints are alternatives; eligible ChatGPT accounts can use the implemented OAuth connection. [Provider setup and data flow](docs/providers.md).
+
+**Prefer cloud recognition too?** Configure a supported cloud ASR provider (for example Alibaba Cloud ASR with Qwen-MT using the same regional key), select both cloud models on the Translation page, and apply. This uploads short audio segments for recognition as well as text for translation. Local model downloads are unnecessary for those cloud stages; local audio extraction and speech detection still run.
+
+### Connect a player
+
+In **Players (播放器)**, use **One-click setup (一键配置)**, confirm the detected location and restart the player.
+
+| Current integration | Start / stop |
 | --- | --- |
-| [Windows 安装与支持](docs/windows.md) | 安装、更新与适用系统 |
-| [识别与字幕调校](docs/tuning.md) | 原文检查、停顿分段、翻译上下文与双语字幕 |
-| [桌面助手](docs/desktop.md) | 配置、托盘、模型下载与诊断 |
-| [播放器适配](docs/adapters.md) | PotPlayer、mpv 及新播放器接口 |
-| [Agent 与命令行接入](docs/automation.md) | MCP 配置、CLI、字幕生成及自动化接口 |
-| [后台协议](docs/server.md) | HTTP 请求、响应、会话、时间轴与缓存 |
-| [推理与翻译后端](docs/providers.md) | 本地与云端配置、VAD、provider 接口 |
-| [架构与模块边界](docs/architecture.md) | 包分层、数据流和扩展位置 |
-| [开发与贡献](docs/contributing.md) | 开发环境、测试与提交前检查 |
+| PotPlayer | Open a video; **Ctrl+Alt+J** starts look-ahead and **Ctrl+Alt+K** stops it for that window. Tray controls and native translation-menu extensions are also available. |
+| mpv 0.42+ | Enable AheadSubs in the native right-click menu. The Lua integration exposes language and look-ahead settings. |
 
-当前支持后台可访问的本地文件与共享目录媒体。字幕按对白片段与原媒体时间对齐。
+Wait for initial buffering before expecting captions; processing speed, network latency and seeks affect how far ahead subtitles are ready. Closing settings hides the app to the tray. **Stop and exit (停止并退出)** stops the service and releases models. [Player details and additional adapters](docs/adapters.md).
+
+## Models and extension points
+
+| Area | Available today |
+| --- | --- |
+| Local recognition | Qwen3-ASR 0.6B / 1.7B through Vulkan; faster-whisper Small through CPU / supported CUDA |
+| Local translation | NLLB 600M INT8 through CTranslate2 |
+| Cloud processing | Alibaba Cloud ASR / Qwen-MT, OpenAI audio/text APIs, ChatGPT OAuth text translation, MiniMax text translation, compatible endpoints |
+| Automation | Shared MCP/CLI operations for status, text translation, whole-file SRT generation and playback sessions; HTTP v1 and JSON desktop bridge |
+| New integrations | Implement a player adapter or provider contract without changing the other layers |
+
+For a source checkout with the [development environment](docs/contributing.md) installed:
+
+```powershell
+python -m subtitle_relay --help
+python -m subtitle_relay serve --asr local --whisper-model small --mt local --device cpu
+python -m subtitle_relay clock D:\video\clip.mkv --source ja --target en --ahead 20
+```
+
+Run the service and the simulated playhead in separate terminals. For cloud CLI configurations, see the [provider examples](docs/providers.md). For Agent access, open **Integrations (接入) → Enable MCP access (开启 MCP 接入) → Copy MCP configuration (复制 MCP 配置)** and add it to a trusted local client. **Install CLI (安装 CLI)** exposes `aheadsubs` after reopening your terminal. MCP and CLI share operation schemas and errors. See [Agent and CLI integrations](docs/automation.md) for configuration, tools and examples.
+
+## Current support and performance
+
+The packaged application currently targets Windows x64 and readable local files or shared folders. Windows 11 is the primary validation target; Windows 10, ARM64 and other limitations are documented in [Windows support](docs/windows.md). These are today's tested boundaries, not a restriction on future adapters or platforms.
+
+Start with one video on your own hardware. An RTX 4090 test with Qwen3-ASR 1.7B Q4_K and NLLB 600M INT8 sustained four simulated playback sessions for 45 seconds with no sampled buffer exhaustion and a minimum 18.17 seconds ready ahead. It used independent copies of one public Japanese sample, not a long-running mixed-content workload. [Measurements, CPU results and reproduction](docs/performance.md).
+
+## Documentation
+
+Every repository Markdown page offers an English / Simplified Chinese switch. English is the default entry point.
+
+| Start here | What it covers |
+| --- | --- |
+| [Windows setup](docs/windows.md) | Downloads, packages, installation and supported systems |
+| [Desktop guide](docs/desktop.md) | Models, credentials, tray controls and diagnostics |
+| [Subtitle tuning](docs/tuning.md) | Recognition, boundaries, look-ahead and bilingual display |
+| [Providers](docs/providers.md) | Local/cloud choices, authorization and provider contracts |
+| [Agent / CLI integrations](docs/automation.md) | MCP setup, text translation, whole-file SRT and automation |
+| [Player integrations](docs/adapters.md) | PotPlayer, mpv and new adapters |
+| [HTTP protocol](docs/server.md) / [Architecture](docs/architecture.md) | APIs, sessions, timeline and module boundaries |
+| [Contributing](docs/contributing.md) | Development, tests and Agent PR-to-merge workflow |
+| [Releases and budget](docs/releases.md) | Automatic previews, build verification and cost controls |
+
+The [Wiki](https://github.com/cutexx52/AheadSubs/wiki) is a navigation entry; maintained documentation lives in this repository. The overview illustration was created with the built-in image generator; its [prompt and accessible description](docs/images/README.md) are included.

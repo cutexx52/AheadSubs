@@ -4,11 +4,15 @@ import logging
 import time
 from contextlib import ExitStack
 from dataclasses import asdict
+from http.client import HTTPConnection, HTTPException
+from ipaddress import ip_address
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from .inference.audio import Segmentation, Segmenter, VAD_THRESHOLDS
 from .inference.chatgpt import ChatGPTTranslation
 from .inference.dashscope import DASHSCOPE_ASR_MODELS, DashScopeAudio
+from .inference.usage import CloudMeter, CloudUsage, model_label
 from .server.engine import MAX_CONTEXT_CUES, Relay, TranslationSettings
 from .adapters.players import Mpv, run_adapter
 from .client import RelayClient
@@ -36,6 +40,74 @@ class ClockPlayer:
         if self.last_subtitle != (path, revision):
             print(json.dumps({"subtitle": path, "revision": revision}), flush=True)
             self.last_subtitle = path, revision
+
+
+def loopback_endpoint(endpoint):
+    host = urlsplit(endpoint).hostname
+    if host == "localhost":
+        return True
+    try:
+        return ip_address(host).is_loopback
+    except ValueError:
+        return False
+
+
+def qwen_ready(port):
+    connection = HTTPConnection("127.0.0.1", port, timeout=0.25)
+    try:
+        connection.request("GET", "/health")
+        return connection.getresponse().status == 200
+    except (OSError, HTTPException):
+        return False
+    finally:
+        connection.close()
+
+
+def monitor_pipeline(args, recognizer, translator, speech_translator, dashscope_url, usage):
+    models = []
+    qwen_port = None
+
+    def local(operation, model, device, state="loaded"):
+        models.append({"operation": operation, "model": model_label(model), "device": device, "state": state})
+
+    def cloud(operation, provider, backend, endpoint=""):
+        backend.usage_meter = CloudMeter(usage, provider, backend.model, endpoint)
+        local(operation, backend.model, "cloud", "configured")
+
+    if speech_translator:
+        cloud("ast", "openai", speech_translator)
+    elif args.asr == "local":
+        model = "custom" if Path(args.whisper_model).is_dir() else "Whisper-" + args.whisper_model
+        local("asr", model, args.asr_device or args.device)
+    elif args.asr == "qwen":
+        qwen_port = urlsplit(args.asr_url).port
+        local("asr", "Qwen3-ASR-" + args.qwen_size, "vulkan")
+    elif args.asr == "compatible" and loopback_endpoint(args.asr_url):
+        local("asr", recognizer.model, "external", "unverified")
+    else:
+        cloud("asr", args.asr, recognizer, dashscope_url)
+
+    if translator:
+        if args.mt == "local":
+            model = "custom" if Path(args.nllb_model).is_dir() else args.nllb_model
+            local("mt", "NLLB-200" if model == "Adom4600/nllb-200-distilled-600M-ct2-int8" else model,
+                  args.mt_device or args.device)
+        elif args.mt == "compatible" and loopback_endpoint(args.llm_url):
+            local("mt", translator.model, "external", "unverified")
+        elif args.mt == "minimax" and translator.subscription:
+            cloud("mt", "minimax_plan", translator)
+        else:
+            cloud("mt", "dashscope" if args.mt == "qwen-mt" else args.mt, translator, dashscope_url)
+
+    if not args.no_vad:
+        local("vad", args.vad_model, "cpu")
+
+    def snapshot():
+        if qwen_port is not None and not qwen_ready(qwen_port):
+            return [dict(models[0], state="unavailable"), *models[1:]]
+        return models
+
+    return snapshot
 
 
 def make_relay(args):
@@ -103,8 +175,12 @@ def make_relay(args):
         profile.extend([args.dashscope_asr_model, dashscope_url])
     if settings.enabled and args.vad_model != "silero":
         profile.append(args.vad_model)
-    return Relay(args.cache, recognizer, translator, profile, args.workers, args.chunk,
-                 OpenAIWhisper(cloud) if args.ast else None, Segmenter(settings, args.vad_model),
+    speech_translator = OpenAIWhisper(cloud) if args.ast else None
+    segmenter = Segmenter(settings, args.vad_model)
+    usage = CloudUsage(args.cache)
+    model_status = monitor_pipeline(args, recognizer, translator, speech_translator, dashscope_url, usage)
+    return Relay(args.cache, recognizer, translator, profile, args.workers, args.chunk, speech_translator, segmenter,
+                 model_status=model_status, cloud_usage=usage,
                  translation_settings=TranslationSettings(args.translation_previous_cues, args.translation_prompt,
                                                           args.translation_context_chars))
 
@@ -229,7 +305,8 @@ def main():
         return
     if args.interval <= 0:
         parser.error("--interval must be positive")
-    options = (RelayClient(args.port), args.source, args.target, args.ahead, args.interval)
+    entry = {"mpv": "mpv", "potplayer": "potplayer", "potplayer-open": "potplayer", "clock": "cli"}[args.mode]
+    options = (RelayClient(args.port, entry), args.source, args.target, args.ahead, args.interval)
     if args.mode == "mpv":
         with Mpv(args.pipe) as player:
             run_adapter(player, *options)

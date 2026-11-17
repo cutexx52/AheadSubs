@@ -1,34 +1,36 @@
-# 调整识别与字幕
+# Tune recognition and subtitles
 
-先在 **字幕检查** 选中视频，对照时间、原文和译文。原文就是进入翻译步骤的 ASR 文本。文字翻译失败时仍保留原句，译文列显示原因。原文错了，先查源语言、语音检测和识别模型。原文对而译文错，才调整翻译模型、邻近对白或风格提示。直接音频翻译只返回译文，原文列会留空。
+[English](tuning.md) | [简体中文](tuning.zh-CN.md)
 
-服务商明确回复内容审核拦截时，译文列显示「请求被服务商的内容审核拦截」。按句发请求的后端会继续翻译同批其他句子；按整批发请求的后端只能确认整批被拦截。本地 NLLB 翻译不发出云端请求；换成本地翻译并应用后，按新配置生成字幕。[百炼错误码](https://help.aliyun.com/zh/model-studio/error-code/#inappropriate-content)
+Start in Subtitle inspection (字幕检查): select a video and compare timestamps, source and translation. The source is the ASR text passed to translation. Failures retain the original and show a reason. Incorrect source text calls for checking source language, speech detection and recognition first; correct source with poor translation calls for a different translator, context or prompt. Direct audio translation has no source text column.
 
-## 语音检测
+Explicit provider moderation produces a moderation-block message. Per-sentence backends continue other sentences; batch backends identify only a blocked batch. Local NLLB makes no cloud translation requests. Apply a local configuration to generate under that configuration. [Alibaba Cloud error codes](https://help.aliyun.com/zh/model-studio/error-code/#inappropriate-content).
 
-| 设置 | 默认 | 作用 |
+## Speech detection
+
+| Setting | Default | Effect |
 | --- | --- | --- |
-| 语音检测模型 | Silero v6 | 判断音频哪里有人说话。也可以用 FunASR FSMN-VAD。 |
-| 语音门槛 | Silero `0.50`，FSMN `0.80` | 调低保留更多轻声和远处对白，也可能引入更多音乐和噪声。两个模型的分数无需调成一样。 |
-| 优先停顿 | `450 ms` | 找到合适的边界时优先选择至少这么长的非语音停顿。到上限前没有这么长的停顿时，优先选可用的最长短停顿。 |
-| 句边留白 | `80 ms` | 在语音的两端保留少量音频。同一分段计划中的相邻片段不会重叠，也不会各自把整段停顿读进去。 |
-| 最短片段目标 | `3 s` | 尽量避免把连续对白切得过碎。孤立短句和边界余段仍会识别。 |
-| 最长识别片段 | `12 s` | 每段送给 ASR 的音频上限。持续说话且到上限前没有可用停顿时，在接近上限的位置找最低能量点切开。 |
+| Detector | Silero v6 | Locates speech; FunASR FSMN-VAD is also available. |
+| Threshold | Silero `0.50`, FSMN `0.80` | Lower retains quieter/distant speech but may include music/noise. Scores need not match across models. |
+| Preferred pause | `450 ms` | Prefer gaps this long; otherwise choose the longest shorter pause before the limit. |
+| Edge padding | `80 ms` | Preserve audio at both ends; adjacent planned segments do not overlap or each consume the entire pause. |
+| Minimum segment target | `3 s` | Avoid fragmented continuous dialogue; isolated short speech and boundary leftovers still run. |
+| Maximum ASR segment | `12 s` | Bound recognition input. Without a suitable pause, split at a low-energy point near the limit. |
 
-Silero 的内部最短语音门槛为 `96 ms`，检测短停顿的门槛约为 `64 ms`。后台日志需要主动开启诊断模式，日志的 `speech_spans=0` 表示 VAD 没切出语音，`asr_cues=0` 表示当前任务未得到识别字幕。用同一段对白逐项调整，便于判断效果。
+Silero's internal minimum speech duration is `96 ms`; short-pause detection is about `64 ms`. In opt-in diagnostics, `speech_spans=0` means no speech was segmented; `asr_cues=0` means no cues were recognized. Adjust one setting at a time on the same sample.
 
-## 预读与跳转
+## Look-ahead and seeking
 
-| 设置 | 默认 | 作用 |
+| Setting | Default | Effect |
 | --- | --- | --- |
-| 任务分块 | `8 s` | 后台排队和缓存的基本区间。 |
-| 额外向前／向后查找停顿 | 前 `2 s`、后 `2 s` | 在最长识别片段之外，再扩一点 VAD 搜索范围。它影响查找边界，不会把整个搜索范围交给 ASR。 |
-| 跳转最少回补 | `4 s` | seek 后回头纳入可能覆盖落点的任务。长片段允许服务自动把范围扩大到最长识别片段的一半。 |
+| Scheduler chunk | `8 s` | Scheduling and cache-ownership interval. |
+| Extra pause search before/after | `2 s` each | Expand VAD search beyond the longest speech segment; this entire range is not sent to ASR. |
+| Minimum seek backfill | `4 s` | Include earlier tasks covering the seek target; long segments can expand this to half the maximum segment duration. |
 
-播放器字幕每侧默认放宽约 0.6 秒。短字幕有空余时尽量显示满 1.4 秒，每侧最多扩 1 秒。相邻对白只在空白区分配时间，连续对白保持原来的切换时刻。字幕检查继续显示识别得到的时间，单纯调整显示时不必重新识别或翻译。
+Display extends about 0.6 seconds per side. Short cues aim for 1.4 seconds when space allows, extending at most 1 second per side. Adjacent dialogue shares free gaps only; continuous speech keeps its transitions. Inspection shows recognition timestamps. Display-only changes need no new recognition/translation.
 
-## 翻译上下文和双语字幕
+## Translation context and bilingual display
 
-在 **翻译 → 上下文增强**，可为支持的模型启用前文和提示词。前文按已识别字幕条数计算，范围 0–8，默认建议 4。0 表示只使用填写的提示词。每次请求只输出当前字幕的译文，仍保留原来的时间轴。跳转后若可用的前文不足，程序会使用能获得的较少条数。云端聊天模型也会收到这些参考文字。风格提示可写成「用自然口语，保留人物称谓，同一人名保持一致」。
+Translation → Context enhancement (翻译 → 上下文增强) enables previous dialogue and prompts for supported models. Context counts recognized cues, 0–8, with a suggested default of 4. Zero uses only the prompt. Requests return current cues only and preserve timestamps. After a seek, fewer previous cues may be available. Cloud chat models receive those texts too. Example: “Use natural dialogue, preserve forms of address, and keep character names consistent.”
 
-每个翻译模型保存自己的增强开关、条数和提示词。Qwen-MT Flash / Plus 支持英文风格提示。聊天模型支持前文与提示词。Qwen-MT Lite 和 NLLB 保持逐段翻译。双语字幕用同一份缓存生成两行 SRT，原文在上，译文在下，例如 `[JP]` 和 `[CN]`。源语言自动识别时使用 ASR 报告的语种；旧缓存没有保存语种时显示 `[原文]`。切换显示无需重新识别或翻译。
+Each model saves its switch, count and prompt. Qwen-MT Flash / Plus support English style prompts; chat models support context and prompts. Qwen-MT Lite and NLLB remain segment-by-segment. Bilingual SRT reuses the cache: original above translation, prefixed with tags such as `[JP]` and `[CN]`. Detection uses the ASR language; old caches without one show `[原文]`. Display changes do not rerun inference.

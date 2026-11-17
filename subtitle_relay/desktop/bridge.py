@@ -163,6 +163,10 @@ def run_command(command, item=None, folder=None):
         return result
     if command == "status":
         return status()
+    if command == "cloud-usage":
+        from ..inference.usage import USAGE_DB, read_usage
+
+        return read_usage(runtime.DATA / "cache" / USAGE_DB)
     if command == "preset-check":
         raw = sys.stdin.read()
         return check_requirements(item, json.loads(raw)["qwen_mt_url"] if raw else None)
@@ -235,7 +239,8 @@ def run_command(command, item=None, folder=None):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("status", "preset-check", "automation", "install", "uninstall", "apply", "save-credentials", "stop",
+    parser.add_argument("command", choices=("status", "cloud-usage", "preset-check", "automation", "install",
+                                           "uninstall", "apply", "save-credentials", "stop",
                                            "integrate", "unintegrate", "logs", "inspect", "inspect-library",
                                            "inspect-rows", "inspect-srt", "inspect-regenerate",
                                            "pot-windows", "pot-start", "pot-stop", "chatgpt-status", "chatgpt-login",

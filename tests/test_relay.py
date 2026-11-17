@@ -57,7 +57,7 @@ class RelayTest(unittest.TestCase):
                     relay.inflight.add(job)
                     relay.update("test", playback)
                     future = Future()
-                    future.set_result(result)
+                    future.set_result((result, None))
                     relay._finish(job, future)
                     status = relay.update("test", playback)
                 rows = inspect_cache(root / "cache.sqlite3")["rows"]

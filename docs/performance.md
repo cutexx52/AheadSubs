@@ -1,43 +1,45 @@
-# 性能与设备建议
+# Performance and hardware
 
-## 推荐起点
+[English](performance.md) | [简体中文](performance.zh-CN.md)
 
-| 设备 | 优先试用 | 验证状态 |
+## Starting configurations
+
+| Hardware | Try first | Evidence |
 | --- | --- | --- |
-| CPU，无可用 GPU | Whisper Small + NLLB 600M INT8，均使用 CPU | i9-13900KF 验证单路。其他 CPU 先试一路。 |
-| 支持 Vulkan 的独显，显存紧张 | Qwen3-ASR 0.6B + NLLB 600M | 4090 已验证 GPU 识别加 CPU 翻译。入门 GPU 的并发待测。 |
-| RTX 4090 24 GB | Qwen3-ASR 1.7B Q4_K + NLLB 600M INT8 | 公开日语样本上默认配置 4 路通过，详见下表。 |
+| CPU, no usable GPU | Whisper Small + NLLB 600M INT8 on CPU | One session tested on i9-13900KF; start with one on other CPUs. |
+| Vulkan GPU with limited VRAM | Qwen3-ASR 0.6B + NLLB 600M | GPU recognition + CPU translation tested on RTX 4090; entry-level GPU concurrency unmeasured. |
+| RTX 4090 24 GB | Qwen3-ASR 1.7B Q4_K + NLLB 600M INT8 | Four sessions with defaults tested on a public Japanese sample. |
 
-硬件建议按设备能力选择起点。表中的模型权重和实际显存占用不同，后者还包括对齐模型、Vulkan/CUDA 运行时及并发缓冲。先用自己的目标片源测一路，再加到计划使用的窗口数。
+Model file size is not VRAM usage: alignment, runtimes and concurrent buffers add overhead. Test one session on your own media before increasing window count.
 
-## RTX 4090 实测
+## RTX 4090 measurements
 
-| 测试 | 条件 | 观测结果 |
+| Test | Conditions | Observation |
 | --- | --- | --- |
-| 轻量本地 4 路 | Qwen 0.6B + NLLB，20 秒 | 最低余量约 18.7 秒，0 次耗尽采样 |
-| 一键本地方案 4 路 | Qwen 0.6B Vulkan + CPU NLLB，默认 4 workers，25 秒 | 达到目标预读 3.77 秒，最低余量 18.45 秒，0 次耗尽采样 |
-| CPU 备用方案 1 路 | i9-13900KF，Whisper Small + NLLB 均以 CPU INT8 运行，25 秒 | 达到目标预读 2.95 秒，最低余量 17.69 秒，0 次耗尽采样 |
-| 全本地 4 路 | Qwen 1.7B Q4_K + NLLB 600M INT8，默认 4 workers，45 秒 | 达到目标预读 4.81 秒，最低余量 18.17 秒，0 次耗尽采样 |
-| 全本地 8 路 | 同模型，12 workers，35 秒 | 最低余量 16.61 秒，0 次耗尽采样 |
-| 全本地 12 路 | 同模型，12 workers，35 秒 | 最低余量 16.25 秒，0 次耗尽采样 |
-| PotPlayer 未命中缓存跳转 | Qwen 1.7B + Silero v6 + Qwen-MT Flash，预热后两轮、每轮 6 次 | 字幕交给播放器的中位数 1.17 秒／1.34 秒，总范围 0.99–1.66 秒 |
-| 单路 ASR | 预热 Qwen 1.7B Q4_K + Vulkan 对齐，约 10 秒音频，6 次 | RTF 中位数 0.0244，识别加对齐约 0.24–0.26 秒 |
+| Lightweight local, 4 sessions | Qwen 0.6B + NLLB, 20 s | Minimum ready ahead about 18.7 s; zero sampled exhaustion |
+| Starter preset, 4 sessions | Qwen 0.6B Vulkan + CPU NLLB, default 4 workers, 25 s | Target reached in 3.77 s; minimum 18.45 s; zero exhaustion |
+| CPU fallback, 1 session | i9-13900KF, Whisper Small + NLLB CPU INT8, 25 s | Target reached in 2.95 s; minimum 17.69 s; zero exhaustion |
+| Fully local, 4 sessions | Qwen 1.7B Q4_K + NLLB 600M INT8, default 4 workers, 45 s | Target reached in 4.81 s; minimum 18.17 s; zero exhaustion |
+| Fully local, 8 sessions | Same models, 12 workers, 35 s | Minimum 16.61 s; zero exhaustion |
+| Fully local, 12 sessions | Same models, 12 workers, 35 s | Minimum 16.25 s; zero exhaustion |
+| PotPlayer uncached seek | Qwen 1.7B + Silero v6 + Qwen-MT Flash; two warmed rounds, 6 seeks each | Median subtitle delivery 1.17 / 1.34 s; range 0.99–1.66 s |
+| Single ASR | Warm Qwen 1.7B Q4_K + Vulkan alignment; about 10 s audio, 6 runs | Median RTF 0.0244; recognition + alignment about 0.24–0.26 s |
 
-并发测试使用同一公开日语样本的不同路径副本，各会话使用独立任务并由模拟播放头等速推进。目标预读是 20 秒。跳转测试包含播放器位置、取音频、识别、翻译和 SRT 交付，未测最后的屏幕绘制。实际片源的对白密度、背景声音、GPU 上的其他应用、网络延迟、倍速和拖动习惯均会改变结果。12 路的短试验不能作为长时间使用保证。
+Concurrency tests used different-path copies of one public Japanese sample, independent tasks and simulated constant-speed playheads, targeting 20 seconds ahead. Seek measurements include position, extraction, recognition, translation and SRT delivery, not final screen painting. Dialogue density, background sound, other GPU apps, network, speed and seeks affect results. Short 12-session tests are not long-run guarantees.
 
-一键本地方案、CPU 备用方案、1.7B 全本地四路和 PotPlayer 跳转已用当前停顿分段策略复测。轻量本地四路的 20 秒结果和八至十二路的数据来自改动前。
+The starter preset, CPU fallback, 1.7B four-session setup and PotPlayer seeks were retested with current pause segmentation. The 20-second lightweight four-session and 8–12-session results predate that change.
 
-RTF 是处理耗时除以音频时长。单路 ASR 的 RTF 不包括 FFmpeg、云端翻译、调度、写缓存或播放器。
+RTF is processing time / audio duration. ASR-only RTF excludes FFmpeg, translation, scheduling, cache writes and the player.
 
-另用合成数据验证字幕持久化的内存开销。生成 10,000 条字幕的约 1.95 MiB SRT 时，`tracemalloc` 观测到的 Python 分配峰值约 33 KiB。该数字只测字幕生成代码，范围不含 SQLite 原生分配、模型或进程工作集。
+A synthetic persistence test generated 10,000 cues into about 1.95 MiB SRT. `tracemalloc` observed about 33 KiB peak Python allocations. This measures subtitle generation only, excluding native SQLite allocation, models and the process working set.
 
-## 复测
+## Reproduce
 
-给服务使用空缓存目录，开启与实际使用一致的模型和 worker 数。传给工具的媒体应为不同文件路径，且每个文件至少比测试时长多 20 秒。
+Use an empty service cache and the target models/worker count. Supply distinct paths, each at least 20 seconds longer than the test.
 
 ```cmd
 python tools\benchmark.py --seconds 45 clip1.wav clip2.wav clip3.wav clip4.wav
 python tools\mpv_smoke.py C:\path\mpv.exe clip1.mp4 clip2.mp4 clip3.mp4 clip4.mp4
 ```
 
-先看到预读目标满足后，再比较最低余量和耗尽采样数。报告最好包含 GPU、系统、provider、worker 数、媒体编码及音轨、测试时长和数据是否命中缓存。较早的测试见 [VALIDATION.md](../VALIDATION.md)。
+Wait for the target buffer, then compare minimum ready ahead and exhaustion samples. Record GPU, OS, providers, workers, codec/track, duration and cache-hit state. Earlier tests: [VALIDATION.md](../VALIDATION.md).

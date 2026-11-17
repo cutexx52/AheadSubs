@@ -41,7 +41,7 @@ class InspectionTest(unittest.TestCase):
             if isinstance(cues, Exception):
                 result.set_exception(cues)
             else:
-                result.set_result(cues)
+                result.set_result((cues, None))
             relay._finish(job, result)
 
     def files(self):
@@ -193,7 +193,7 @@ class InspectionTest(unittest.TestCase):
             new_key = relay.queue_regeneration(old_key)["key"]
         relay.drop("viewer")
 
-        def replace_input(*_):
+        def replace_input(*_, **_options):
             self.video.write_bytes(b"a replacement with a different length")
             raise TranslationFailure([Cue(1, 2, "replacement content")])
 
