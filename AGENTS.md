@@ -3,10 +3,11 @@
 ## Working agreement
 
 - Read [the contribution workflow](docs/contributing.md) before implementation or review. Keep project-wide rules here; Claude and Copilot entry files reference this source rather than maintaining competing policies.
-- Use Draft-first for changes intended for merge: define the outcome, scope and acceptance checks, push a minimal meaningful commit, then open a Draft PR before substantial implementation. Update the same PR as work progresses; do not manufacture empty commits or PRs for local-only tasks.
+- Repository-changing Agent tasks default to delivery through a PR and merge once acceptance, CI and independent review gates pass. Do not stop at local edits, commits, a pushed branch or an open PR. This is the standing project workflow unless the user explicitly limits delivery; read-only questions and tasks with no repository diff do not require artificial PRs.
+- Use Draft-first for repository changes: define the outcome, scope and acceptance checks, push a minimal meaningful commit, then open a Draft PR before substantial implementation. Update the same PR as work progresses; do not manufacture empty commits or PRs for tasks with no repository diff.
 - Keep one outcome per PR. Inspect existing code and tests first; plan only nontrivial changes. Avoid unrelated cleanup, speculative abstractions, and new dependencies without a concrete need. Preserve unrelated user changes.
 - Run focused checks during iteration and the required checks before Ready. Record actual commands, outcomes and untested limits; never claim unexecuted checks passed. Delegate only independent, bounded work when authorized, with one owner per file and one integration owner.
-- Finish the review loop: inspect CI and independent review, verify findings, fix real defects with regression coverage, and request review of the new head. Merge only under the contribution guide's current-head gates and task authorization; never bypass branch protection.
+- Finish the review loop: inspect CI and independent review, verify findings, fix real defects with regression coverage, and request review of the new head. Merge only under the contribution guide's current-head gates and task authorization; never bypass branch protection. Keep following checks and review until merged or a concrete external blocker requires a handoff; report the PR URL, head SHA, blocker and next action, not a false completion claim.
 
 ## Documentation, languages and tests
 
