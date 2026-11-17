@@ -3,15 +3,36 @@ import time
 import unittest
 from types import SimpleNamespace
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from subtitle_relay.audio import Segmentation, Segmenter, make_wav
 from subtitle_relay.engine import Playback, Relay, clear_dialogue, merge_cues
+from subtitle_relay.players import run_adapter
 from subtitle_relay.protocol import playback_from_json
 from subtitle_relay.providers import Cue, OpenAIWhisper
 
 
 class RelayTest(unittest.TestCase):
+    def test_playback_adapter_resumes_same_session_at_latest_position_after_restart(self):
+        player = Mock()
+        player.state.side_effect = [{"position": 4}, {"position": 8}, {"position": 12}, EOFError]
+        client = Mock()
+        client.send.side_effect = [
+            {"subtitle": "old.srt", "revision": 1, "error": None, "ready_ahead": 4, "nearby_cues": True},
+            ConnectionRefusedError,
+            {"subtitle": "new.srt", "revision": 1, "error": None, "ready_ahead": 4, "nearby_cues": True},
+            {},
+        ]
+        source = Mock(side_effect=["en", "ja", "ja"])
+        report = Mock()
+        with patch("subtitle_relay.players.time.sleep"), self.assertRaises(EOFError):
+            run_adapter(player, client, source, "zh", 20, 0.4, report=report)
+        requests = [call.args[1] for call in client.send.call_args_list if call.args[0] == "playback"]
+        self.assertEqual(len({request["session"] for request in requests}), 1)
+        self.assertEqual((requests[-1]["position"], requests[-1]["source"]), (12, "ja"))
+        self.assertEqual([call.args[0] for call in report.call_args_list], ["ready", "reconnecting", "ready"])
+        self.assertEqual([call.args for call in player.publish.call_args_list], [("old.srt", 1), ("new.srt", 1)])
+
     def test_dialogue_filter_preserves_normal_repetition(self):
         self.assertTrue(clear_dialogue("はい、はい、わかりました。"))
         self.assertFalse(clear_dialogue("ありがとう、" * 7))

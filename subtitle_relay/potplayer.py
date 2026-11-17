@@ -169,9 +169,10 @@ def start_hotkey(launcher):
 class PotPlayer:
     """Poll one explicitly bound window and local file."""
 
-    def __init__(self, hwnd, path, audio, reload_command):
+    def __init__(self, hwnd, path, audio, reload_command, track=None):
         self.hwnd, self.path, self.audio = hwnd, Path(path).resolve(strict=True), audio
         self.reload_command = reload_command
+        self.track = track
         self.user = ct.WinDLL("user32", use_last_error=True)
         self.user.SendMessageTimeoutW.argtypes = [
             win.HWND, win.UINT, win.WPARAM, win.LPARAM, win.UINT, win.UINT, ct.POINTER(ct.c_size_t),
@@ -213,6 +214,16 @@ class PotPlayer:
         return {"path": str(self.path), "position": position, "duration": duration, "audio": self.audio}
 
     def publish(self, path, revision):
+        if self.track is not None:
+            if (path, revision) != (self.subtitle, self.revision):
+                try:
+                    write_potplayer_track(self.track, Path(path))
+                except PermissionError:
+                    return
+                if self.reload_command:
+                    self._send(0x111, self.reload_command)
+                self.subtitle, self.revision = path, revision
+            return
         if self.subtitle != path:
             if Path(path).stat().st_size <= 1:
                 return
@@ -252,6 +263,8 @@ class PotPlayer:
 
 
 def open_with_subtitles(executable, path, client, audio, source, target, ahead, muted=False):
+    from .players import run_adapter
+
     path = Path(path).resolve(strict=True)
     duration = float(subprocess.check_output([
         "ffprobe", "-v", "error", "-show_entries", "format=duration",
@@ -289,7 +302,7 @@ def open_with_subtitles(executable, path, client, audio, source, target, ahead, 
             for hwnd, title in list_windows():
                 if path.stem.casefold() not in title.casefold():
                     continue
-                candidate = PotPlayer(hwnd, path, audio, reload_command)
+                candidate = PotPlayer(hwnd, path, audio, reload_command, track=subtitle)
                 if candidate.pid == process.pid:
                     player = candidate
                     break
@@ -299,26 +312,8 @@ def open_with_subtitles(executable, path, client, audio, source, target, ahead, 
             raise TimeoutError("Could not identify the new PotPlayer window")
         print(json.dumps({"window": hex(player.hwnd), "subtitle": str(subtitle),
                           "reload_command": reload_command}), flush=True)
-        revision = response["revision"]
-        while process.poll() is None:
-            state = player.state()
-            if not state:
-                client.send("close", {"session": session})
-            else:
-                response = client.send("playback", {**hints, **state})
-                if response["error"]:
-                    print(response["error"], flush=True)
-                if response["subtitle"] and response["revision"] != revision:
-                    try:
-                        write_potplayer_track(subtitle, Path(response["subtitle"]))
-                    except PermissionError:
-                        # The player can briefly hold the external file open while reloading.
-                        time.sleep(0.25)
-                        continue
-                    if reload_command:
-                        player._send(0x111, reload_command)
-                    revision = response["revision"]
-            time.sleep(0.6)
+        player.subtitle, player.revision = str(cache_srt), response["revision"]
+        run_adapter(player, client, source, target, ahead, 0.6, session=session)
     finally:
         try:
             client.send("close", {"session": session})

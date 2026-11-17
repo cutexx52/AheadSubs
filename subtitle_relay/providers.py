@@ -54,18 +54,28 @@ class FasterWhisper:
         return info.language, [Cue(s.start, s.end, s.text.strip()) for s in segments if s.text.strip()]
 
 
+def openai_key(key_file=None):
+    key = os.getenv("OPENAI_API_KEY")
+    if key_file:
+        try:
+            contents = Path(key_file).read_text(encoding="utf-8-sig")
+        except (OSError, UnicodeError) as exc:
+            raise ValueError("无法读取 OpenAI 密钥文件，请在高级设置重新选择。") from exc
+        match = re.search(r"sk-[A-Za-z0-9_-]+", contents)
+        if match is None:
+            raise ValueError("密钥文件中没有找到 OpenAI API 密钥，请在高级设置重新选择。")
+        key = match.group(0)
+    if not key or not key.strip():
+        raise ValueError("请选择 OpenAI 密钥文件，或设置 OPENAI_API_KEY。")
+    return key.strip()
+
+
 def openai_client(key_file=None, endpoint=None, endpoint_key="RELAY_LLM_API_KEY"):
     from openai import OpenAI
 
-    key = os.getenv("OPENAI_API_KEY")
-    if key_file:
-        match = re.search(r"sk-[A-Za-z0-9_-]+", Path(key_file).read_text(encoding="utf-8-sig"))
-        if match is None:
-            raise ValueError("No OpenAI API key in the supplied key file")
-        key = match.group(0)
     if endpoint:
         return OpenAI(api_key=os.getenv(endpoint_key, "local"), base_url=endpoint, timeout=30)
-    return OpenAI(api_key=key, base_url="https://api.openai.com/v1", timeout=30)
+    return OpenAI(api_key=openai_key(key_file), base_url="https://api.openai.com/v1", timeout=30)
 
 
 class OpenAIWhisper:

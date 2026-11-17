@@ -1,5 +1,6 @@
 import json
 import math
+import os
 from secrets import compare_digest
 from threading import BoundedSemaphore, Thread
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -42,7 +43,7 @@ def serve(relay, port, control_token=None):
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
             if self.path == "/v1/health":
-                self.reply(200, {"service": "subtitle-relay"})
+                self.reply(200, {"service": "subtitle-relay", "pid": os.getpid()})
             else:
                 self.reply(404, {"error": "unknown route"})
 

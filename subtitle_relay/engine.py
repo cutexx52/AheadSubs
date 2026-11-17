@@ -241,7 +241,13 @@ class Relay:
             except Exception as exc:
                 # Provider exceptions can include request material. Return only the exception type/status.
                 status = getattr(exc, "status_code", None)
-                self.errors[job] = (time.monotonic() + 15, f"{type(exc).__name__} ({status})" if status
-                                    else type(exc).__name__)
+                errors = {
+                    401: "API 密钥无效，请检查高级设置中的密钥文件（401）",
+                    403: "API 服务拒绝访问，请检查账号或模型权限（403）",
+                    404: "API 模型或接口不存在，请检查模型名与地址（404）",
+                    429: "API 达到限额，请检查额度、余额或请求频率（429）",
+                }
+                detail = errors.get(status, f"{type(exc).__name__} ({status})" if status else type(exc).__name__)
+                self.errors[job] = (time.monotonic() + 15, detail)
             finally:
                 self.inflight.remove(job)

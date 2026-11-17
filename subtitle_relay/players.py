@@ -88,18 +88,37 @@ class Mpv:
         self.subtitle, self.revision = path, revision
 
 
-def run_adapter(player, client, source, target, ahead, interval, stop=None, idle_limit=None, report=None):
-    session = uuid4().hex
+def run_adapter(player, client, source, target, ahead, interval, stop=None, idle_limit=None, report=None, session=None):
+    session = session or uuid4().hex
     previous_error = None
     last_active = time.monotonic()
+    disconnected_at = None
     try:
         while stop is None or not stop.exists():
             state = player.state()
             if state:
                 last_active = time.monotonic()
-                response = client.send("playback", {
-                    **state, "session": session, "source": source, "target": target, "ahead": ahead,
-                })
+            elif idle_limit is not None and time.monotonic() - last_active >= idle_limit:
+                return
+            try:
+                if state:
+                    response = client.send("playback", {
+                        **state, "session": session, "source": source() if callable(source) else source,
+                        "target": target, "ahead": ahead,
+                    })
+                elif disconnected_at is None:
+                    client.send("close", {"session": session})
+            except OSError:
+                if disconnected_at is None:
+                    disconnected_at = time.monotonic()
+                if time.monotonic() - disconnected_at >= 165:
+                    raise RuntimeError("字幕服务未恢复，请在设置中查看服务日志。") from None
+                if report:
+                    report("reconnecting", "正在等待字幕服务恢复，随后会从当前播放位置继续…")
+                time.sleep(interval)
+                continue
+            if state:
+                disconnected_at = None
                 if response["subtitle"]:
                     player.publish(response["subtitle"], response["revision"])
                 if response["error"] and response["error"] != previous_error:
@@ -115,11 +134,8 @@ def run_adapter(player, client, source, target, ahead, interval, stop=None, idle
                     else:
                         report("silence", "这一段已处理，暂未生成字幕")
             else:
-                client.send("close", {"session": session})
                 if report:
                     report("waiting", "等待活动音轨或播放位置…")
-                if idle_limit is not None and time.monotonic() - last_active >= idle_limit:
-                    return
             time.sleep(interval)
     finally:
         try:

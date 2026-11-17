@@ -43,13 +43,18 @@ def config():
     return {**DEFAULTS, **json.loads(CONFIG.read_text(encoding="utf-8"))}
 
 
-def healthy():
+def service_health():
     try:
         opener = build_opener(ProxyHandler({}))
         with opener.open(f"http://127.0.0.1:{PORT}/v1/health", timeout=0.3) as response:
-            return json.load(response).get("service") == "subtitle-relay"
+            health = json.load(response)
+            return health if health.get("service") == "subtitle-relay" else None
     except (OSError, URLError, ValueError):
-        return False
+        return None
+
+
+def healthy():
+    return service_health() is not None
 
 
 def spawn(arguments, log=LOG):
@@ -62,15 +67,41 @@ def spawn(arguments, log=LOG):
                                 stdin=subprocess.DEVNULL, creationflags=subprocess.CREATE_NO_WINDOW)
 
 
-def background_start(on_wait=None):
+def background_start(on_wait=None, restart=False):
     DATA.mkdir(parents=True, exist_ok=True)
     with (DATA / "starting.lock").open("a+b") as startup:
-        try:
-            msvcrt.locking(startup.fileno(), msvcrt.LK_NBLCK, 1)
-        except OSError:
-            return
-        if healthy():
-            return
+        deadline = time.monotonic() + 120
+        while True:
+            try:
+                msvcrt.locking(startup.fileno(), msvcrt.LK_NBLCK, 1)
+                break
+            except OSError:
+                if not restart:
+                    return
+                if time.monotonic() >= deadline:
+                    raise RuntimeError("等待上一项服务操作超时。")
+                time.sleep(0.25)
+        health = service_health()
+        if health:
+            if not restart:
+                return
+            from subtitle_relay.protocol import RelayClient
+
+            if not CONTROL.is_file():
+                raise RuntimeError("当前字幕服务由另一个程序启动，请先关闭该服务。")
+            RelayClient(PORT).send("shutdown", {"token": CONTROL.read_text(encoding="ascii")})
+            if pid := health.get("pid"):
+                import psutil
+
+                try:
+                    psutil.Process(pid).wait(timeout=100)
+                except psutil.NoSuchProcess:
+                    pass
+            deadline = time.monotonic() + 5
+            while healthy():
+                if time.monotonic() >= deadline:
+                    raise RuntimeError("旧字幕服务尚未退出。")
+                time.sleep(0.25)
         settings = config()
         CONTROL.write_text(secrets.token_urlsafe(32), encoding="ascii")
         args = ["serve", "--cache", str(DATA / "cache"), "--control-token-file", str(CONTROL)]
@@ -272,7 +303,7 @@ def run_native_adapter(hwnd, media, stop, report):
     reload = find_reload_command(executable)
     with (DATA / "potplayer.log").open("a", encoding="utf-8") as log, redirect_stdout(log):
         player = PotPlayer(hwnd, media, 0, reload)
-        run_adapter(player, RelayClient(PORT), config()["source"] or None, "zh", 20, 0.6, stop,
+        run_adapter(player, RelayClient(PORT), lambda: config()["source"] or None, "zh", 20, 0.6, stop,
                     idle_limit=4, report=report)
 
 
@@ -400,6 +431,8 @@ def gui(initial_media=None):
 
     def start():
         nonlocal starter_process
+        if starter_process and starter_process.poll() is None:
+            return
         if speech.get() not in asr_models or translation.get() not in mt_models:
             model_status.set("先选择已安装的本地模型或远程模型。")
             return
@@ -410,22 +443,31 @@ def gui(initial_media=None):
             settings["whisper_model"].set("small")
         settings["mt"].set(mt_models[translation.get()])
         settings["source"].set(languages[language.get()])
-        save()
-        if healthy():
-            messagebox.showinfo("Subtitle Relay", "The service is running. Stop and start it to apply settings.")
-            return
         if not PYTHON.is_file():
             messagebox.showerror("Subtitle Relay", "The project .venv is missing. See the installation in README.md.")
             return
+        if ("openai" in (settings["asr"].get(), settings["mt"].get())
+                or settings["route"].get() == "OpenAI AST (English)"):
+            from subtitle_relay.providers import openai_key
+
+            try:
+                openai_key(settings["key_file"].get())
+            except ValueError as exc:
+                model_status.set(str(exc))
+                return
+        model_status.set("")
+        save()
         with LOG.open("ab") as output:
-            starter_process = subprocess.Popen([str(PYTHON), str(Path(__file__).resolve()), "--background"],
+            starter_process = subprocess.Popen([str(PYTHON), str(Path(__file__).resolve()), "--restart"],
                                                stdout=output, stderr=output,
                                                creationflags=subprocess.CREATE_NO_WINDOW)
-        status.set("Starting service and preparing models…")
+        status.set("正在应用设置，已启用的播放窗口会自动接续…")
 
     def stop():
         from subtitle_relay.protocol import RelayClient
 
+        if starter_process and starter_process.poll() is None:
+            return
         if CONTROL.is_file() and healthy():
             try:
                 RelayClient(PORT).send("shutdown", {"token": CONTROL.read_text(encoding="ascii")})
@@ -570,10 +612,9 @@ def gui(initial_media=None):
         if setup_process and setup_process.poll() is not None:
             setup_status.set("Engine dependencies ready" if setup_process.returncode == 0 else
                              f"Setup failed. See {DATA / 'setup.log'}")
-        status.set("Service ready" if healthy() else
-                   "启动失败，点击右侧查看服务日志。" if starter_process and starter_process.poll() else
-                   "正在启动服务与模型…" if starter_process and starter_process.poll() is None
-                   else "Service stopped")
+        status.set("正在应用设置，已启用的播放窗口会自动接续…" if starter_process and starter_process.poll() is None
+                   else "设置应用失败，点击右侧查看服务日志。" if starter_process and starter_process.returncode
+                   else "字幕服务就绪" if healthy() else "字幕服务已停止")
         root.after(1500, tick)
 
     root.after(50, tick)
@@ -593,8 +634,8 @@ if __name__ == "__main__":
         install_model(sys.argv[2])
     elif "--prepare" in sys.argv:
         prepare()
-    elif "--background" in sys.argv:
-        background_start()
+    elif "--background" in sys.argv or "--restart" in sys.argv:
+        background_start(restart="--restart" in sys.argv)
     elif len(sys.argv) >= 3 and sys.argv[1] in {"--pot-toggle", "--pot-hwnd"}:
         try:
             if sys.argv[1] == "--pot-hwnd":
