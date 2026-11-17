@@ -1,5 +1,6 @@
 import hashlib
 import json
+import logging
 import math
 import os
 import sqlite3
@@ -234,10 +235,13 @@ class Relay:
     def _finish(self, job, future):
         with self.lock:
             try:
-                encoded = json.dumps([asdict(cue) for cue in future.result()], ensure_ascii=False)
+                cues = future.result()
+                encoded = json.dumps([asdict(cue) for cue in cues], ensure_ascii=False)
                 self.db.execute("INSERT OR REPLACE INTO chunks VALUES (?, ?, ?)", (*job, encoded))
                 self.db.commit()
                 self.errors.pop(job, None)
+                logging.getLogger(__name__).info("Processed media=%s start=%.1fs cues=%d",
+                                                 job[0][:10], job[1] * self.chunk, len(cues))
             except Exception as exc:
                 # Provider exceptions can include request material. Return only the exception type/status.
                 status = getattr(exc, "status_code", None)
@@ -249,5 +253,7 @@ class Relay:
                 }
                 detail = errors.get(status, f"{type(exc).__name__} ({status})" if status else type(exc).__name__)
                 self.errors[job] = (time.monotonic() + 15, detail)
+                logging.getLogger(__name__).warning("Chunk failed media=%s start=%.1fs error=%s status=%s",
+                                                    job[0][:10], job[1] * self.chunk, type(exc).__name__, status)
             finally:
                 self.inflight.remove(job)

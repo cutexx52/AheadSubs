@@ -123,6 +123,10 @@ def caller_potplayer():
     return None
 
 
+class MediaPathUnavailable(RuntimeError):
+    pass
+
+
 def current_media(pid, filename):
     """Resolve PotPlayer's filename within the calling process's open media files."""
     import psutil
@@ -130,13 +134,15 @@ def current_media(pid, filename):
     hint = Path(filename)
     if hint.is_absolute() and hint.is_file():
         return hint
-    candidates = {path for opened in psutil.Process(pid).open_files()
-                  if (path := Path(opened.path)).name.casefold() == hint.name.casefold()
-                  and path.is_file()}
+    try:
+        candidates = {path for opened in psutil.Process(pid).open_files()
+                      if (path := Path(opened.path)).name.casefold() == hint.name.casefold()
+                      and path.is_file()}
+    except psutil.AccessDenied as exc:
+        raise MediaPathUnavailable("Windows 拒绝读取 PotPlayer 打开的文件列表。") from exc
     if len(candidates) == 1:
         return candidates.pop()
-    raise RuntimeError("PotPlayer reported only the filename and Relay could not uniquely resolve it. "
-                       "Use the Subtitle Relay helper to attach this file.")
+    raise MediaPathUnavailable(f"PotPlayer 只提供了文件名，找到 {len(candidates)} 个实际路径候选。")
 
 
 def start_hotkey(launcher):
@@ -148,6 +154,7 @@ def start_hotkey(launcher):
         if not user.RegisterHotKey(None, 1, 0x4003, ord("J")):
             print("PotPlayer hotkey Ctrl+Alt+J is already in use.", flush=True)
             return
+        print("PotPlayer hotkey Ctrl+Alt+J registered", flush=True)
         message = win.MSG()
         previous = 0.0
         try:
@@ -158,6 +165,7 @@ def start_hotkey(launcher):
                 now = time.monotonic()
                 if now - previous >= 0.65 and any(hwnd == foreground for hwnd, _ in list_windows()):
                     previous = now
+                    print(f"PotPlayer hotkey received hwnd={foreground:#x}", flush=True)
                     subprocess.Popen([sys.executable, str(launcher), "--pot-hwnd", str(foreground)],
                                      creationflags=subprocess.CREATE_NO_WINDOW)
         finally:

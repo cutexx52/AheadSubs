@@ -1,8 +1,8 @@
-string GetTitle() { return "Subtitle Relay - Start/stop audio pre-read"; }
-string GetVersion() { return "1"; }
-string GetDesc() { return "Start or stop audio pre-read for the current PotPlayer window."; }
+string GetTitle() { return "Subtitle Relay - Start audio pre-read"; }
+string GetVersion() { return "2"; }
+string GetDesc() { return "Start audio pre-read for the current PotPlayer window."; }
 string GetLoginTitle() { return "Subtitle Relay audio pre-read"; }
-string GetLoginDesc() { return "Click OK to start or stop audio pre-read for this window."; }
+string GetLoginDesc() { return "Click OK to start audio pre-read. Use Ctrl+Alt+J in PotPlayer to stop."; }
 string GetUserText() { return "Optional"; }
 string GetPasswordText() { return ""; }
 array<string> GetSrcLangs() { array<string> languages = {""}; return languages; }
@@ -23,4 +23,4 @@ string ServerLogin(string User, string Pass) {
     return "200 OK";
 }
 
-string Translate(string Text, string &in SrcLang, string &in DstLang) { return ""; }
+string Translate(string Text, string &in SrcLang, string &in DstLang) { return Text; }

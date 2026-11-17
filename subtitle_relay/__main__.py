@@ -1,5 +1,6 @@
 import argparse
 import json
+import logging
 import time
 from contextlib import ExitStack
 from dataclasses import asdict
@@ -119,6 +120,13 @@ def main():
         command.add_argument("--audio", type=int, default=0)
     args = parser.parse_args()
     if args.mode == "serve":
+        logging.basicConfig(format="%(asctime)s %(levelname)s %(name)s %(message)s")
+        logger = logging.getLogger("subtitle_relay")
+        logger.setLevel(logging.INFO)
+        logger.info(
+            "Starting service asr=%s mt=%s qwen_size=%s llm_model=%s ast=%s workers=%d",
+            args.asr, args.mt, args.qwen_size if args.asr == "qwen" else "-",
+            args.llm_model if args.mt == "openai" and not args.ast else "-", args.ast, args.workers)
         if not (0 <= args.before <= 5 and 0 <= args.after <= 5 and
                 2 <= args.max_speech <= 20 and 40 <= args.min_silence_ms <= 2000 and
                 0 <= args.pad_ms <= 500 and 0 < args.vad_threshold < 1 and

@@ -1,3 +1,4 @@
+import os
 import tempfile
 import time
 import unittest
@@ -13,6 +14,15 @@ from subtitle_relay.providers import Cue, OpenAIWhisper
 
 
 class RelayTest(unittest.TestCase):
+    @unittest.skipUnless(os.name == "nt", "PotPlayer requires Windows")
+    def test_potplayer_path_access_denied_offers_manual_resolution(self):
+        import psutil
+        from subtitle_relay.potplayer import MediaPathUnavailable, current_media
+
+        with patch.object(psutil.Process, "open_files", side_effect=psutil.AccessDenied()):
+            with self.assertRaises(MediaPathUnavailable):
+                current_media(os.getpid(), "clip.mp4")
+
     def test_playback_adapter_resumes_same_session_at_latest_position_after_restart(self):
         player = Mock()
         player.state.side_effect = [{"position": 4}, {"position": 8}, {"position": 12}, EOFError]

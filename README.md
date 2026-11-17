@@ -15,7 +15,7 @@
 
 - **Open video with translated subtitles…** 选择本地视频或 Windows 共享文件，服务先准备起始字幕，再用新 PotPlayer 窗口加载 SRT。后续更新会触发 PotPlayer 原生 Reload Subtitle 命令。已打开的视频也可用 **Select media and start pre-reading…** 手动绑定，助手会把首份 SRT 交给指定窗口。SRT 保存在后台缓存目录，默认是 `%LOCALAPPDATA%\Subtitle Relay\cache`。
 - **Install PotPlayer translation menu** 安装原生 **Subtitle Relay (local service)** 翻译引擎。重开 PotPlayer 后，在实时字幕翻译的引擎列表选择它，并指定来源和目标语言。该回调处理 PotPlayer 传入的现成字幕文本。观看已经由后台生成译文的 SRT 时，可关闭 PotPlayer 自己的字幕翻译以免重复处理。
-- 已经在 PotPlayer 打开视频时，在 **F5 → 扩展功能 → 实时字幕翻译** 的列表选 **Subtitle Relay - Start/stop audio pre-read**，打开它的**设置**并点**确定**。扩展把当前视频的文件名交给后台，后台从对应窗口的进程定位打开的文件并加载字幕。如果存在多个同名候选项或无法解析路径，助手的 Attach 可以显式指定。再次执行同一操作会停止预读，已加载的字幕仍可使用。默认译成简体中文、预读 20 秒并读第一条音轨。切换文件后重新启动预读。
+- 已经在 PotPlayer 打开视频时，在 **F5 → 扩展功能 → 实时字幕翻译** 的列表选 **Subtitle Relay - Start audio pre-read**，打开它的**设置**并点**确定**。扩展把当前视频的文件名交给后台。无法定位路径时，会提示为当前窗口选择正在播放的文件。用 **Ctrl+Alt+J** 停止预读。默认译成简体中文、预读 20 秒并读第一条音轨。切换文件后重新启动预读。
 
 ## 单独运行后台
 

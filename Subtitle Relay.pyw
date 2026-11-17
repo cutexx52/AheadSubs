@@ -204,8 +204,15 @@ def install_potplayer(destination):
         (destination / path.name).write_text(script, encoding="utf-8")
 
 
+def pot_event(event, detail, hwnd=None):
+    DATA.mkdir(parents=True, exist_ok=True)
+    with (DATA / "potplayer.log").open("a", encoding="utf-8") as log:
+        window = f" hwnd={hwnd:#x}" if hwnd else ""
+        log.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')}{window} {event} {detail}\n")
+
+
 def native_potplayer(encoded=None, foreground=None):
-    from subtitle_relay.potplayer import caller_potplayer, current_media, list_windows
+    from subtitle_relay.potplayer import MediaPathUnavailable, caller_potplayer, current_media, list_windows
 
     value = base64.b64decode(encoded) if encoded else b""
     encodings = ("utf-16-le", "utf-8-sig", "mbcs") if b"\0" in value else ("utf-8-sig", "mbcs")
@@ -251,6 +258,15 @@ def native_potplayer(encoded=None, foreground=None):
     from subtitle_relay.feedback import PotFeedback
 
     feedback = PotFeedback(hwnd)
+    previous_state = None
+
+    def report(state, message):
+        nonlocal previous_state
+        if state != previous_state:
+            pot_event(state, message, hwnd)
+            previous_state = state
+        feedback.report(state, message)
+
     DATA.mkdir(parents=True, exist_ok=True)
     lock = DATA / f"pot-{pid}-{hwnd}.lock"
     stop = lock.with_suffix(".stop")
@@ -258,18 +274,38 @@ def native_potplayer(encoded=None, foreground=None):
         try:
             msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
         except OSError:
+            if not foreground:
+                pot_event("already-active", "PotPlayer 重复调用了预读扩展", hwnd)
+                feedback.close()
+                return
             stop.touch()
-            feedback.report("off", "预读已关闭")
+            report("off", "预读已关闭")
             feedback.close(2)
             return
         try:
-            feedback.report("on", "预读已开启，正在准备…")
-            media = current_media(pid, filename)
-            run_native_adapter(hwnd, media, stop, feedback.report)
+            stop.unlink(missing_ok=True)
+            pot_event("launch", "快捷键" if foreground else "PotPlayer 扩展", hwnd)
+            report("on", "正在定位当前视频并启动预读…")
+            try:
+                media = current_media(pid, filename)
+                pot_event("media", "自动定位成功", hwnd)
+            except MediaPathUnavailable as exc:
+                report("choose-media", f"{exc} 请选择当前正在播放的视频。")
+                selected = filedialog.askopenfilename(parent=feedback.root, initialfile=Path(filename).name,
+                                                      title="Subtitle Relay — 选择 PotPlayer 中正在播放的视频")
+                if not selected or stop.exists():
+                    report("cancelled", "已取消选择，预读未启动。")
+                    feedback.close(2)
+                    return
+                media = Path(selected)
+                if media.name.casefold() != Path(filename).name.casefold():
+                    raise ValueError("所选文件名与当前 PotPlayer 窗口不一致，请重新启动预读并选择当前视频。")
+                pot_event("media", "用户指定了与当前窗口同名的视频", hwnd)
+            run_native_adapter(hwnd, media, stop, report)
         except EOFError:
-            pass
+            pot_event("closed", "播放器窗口关闭", hwnd)
         except Exception as exc:
-            feedback.report("failed", str(exc))
+            report("failed", str(exc))
             feedback.close(2.7)
             return
         feedback.close()
@@ -284,7 +320,6 @@ def run_native_adapter(hwnd, media, stop, report):
     def starting():
         report("starting", "正在启动字幕服务与识别模型…")
 
-    stop.unlink(missing_ok=True)
     if not healthy():
         starting()
         background_start(starting)
@@ -591,7 +626,8 @@ def gui(initial_media=None):
     footer = ttk.Frame(outer)
     footer.pack(fill="x", pady=(10, 0))
     ttk.Label(footer, textvariable=status).pack(side="left")
-    ttk.Button(footer, text="View service log", command=lambda: os.startfile(LOG) if LOG.exists() else None).pack(side="right")
+    ttk.Button(footer, text="后台日志", command=lambda: os.startfile(LOG) if LOG.exists() else None).pack(side="right")
+    ttk.Button(footer, text="播放器日志", command=lambda: os.startfile(pot_log) if pot_log.exists() else None).pack(side="right")
 
     def tick():
         nonlocal model_process
@@ -645,6 +681,7 @@ if __name__ == "__main__":
         except EOFError:
             pass
         except Exception as exc:
+            pot_event("launch-failed", str(exc))
             ctypes.windll.user32.MessageBoxW(None, str(exc), "Subtitle Relay", 0x10)
     else:
         gui()
