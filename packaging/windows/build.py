@@ -31,7 +31,7 @@ FFMPEG_NOTICES = ("COPYING.LGPLv3", "COPYING.GPLv3", "CREDITS")
 WINPTHREADS_VERSION = "14.0.0.r598.ge3d18511f-1"
 WINPTHREADS_URL = f"https://mirror.msys2.org/mingw/sources/mingw-w64-winpthreads-{WINPTHREADS_VERSION}.src.tar.zst"
 WINPTHREADS_SHA256 = "1da3dad4f6916d0c23e8fe76c38ed79946fb32078f94047c0475229b8112a1db"
-WINPTHREADS_BINARY_URL = ("https://mirror.msys2.org/mingw/ucrt64/"
+WINPTHREADS_BINARY_URL = ("https://repo.msys2.org/mingw/ucrt64/"
                          f"mingw-w64-ucrt-x86_64-libwinpthread-{WINPTHREADS_VERSION}-any.pkg.tar.zst")
 WINPTHREADS_BINARY_SHA256 = "c35d6be83d141c8cfbb61f1637dd4b53aac8f5562d766aa26d0741c40bad4e4d"
 WHISPER_AUDIO_SHA256 = "60a1d8638f718cbf6d245aed3e5a5aa61c1f822a0b0fe9b48a7c928d47c23909"
