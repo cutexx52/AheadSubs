@@ -212,7 +212,8 @@ def pot_event(event, detail, hwnd=None):
 
 
 def native_potplayer(encoded=None, foreground=None):
-    from subtitle_relay.potplayer import MediaPathUnavailable, caller_potplayer, current_media, list_windows
+    from subtitle_relay.potplayer import (MediaPathUnavailable, caller_potplayer, current_media,
+                                          list_windows, media_from_folder)
 
     value = base64.b64decode(encoded) if encoded else b""
     encodings = ("utf-16-le", "utf-8-sig", "mbcs") if b"\0" in value else ("utf-8-sig", "mbcs")
@@ -270,6 +271,7 @@ def native_potplayer(encoded=None, foreground=None):
     DATA.mkdir(parents=True, exist_ok=True)
     lock = DATA / f"pot-{pid}-{hwnd}.lock"
     stop = lock.with_suffix(".stop")
+    folder_hint = lock.with_suffix(".folder")
     with lock.open("a+b") as handle:
         try:
             msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
@@ -286,24 +288,48 @@ def native_potplayer(encoded=None, foreground=None):
             stop.unlink(missing_ok=True)
             pot_event("launch", "快捷键" if foreground else "PotPlayer 扩展", hwnd)
             report("on", "正在定位当前视频并启动预读…")
+            folder = None
             try:
-                media = current_media(pid, filename)
-                pot_event("media", "自动定位成功", hwnd)
-            except MediaPathUnavailable as exc:
-                report("choose-media", f"{exc} 请选择当前正在播放的视频。")
-                selected = filedialog.askopenfilename(parent=feedback.root, initialfile=Path(filename).name,
-                                                      title="Subtitle Relay — 选择 PotPlayer 中正在播放的视频")
-                if not selected or stop.exists():
-                    report("cancelled", "已取消选择，预读未启动。")
-                    feedback.close(2)
-                    return
-                media = Path(selected)
-                if media.name.casefold() != Path(filename).name.casefold():
-                    raise ValueError("所选文件名与当前 PotPlayer 窗口不一致，请重新启动预读并选择当前视频。")
-                pot_event("media", "用户指定了与当前窗口同名的视频", hwnd)
-            run_native_adapter(hwnd, media, stop, report)
+                folder = Path(folder_hint.read_text(encoding="utf-8"))
+            except OSError:
+                pass
+
+            def resolve_media(name):
+                nonlocal folder
+                try:
+                    media = current_media(pid, name)
+                    pot_event("media", "自动定位成功", hwnd)
+                except MediaPathUnavailable as exc:
+                    media = media_from_folder(folder, name)
+                    if media:
+                        pot_event("media", "在当前窗口已确认的目录找到视频", hwnd)
+                    else:
+                        report("choose-media", f"{exc} 请选择当前视频，同一目录里的后续视频会自动接续。")
+                        selected = filedialog.askopenfilename(
+                            parent=feedback.root, initialdir=str(folder) if folder else "",
+                            initialfile=Path(name).name, title="Subtitle Relay — 选择 PotPlayer 中正在播放的视频")
+                        if not selected or stop.exists():
+                            report("cancelled", "已取消选择，预读已停止。")
+                            return None
+                        media = Path(selected)
+                        if media.name.casefold() != Path(name).name.casefold():
+                            raise ValueError("所选文件名与当前 PotPlayer 窗口不一致。")
+                        pot_event("media", "用户已确认当前视频和目录", hwnd)
+                if media.parent != folder:
+                    folder = media.parent
+                    folder_hint.write_text(str(folder), encoding="utf-8")
+                return media
+
+            media = resolve_media(filename)
+            if media is None:
+                feedback.close(2)
+                return
+            run_native_adapter(hwnd, media, stop, report, resolve_media)
         except EOFError:
-            pot_event("closed", "播放器窗口关闭", hwnd)
+            pot_event("closed", "当前窗口的预读会话已结束", hwnd)
+            if previous_state == "cancelled":
+                feedback.close(2)
+                return
         except Exception as exc:
             report("failed", str(exc))
             feedback.close(2.7)
@@ -311,7 +337,7 @@ def native_potplayer(encoded=None, foreground=None):
         feedback.close()
 
 
-def run_native_adapter(hwnd, media, stop, report):
+def run_native_adapter(hwnd, media, stop, report, resolve_media):
     from contextlib import redirect_stdout
     from subtitle_relay.players import run_adapter
     from subtitle_relay.potplayer import PotPlayer, find_reload_command
@@ -337,9 +363,9 @@ def run_native_adapter(hwnd, media, stop, report):
         executable = directory / "PotPlayerMini.exe"
     reload = find_reload_command(executable)
     with (DATA / "potplayer.log").open("a", encoding="utf-8") as log, redirect_stdout(log):
-        player = PotPlayer(hwnd, media, 0, reload)
+        player = PotPlayer(hwnd, media, 0, reload, resolve_media=resolve_media)
         run_adapter(player, RelayClient(PORT), lambda: config()["source"] or None, "zh", 20, 0.6, stop,
-                    idle_limit=4, report=report)
+                    report=report)
 
 
 def gui(initial_media=None):

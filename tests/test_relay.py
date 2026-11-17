@@ -23,6 +23,18 @@ class RelayTest(unittest.TestCase):
             with self.assertRaises(MediaPathUnavailable):
                 current_media(os.getpid(), "clip.mp4")
 
+    @unittest.skipUnless(os.name == "nt", "PotPlayer requires Windows")
+    def test_potplayer_folder_hint_checks_only_the_current_basename(self):
+        from subtitle_relay.potplayer import media_from_folder
+
+        with tempfile.TemporaryDirectory() as directory:
+            folder = Path(directory)
+            episode = folder / "episode 2.mp4"
+            episode.touch()
+            self.assertEqual(media_from_folder(folder, episode.name), episode)
+            self.assertIsNone(media_from_folder(folder, str(episode)))
+            self.assertIsNone(media_from_folder(folder, "episode 3.mp4"))
+
     def test_playback_adapter_resumes_same_session_at_latest_position_after_restart(self):
         player = Mock()
         player.state.side_effect = [{"position": 4}, {"position": 8}, {"position": 12}, EOFError]

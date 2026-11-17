@@ -127,6 +127,14 @@ class MediaPathUnavailable(RuntimeError):
     pass
 
 
+def media_from_folder(folder, filename):
+    relative = Path(filename)
+    if not folder or not folder.is_absolute() or relative.name != filename:
+        return None
+    candidate = folder / relative
+    return candidate if candidate.is_file() else None
+
+
 def current_media(pid, filename):
     """Resolve PotPlayer's filename within the calling process's open media files."""
     import psutil
@@ -177,10 +185,11 @@ def start_hotkey(launcher):
 class PotPlayer:
     """Poll one explicitly bound window and local file."""
 
-    def __init__(self, hwnd, path, audio, reload_command, track=None):
+    def __init__(self, hwnd, path, audio, reload_command, track=None, resolve_media=None):
         self.hwnd, self.path, self.audio = hwnd, Path(path).resolve(strict=True), audio
         self.reload_command = reload_command
         self.track = track
+        self.resolve_media = resolve_media
         self.user = ct.WinDLL("user32", use_last_error=True)
         self.user.SendMessageTimeoutW.argtypes = [
             win.HWND, win.UINT, win.WPARAM, win.LPARAM, win.UINT, win.UINT, ct.POINTER(ct.c_size_t),
@@ -213,11 +222,25 @@ class PotPlayer:
             raise EOFError("PotPlayer window closed")
         title = ct.create_unicode_buffer(1024)
         self.user.GetWindowTextW(self.hwnd, title, len(title))
-        if self.path.stem.casefold() not in title.value.casefold():
+        filename = title.value.removesuffix(" - PotPlayer")
+        if self.resolve_media:
+            if not title.value.endswith(" - PotPlayer") or not Path(filename).suffix:
+                return None
+        elif self.path.stem.casefold() not in title.value.casefold():
             return None
         duration = self._send(0x400, 0x5002) / 1000
         position = self._send(0x400, 0x5004) / 1000
         if not 0 < duration <= 10_000_000 or not 0 <= position <= duration:
+            return None
+        hint = Path(filename)
+        current = str(self.path) if hint.is_absolute() else self.path.name
+        if self.resolve_media and str(hint).casefold() != current.casefold():
+            media = self.resolve_media(filename)
+            if media is None:
+                raise EOFError("Pre-read stopped after file selection was cancelled")
+            self.path = media.resolve(strict=True)
+            self.subtitle, self.revision = None, 0
+            # The picker may have been open while playback advanced or changed file again.
             return None
         return {"path": str(self.path), "position": position, "duration": duration, "audio": self.audio}
 

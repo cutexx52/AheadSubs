@@ -93,6 +93,7 @@ def run_adapter(player, client, source, target, ahead, interval, stop=None, idle
     previous_error = None
     last_active = time.monotonic()
     disconnected_at = None
+    attached = False
     try:
         while stop is None or not stop.exists():
             state = player.state()
@@ -106,8 +107,10 @@ def run_adapter(player, client, source, target, ahead, interval, stop=None, idle
                         **state, "session": session, "source": source() if callable(source) else source,
                         "target": target, "ahead": ahead,
                     })
-                elif disconnected_at is None:
+                    attached = True
+                elif attached and disconnected_at is None:
                     client.send("close", {"session": session})
+                    attached = False
             except OSError:
                 if disconnected_at is None:
                     disconnected_at = time.monotonic()
