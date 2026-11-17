@@ -25,6 +25,14 @@ def api(route, *args):
     return json.loads(run("gh", "api", route, *args))
 
 
+def find_release(tag):
+    # /releases/tags/{tag} is documented for published releases, not drafts.
+    # Authenticated list access includes drafts for a token with push permission.
+    repo = os.environ["GITHUB_REPOSITORY"]
+    pages = api(f"repos/{repo}/releases?per_page=100", "--paginate", "--slurp")
+    return next((r for page in pages for r in page if r["tag_name"] == tag), None)
+
+
 def relevant(path):
     return not (path.endswith(".md") or path.startswith(("docs/", "tests/")) or path in DOC_NAMES)
 
@@ -113,8 +121,7 @@ def plan():
 def draft(tag, sha):
     repo = os.environ["GITHUB_REPOSITORY"]
     # Enumerate instead of interpreting every API failure as a missing release.
-    pages = api(f"repos/{repo}/releases?per_page=100", "--paginate", "--slurp")
-    existing = next((r for page in pages for r in page if r["tag_name"] == tag), None)
+    existing = find_release(tag)
     marker = f"<!-- aheadsubs-source:{sha} -->"
     if existing:
         if not existing["draft"] or marker not in (existing.get("body") or ""):
@@ -130,8 +137,8 @@ def draft(tag, sha):
 
 def upload(tag, sha):
     repo = os.environ["GITHUB_REPOSITORY"]
-    release = api(f"repos/{repo}/releases/tags/{tag}")
-    if not release["draft"] or f"<!-- aheadsubs-source:{sha} -->" not in release["body"]:
+    release = find_release(tag)
+    if not release or not release["draft"] or f"<!-- aheadsubs-source:{sha} -->" not in (release.get("body") or ""):
         raise RuntimeError("Upload target must be our draft at the planned commit")
     files = sorted((ROOT / "dist").glob("*"))
     names = {p.name for p in files}
@@ -160,8 +167,8 @@ def upload(tag, sha):
 
 def publish_release(tag, sha):
     repo = os.environ["GITHUB_REPOSITORY"]
-    release = api(f"repos/{repo}/releases/tags/{tag}")
-    if not release["draft"] or f"<!-- aheadsubs-source:{sha} -->" not in release["body"]:
+    release = find_release(tag)
+    if not release or not release["draft"] or f"<!-- aheadsubs-source:{sha} -->" not in (release.get("body") or ""):
         raise RuntimeError("Release is not the expected draft")
     validate_assets(tag, release["assets"])
     # For existing stable tags, verify they still point at the built commit.

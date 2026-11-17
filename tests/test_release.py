@@ -102,8 +102,8 @@ class ReleaseTests(unittest.TestCase):
     @patch.object(release, "api")
     def test_publish_rejects_moved_tag(self, api, run):
         sha = "a" * 40
-        api.return_value = {"draft": True, "body": f"<!-- aheadsubs-source:{sha} -->",
-                            "assets": [{"name": n, "size": 42, "state": "uploaded"} for n in release.asset_names("v0.1.0")]}
+        api.return_value = [[{"tag_name": "v0.1.0", "draft": True, "body": f"<!-- aheadsubs-source:{sha} -->",
+                            "assets": [{"name": n, "size": 42, "state": "uploaded"} for n in release.asset_names("v0.1.0")]}]]
         run.return_value = f"{'b' * 40}\trefs/tags/v0.1.0"
         with self.assertRaises(RuntimeError):
             release.publish_release("v0.1.0", sha)
@@ -115,7 +115,7 @@ class ReleaseTests(unittest.TestCase):
     def test_bad_checksum_cannot_upload(self, api, run):
         sha = "a" * 40
         tag = "v0.1.0"
-        api.return_value = {"draft": True, "body": f"<!-- aheadsubs-source:{sha} -->"}
+        api.return_value = [[{"tag_name": tag, "draft": True, "body": f"<!-- aheadsubs-source:{sha} -->"}]]
         with tempfile.TemporaryDirectory() as folder, patch.object(release, "ROOT", Path(folder)):
             dist = Path(folder) / "dist"
             dist.mkdir()
@@ -126,3 +126,11 @@ class ReleaseTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 release.upload(tag, sha)
         run.assert_not_called()
+
+    @patch.dict(os.environ, {"GITHUB_REPOSITORY": "owner/repo"})
+    @patch.object(release, "api")
+    def test_draft_lookup_uses_paginated_listing_not_published_tag_endpoint(self, api):
+        draft = {"tag_name": "v0.1.0-preview.abc", "draft": True}
+        api.return_value = [[{"tag_name": "v0.1.0", "draft": False}], [draft]]
+        self.assertEqual(release.find_release(draft["tag_name"]), draft)
+        api.assert_called_once_with("repos/owner/repo/releases?per_page=100", "--paginate", "--slurp")
