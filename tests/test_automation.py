@@ -97,7 +97,7 @@ class AutomationTest(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertEqual(json.loads(output.getvalue()), expected)
         self.assertEqual(expected["error_code"], "content_blocked")
-        factory.assert_called_with(9001)
+        factory.assert_called_with(9001, "cli")
 
     def test_generate_advances_bounded_windows_and_exports_after_completion(self):
         with tempfile.TemporaryDirectory() as directory:

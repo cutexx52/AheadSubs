@@ -42,7 +42,7 @@ def serve_stdio(port, *, desktop=False):
             except OperationError as error:
                 return error.result()
             name = params.name.removeprefix("aheadsubs_") if params.name.startswith("aheadsubs_") else ""
-            return invoke(name, params.arguments if params.arguments is not None else {}, port, checkpoint)
+            return invoke(name, params.arguments if params.arguments is not None else {}, port, checkpoint, entry="mcp")
 
         result = await anyio.to_thread.run_sync(run)
         return CallToolResult(content=[TextContent(type="text", text=json.dumps(result, ensure_ascii=False))],

@@ -92,8 +92,24 @@ public partial class MainWindow : Window
                  "args":["-m","subtitle_relay.cli","mcp","--desktop"]}}}}
                 """)!.AsObject());
             PreviewFolderTasks();
+            StatusDashboard.Preview(JsonNode.Parse("""
+                {"ready":true,"active_sessions":2,"workers":{"busy":1,"limit":4},
+                 "sources":[{"source":"potplayer","playback":1,"text":0},{"source":"mpv","playback":1,"text":0}],
+                 "models":[{"operation":"asr","model":"Qwen3-ASR-1.7b","device":"vulkan","state":"loaded"},
+                           {"operation":"mt","model":"qwen-mt-flash","device":"cloud","state":"configured"},
+                           {"operation":"vad","model":"silero","device":"cpu","state":"loaded"}],
+                 "resources":{"cpu_percent":12.6,"rss_bytes":1174405120,"gpu_percent":22.4,"vram_bytes":805306368},
+                 "performance":{"rtf":{"count":87,"p50":0.44},"latency":{"count":32,"p50":1.36,"p95":2.14,"p99":3.07}},
+                 "cloud":{"weeks":["2026-11-16","2026-11-09"],"rows":[
+                   {"week":"2026-11-16","provider":"dashscope","model":"qwen-mt-flash","operation":"mt",
+                    "calls":248,"failed":2,"input_tokens":10830,"output_tokens":3041,"priced_calls":246,"estimated_usd":0.0019},
+                   {"week":"2026-11-16","provider":"chatgpt","model":"gpt-5.4-mini","operation":"mt",
+                    "calls":13,"failed":0,"input_tokens":4120,"output_tokens":902,"priced_calls":0,"estimated_usd":0}]}}
+                """)!.AsObject());
             return;
         }
+        StatusDashboard.Enable(bridge);
+        StateChanged += (_, _) => StatusDashboard.SetWindowActive(WindowState != WindowState.Minimized);
         tray.ContextMenuStrip.Items.Add("打开设置", null, (_, _) => Dispatcher.Invoke(ShowSettings));
         var potMenu = new Forms.ToolStripMenuItem("PotPlayer 预读");
         potMenu.DropDownItems.Add("读取播放窗口…");
@@ -172,7 +188,10 @@ public partial class MainWindow : Window
 
     private async void PageChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (e.Source != SettingsPanel || previewMode) return;
+        if (e.Source != SettingsPanel) return;
+        if (ServiceStrip is not null)
+            ServiceStrip.Visibility = SettingsPanel.SelectedItem == StatusTab ? Visibility.Collapsed : Visibility.Visible;
+        if (previewMode) return;
         await SelectFolderTasksPage();
         if (SettingsPanel.SelectedItem == InspectTab && initialized) await Inspect();
         if (SettingsPanel.SelectedItem == AutomationTab) await ChangeAutomation();
@@ -735,10 +754,13 @@ public partial class MainWindow : Window
         VerifyControls();
         Directory.CreateDirectory(directory);
         string[] pages = ["translation", "subtitles", "players", "models", "keys", "advanced", "advanced-vad",
-                          "advanced-read-ahead", "translation-context", "chatgpt-oauth", "automation", "presets", "folder-tasks"];
+                          "advanced-read-ahead", "translation-context", "chatgpt-oauth", "automation", "presets",
+                          "status", "status-cloud", "folder-tasks"];
         for (int index = 0; index < pages.Length; index++)
         {
-            SettingsPanel.SelectedIndex = index switch { 8 or 11 => 0, 9 => 4, 10 => 6, 12 => 7, _ => Math.Min(index, 5) };
+            if (index == 14) SettingsPanel.SelectedItem = FolderTasksTab;
+            else if (index is 12 or 13) SettingsPanel.SelectedItem = StatusTab;
+            else SettingsPanel.SelectedIndex = index switch { 8 or 11 => 0, 9 => 4, 10 => 6, _ => Math.Min(index, 5) };
             if (index is 6 or 7 && AdvancedTab.Content is ScrollViewer advanced)
                 advanced.ScrollToVerticalOffset(index == 6 ? 600 : 1100);
             if (index == 8)
@@ -761,6 +783,7 @@ public partial class MainWindow : Window
             RootLayout.Measure(new System.Windows.Size(1040, 760));
             RootLayout.Arrange(new Rect(0, 0, 1040, 760));
             RootLayout.UpdateLayout();
+            if (index == 13) StatusDashboard.ScrollToCloud();
             Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
             RootLayout.UpdateLayout();
             var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(1040, 760, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);

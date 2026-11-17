@@ -7,6 +7,7 @@ import sqlite3
 import subprocess
 import threading
 import time
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass, replace
 from itertools import chain, groupby
@@ -17,6 +18,8 @@ from ..inference.errors import provider_error
 from ..inference.providers import Cue, NLLB_LANGUAGES
 from ..inference.recognition_cache import RecognitionCache
 from .history import create_history, remember_failed_cues, remember_media
+from .metrics import SESSION_TIMEOUT, SOURCES, Samples
+from .resources import Resources
 
 
 BILINGUAL_SUFFIX = "-bilingual-v3"
@@ -140,7 +143,8 @@ def _context_lines(cues, limit, before, max_chars):
 
 
 def translate_chunk(playback, index, chunk, recognizer, translator, speech_translator=None,
-                    segmenter=None, translation_settings=TranslationSettings(), recognition_cache=None):
+                    segmenter=None, translation_settings=TranslationSettings(), recognition_cache=None,
+                    *, observe_audio=None):
     start = index * chunk
     stop = start + chunk
     settings = segmenter.settings if segmenter else Segmentation(enabled=False)
@@ -154,6 +158,8 @@ def translate_chunk(playback, index, chunk, recognizer, translator, speech_trans
     if len(wav) < 400:
         logging.getLogger(__name__).info("No audio samples start=%.1fs audio_stream=%d", start, playback.audio)
         return []
+    if observe_audio is not None:
+        observe_audio(max(0, min(stop, read_start + (len(wav) - 44) / 32000) - start))
     translated = []
     owned, previous = [], []
     spans = segmenter.iter_spans(wav) if segmenter else ((0, wav),)
@@ -232,6 +238,8 @@ class Session:
     playback: Playback
     key: str
     updated: float
+    source: str = "http"
+    waiting_since: float | None = None
 
 
 def merge_cues(cues):
@@ -286,7 +294,8 @@ def display_cues(cues, duration=None):
 
 class Relay:
     def __init__(self, root, recognizer, translator, profile, workers=4, chunk=8,
-                 speech_translator=None, segmenter=None, *, translation_settings=TranslationSettings()):
+                 speech_translator=None, segmenter=None, *, translation_settings=TranslationSettings(),
+                 model_status=lambda: [], cloud_usage=None):
         self.root = Path(root).resolve()
         self.root.mkdir(parents=True, exist_ok=True)
         self.recognizer, self.translator = recognizer, translator
@@ -296,6 +305,13 @@ class Relay:
         self.recognition_cache = RecognitionCache(recognizer) if recognizer and self.translation_settings.previous_cues else None
         self.profile, self.workers, self.chunk = profile, workers, chunk
         self.lock = threading.RLock()
+        self.status_lock = threading.Lock()
+        self.model_status = model_status
+        self.cloud_usage = cloud_usage
+        self.resources = Resources()
+        self.rtf = Samples()
+        self.latency = Samples()
+        self.text_requests = Counter()
         self.db = sqlite3.connect(self.root / "cache.sqlite3", check_same_thread=False)
         self.db.execute("PRAGMA journal_mode=WAL")
         self.db.execute("PRAGMA temp_store=FILE")
@@ -317,6 +333,10 @@ class Relay:
         self.stopping.set()
         self.scheduler.join()
         self.pool.shutdown(wait=True)
+        with self.status_lock:
+            self.resources.close()
+            if self.cloud_usage is not None:
+                self.cloud_usage.close()
         self.db.close()
 
     def _identity(self, playback):
@@ -360,15 +380,18 @@ class Relay:
             self.rendered[render_key] = revision
         return path, revision
 
-    def update(self, identifier, playback, *, background=False):
+    def update(self, identifier, playback, source="http", *, background=False):
+        received = time.monotonic()
         key = self._identity(playback)
         with self.lock:
             if not background and self.background_session is not None:
                 self.drop(self.background_session)
+            now = time.monotonic()
             previous = self.sessions.get(identifier)
             if previous is None or previous.key != key:
                 remember_media(self.db, key, playback, self.speech_translator is None)
-            self.sessions[identifier] = Session(playback, key, time.monotonic())
+            session = Session(playback, key, now, source if source in SOURCES else "http")
+            self.sessions[identifier] = session
             path, revision = self._render(key, playback)
             index = int(playback.position // self.chunk)
             first = index
@@ -391,6 +414,17 @@ class Relay:
                          for (encoded,) in nearby_rows
                          for cue in json.loads(encoded))
             nearby_rows.close()
+            if not background and previous is not None and previous.key == key and now - previous.updated < SESSION_TIMEOUT:
+                advance = playback.position - previous.playback.position
+                expected = (now - previous.updated) * max(1, playback.speed)
+                if int(previous.playback.position // self.chunk) == first and -0.15 <= advance <= expected + 0.55:
+                    session.waiting_since = previous.waiting_since
+            if nearby and session.waiting_since is not None:
+                ready_at = time.monotonic()
+                self.latency.add(ready_at, ready_at - session.waiting_since)
+                session.waiting_since = None
+            elif not background and not nearby and index == first and error is None and session.waiting_since is None:
+                session.waiting_since = received
             return {"revision": revision, "subtitle": str(path) if revision else None,
                     "subtitle_generation": path.stem,
                     "subtitle_has_cues": bool(revision and path.stat().st_size),
@@ -419,6 +453,26 @@ class Relay:
             self.background_session = identifier
             return self.update(identifier, playback, background=True)
 
+    def text_activity(self, source, change):
+        with self.lock:
+            self.text_requests[source] += change
+
+    def status(self):
+        with self.lock:
+            now = time.monotonic()
+            playback = Counter(session.source for name, session in self.sessions.items()
+                               if name != self.background_session and now - session.updated < SESSION_TIMEOUT)
+            sources = [{"source": source, "playback": playback[source], "text": self.text_requests[source]}
+                       for source in SOURCES if playback[source] or self.text_requests[source]]
+            performance = {"rtf": self.rtf.summary(now), "latency": self.latency.summary(now)}
+            workers = {"busy": len(self.inflight), "limit": self.workers}
+        with self.status_lock:
+            models = self.model_status()
+            return {"service": "subtitle-relay", "ready": all(row["state"] != "unavailable" for row in models),
+                    "active_sessions": sum(playback.values()), "sources": sources, "workers": workers,
+                    "models": models, "resources": self.resources.read(), "performance": performance,
+                    "cloud": self.cloud_usage.snapshot() if self.cloud_usage else None}
+
     def _run(self):
         while not self.stopping.wait(0.1):
             with self.lock:
@@ -426,7 +480,7 @@ class Relay:
 
     def _schedule(self):
         now = time.monotonic()
-        self.sessions = {name: s for name, s in self.sessions.items() if now - s.updated < 10}
+        self.sessions = {name: s for name, s in self.sessions.items() if now - s.updated < SESSION_TIMEOUT}
         active = {session.key for session in self.sessions.values()}
         self.rendered = {render_key: revision for render_key, revision in self.rendered.items()
                          if render_key[0] in active}
@@ -458,11 +512,23 @@ class Relay:
                 break
             self.inflight.add(job)
             playback = candidates[job][1]
-            future = self.pool.submit(translate_chunk, playback, job[1], self.chunk,
-                                      self.recognizer, self.translator, self.speech_translator, self.segmenter,
-                                      self.translation_settings, self.recognition_cache)
+            future = self.pool.submit(self._process, playback, job[1])
             future.add_done_callback(lambda result, job=job, media=playback if background else None:
                                      self._finish(job, result, media))
+
+    def _process(self, playback, index):
+        audio_seconds = 0
+
+        def observe(seconds):
+            nonlocal audio_seconds
+            audio_seconds = seconds
+
+        started = time.monotonic()
+        cues = translate_chunk(playback, index, self.chunk, self.recognizer, self.translator,
+                               self.speech_translator, self.segmenter, self.translation_settings,
+                               self.recognition_cache, observe_audio=observe)
+        elapsed = time.monotonic() - started
+        return cues, elapsed / audio_seconds if audio_seconds else None
 
     def _finish(self, job, future, background_media=None):
         with self.lock:
@@ -473,11 +539,13 @@ class Relay:
                             return
                     except OSError:
                         return
-                cues = future.result()
+                cues, rtf = future.result()
                 encoded = json.dumps([asdict(cue) for cue in cues], ensure_ascii=False)
                 self.db.execute("INSERT OR REPLACE INTO chunks VALUES (?, ?, ?)", (*job, encoded))
                 self.db.execute("DELETE FROM failed_cues WHERE key=? AND idx=?", job)
                 self.db.commit()
+                if rtf is not None:
+                    self.rtf.add(time.monotonic(), rtf)
                 self.errors.pop(job, None)
                 logging.getLogger(__name__).info("Processed media=%s start=%.1fs cues=%d",
                                                  job[0][:10], job[1] * self.chunk, len(cues))

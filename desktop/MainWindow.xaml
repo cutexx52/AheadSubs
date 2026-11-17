@@ -38,7 +38,7 @@
   <Grid.RowDefinitions><RowDefinition Height="82"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <Border Background="White" BorderBrush="#E3E7ED" BorderThickness="0,0,0,1"><Grid Margin="28,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
    <StackPanel Orientation="Horizontal" VerticalAlignment="Center"><Image Source="/Assets/AheadSubs.png" Width="44" Height="44" Margin="0,0,10,0" RenderOptions.BitmapScalingMode="HighQuality"/><StackPanel VerticalAlignment="Center"><TextBlock Text="AheadSubs" FontSize="22" FontWeight="SemiBold"/><TextBlock Text="实时字幕与翻译" FontSize="11" Foreground="#6A7484" Margin="0,4,0,0"/></StackPanel></StackPanel>
-   <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"><Border Background="#EDF3EF" CornerRadius="16" Padding="12,6" VerticalAlignment="Center"><TextBlock x:Name="ServiceStatus" Text="正在连接" FontSize="12" Foreground="#326B4F" AutomationProperties.LiveSetting="Polite"/></Border><Button Content="刷新状态" Click="RefreshStatus" Margin="10,0,0,0" Padding="10,6" MinHeight="30" FontSize="12"/></StackPanel>
+   <StackPanel x:Name="ServiceStrip" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"><Border Background="#EDF3EF" CornerRadius="16" Padding="12,6" VerticalAlignment="Center"><TextBlock x:Name="ServiceStatus" Text="正在连接" FontSize="12" Foreground="#326B4F" AutomationProperties.LiveSetting="Polite"/></Border><Button Content="刷新状态" Click="RefreshStatus" Margin="10,0,0,0" Padding="10,6" MinHeight="30" FontSize="12"/></StackPanel>
   </Grid></Border>
   <TabControl x:Name="SettingsPanel" Grid.Row="1" TabStripPlacement="Left" BorderThickness="0" Background="#F5F6F8" SelectionChanged="PageChanged">
    <TabControl.Template><ControlTemplate TargetType="TabControl"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="176"/><ColumnDefinition/></Grid.ColumnDefinitions><Border Background="#F0F2F5" BorderBrush="#E3E7ED" BorderThickness="0,0,1,0"><StackPanel Margin="0,22,0,0"><TabPanel IsItemsHost="True"/></StackPanel></Border><ContentPresenter Grid.Column="1" ContentSource="SelectedContent"/></Grid></ControlTemplate></TabControl.Template>
@@ -301,6 +301,9 @@
       </WrapPanel>
      </StackPanel></Border>
     </StackPanel></ScrollViewer>
+   </TabItem>
+   <TabItem Header="{local:StatusText Title}" x:Name="StatusTab">
+    <local:StatusPage x:Name="StatusDashboard"/>
    </TabItem>
   </TabControl>
   <Border Grid.Row="2" Background="White" BorderBrush="#E3E7ED" BorderThickness="0,1,0,0" Padding="28,14"><StackPanel>

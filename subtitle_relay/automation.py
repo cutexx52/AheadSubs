@@ -217,13 +217,13 @@ OPERATIONS = {
 }
 
 
-def invoke(name, arguments, port=DEFAULT_PORT, checkpoint=lambda: None):
+def invoke(name, arguments, port=DEFAULT_PORT, checkpoint=lambda: None, *, entry="cli"):
     if name not in OPERATIONS:
         return OperationError("unknown_operation").result()
     operation = OPERATIONS[name]
     try:
         options = operation.arguments.model_validate(arguments)
-        return {"ok": True, **operation.run(RelayClient(port), options, checkpoint)}
+        return {"ok": True, **operation.run(RelayClient(port, entry), options, checkpoint)}
     except ValidationError as exc:
         issue = exc.errors(include_input=False)[0]
         field = ".".join(map(str, issue["loc"])) or "arguments"

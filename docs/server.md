@@ -61,6 +61,7 @@ Example response:
 | Request | Contract |
 | --- | --- |
 | `GET /v1/health` | Returns `service`, `pid`, `active_sessions`, `local_models`. The count covers external playback sessions. Local model IDs let the desktop protect models currently in use. |
+| `GET /v1/status` | Returns live status and weekly cloud totals. Send `X-AheadSubs-Status: 1`. Requests with `Origin` return `403`. The response uses `Cache-Control: no-store`. |
 | `POST /v1/close` | JSON `{"session":"window-1"}` releases a session; success returns `{}`. |
 | `POST /v1/shutdown` | JSON `{"token":"…"}` stops the service, requiring the startup control token. |
 
@@ -71,6 +72,22 @@ POST requests with `Origin` are rejected. Ordinary bodies are limited to 32 KiB;
 ## Text translation
 
 `POST /v1/text` uses `Content-Type: application/x-subtitle-relay` with URL-encoded `source`, `target`, `text`. Text is limited to 4000 characters. Success returns `{"translation":"…"}`; no translator returns `409`; provider failure returns `502` with `error` and `error_code`. This translates existing text without a media timeline.
+
+## Status metrics
+
+`/v1/playback` and `/v1/text` accept an optional `X-AheadSubs-Entry` header for grouping. Values are `potplayer`, `mpv`, `cli`, `mcp` and `http`. The legacy PotPlayer text and mpv integrations are recognized by their existing identifiers. Other clients with an absent or unrecognized entry are grouped as `http`. Playback sessions drop from the snapshot on close or after 10 seconds without updates. Text requests count while being handled.
+
+| Field | Meaning |
+| --- | --- |
+| `ready`, `models` | The endpoint is available after initialization. A bundled Qwen3-ASR health check can set `ready` to false. Each model shows its `operation`, `model`, `device` and `state`. External loopback services have an unknown load state, and cloud models show whether they are configured. |
+| `active_sessions`, `sources`, `workers` | Active playback count, playback and text counts by entry, and worker slots currently busy and available in total. |
+| `resources` | CPU as a percentage of all logical cores, working-set bytes, busiest GPU engine percentage, and dedicated GPU memory bytes for the service process tree. Fields may be null or absent during initialization or when counters are unsupported. Externally managed services are outside this scope. |
+| `performance.rtf`, `performance.latency` | Up to 1,024 samples each in the last 15 minutes. Each returns `count` and nearest-rank `p50`, `p95`, `p99`, with null percentiles when no samples are available. |
+| `cloud` | Monday dates in UTC (`weeks`), totals by week/provider/model/operation (`rows`), and `incomplete` when the totals may be missing data. Each row provides calls, failures, known input/output tokens and audio seconds, priced calls, and estimated USD cost. |
+
+RTF divides successful chunk processing time by the actual audio duration in its owned media window. It includes extraction, VAD, recognition and translation, excluding scheduling and cache writes. Latency measures from the first playback update waiting for a new chunk until a subsequent response reports usable subtitles within the same playback chunk. It includes the player's polling interval. Immediate cache hits, abandoned waits after seeks or file changes, and rendering inside the player are excluded. Percentiles may match when sample counts are small.
+
+Cloud usage starts with this version. The model request boundary counts attempts and groups automatic SDK retries into the same call. Costs use observed tokens or audio duration and built-in public USD list prices at request time. Estimates cover Whisper, GPT-4.1 mini, GPT-6 Luna, MiniMax M3.1 Flash pay-as-you-go, and the bundled Alibaba Model Studio ASR and translation models in Beijing and Singapore. Taxes, discounts, free quotas, retries, rounding and billing plans can change the actual charge. ChatGPT subscriptions, MiniMax M Plan (`minimax_plan`) and compatible endpoints with unknown rates report calls and known usage. [Whisper pricing](https://developers.openai.com/api/docs/models/whisper-1) · [GPT-4.1 mini pricing](https://developers.openai.com/api/docs/models/gpt-4.1-mini) · [GPT-6 Luna pricing](https://developers.openai.com/api/docs/models/gpt-6-luna) · [MiniMax pricing](https://www.minimax.io/blog/minimax-m31f) · [Alibaba Model Studio pricing](https://www.alibabacloud.com/help/en/model-studio/model-pricing)
 
 ## Internal API and cache
 
