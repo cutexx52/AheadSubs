@@ -172,7 +172,7 @@ public partial class MainWindow : Window
         if (e.Source != SettingsPanel || previewMode) return;
         if (SettingsPanel.SelectedItem == InspectTab && initialized) await Inspect();
         if (SettingsPanel.SelectedItem == AutomationTab) await ChangeAutomation();
-        if (SettingsPanel.SelectedItem == TranslationTab && PresetDisclosure.IsExpanded) await CheckPreset();
+        if (initialized && SettingsPanel.SelectedItem == TranslationTab && PresetDisclosure.IsExpanded) await CheckPreset();
     }
 
     private void LoadAutomationText()
@@ -297,6 +297,7 @@ public partial class MainWindow : Window
         {
             using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
             var result = await bridge.Run("status", cancellationToken: timeout.Token);
+            bool wasInitialized = initialized;
             string previousModels = models.ToJsonString();
             activeModels = (result["active_models"] as JsonArray ?? new()).Select(item => item!.GetValue<string>()).ToHashSet();
             models = result["models"] as JsonObject ?? new();
@@ -338,7 +339,11 @@ public partial class MainWindow : Window
                 }
             }
             UpdateModelDownloads();
-            if (PresetDisclosure.IsExpanded) UpdatePresetGuide();
+            if (PresetDisclosure.IsExpanded)
+            {
+                if (wasInitialized) UpdatePresetGuide();
+                else await CheckPreset();
+            }
         }
         catch (Exception ex)
         {
