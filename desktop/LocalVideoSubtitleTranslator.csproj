@@ -9,5 +9,10 @@
     <AssemblyName>LocalVideoSubtitleTranslator</AssemblyName>
     <RootNamespace>LocalVideoSubtitleTranslator</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>..\assets\aheadsubs.ico</ApplicationIcon>
   </PropertyGroup>
+  <ItemGroup>
+    <Resource Include="..\assets\aheadsubs.ico" Link="Assets\AheadSubs.ico" />
+    <Resource Include="..\assets\aheadsubs.png" Link="Assets\AheadSubs.png" />
+  </ItemGroup>
 </Project>

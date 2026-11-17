@@ -135,7 +135,7 @@ def stage_app(stage, dotnet):
             shutil.copy2(source, stage)
     compiler = Path(os.environ["SystemRoot"]) / "Microsoft.NET" / "Framework64" / "v4.0.30319" / "csc.exe"
     run(compiler, "/nologo", "/target:winexe", "/platform:x64", "/reference:System.Windows.Forms.dll",
-        f"/out:{stage / (APP + '.exe')}", SCRIPTS / "launcher.cs")
+        f"/win32icon:{ROOT / 'assets' / 'aheadsubs.ico'}", f"/out:{stage / (APP + '.exe')}", SCRIPTS / "launcher.cs")
     if dotnet:
         run(dotnet, "publish", WPF_PROJECT, "-c", "Release", "-r", "win-x64", "--self-contained", "true",
             "-p:DebugType=None", "-p:DebugSymbols=false", "-o", stage / "UI", cwd=ROOT)

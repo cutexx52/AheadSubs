@@ -106,11 +106,32 @@ class RelayTest(unittest.TestCase):
                 dual = Path(relay.update("test", bilingual)["subtitle"])
                 self.assertNotEqual(single, dual)
                 self.assertNotIn("こんにちは", single.read_text(encoding="utf-8"))
-                self.assertIn("你好\nこんにちは", dual.read_text(encoding="utf-8"))
+                self.assertIn("[JP] こんにちは\n[CN] 你好", dual.read_text(encoding="utf-8"))
                 inspected = inspect_cache(root / "cache.sqlite3")
                 self.assertEqual(inspected["media"][0]["display_name"], "movie.mp4")
                 self.assertEqual(inspected["rows"][0]["original"], "こんにちは")
                 self.assertEqual(inspected["rows"][0]["translation"], "你好")
+            finally:
+                relay.close()
+
+    def test_bilingual_auto_uses_detected_language_and_legacy_fallback(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            video = root / "movie.mp4"
+            video.touch()
+            playback = Playback(video, 0, target="zh-TW", duration=8, bilingual=True)
+            relay = Relay(root, None, None, "test")
+            try:
+                with relay.lock:
+                    key = relay._identity(playback)
+                    relay.db.execute("INSERT INTO chunks VALUES (?, ?, ?)",
+                                     (key, 0, '[{"start": 1, "end": 2, "text": "DVD", "original": "DVD",'
+                                      '"source_language": "jpn_Jpan"},'
+                                      '{"start": 2, "end": 3, "text": "你好", "original": "こんにちは"}]'))
+                    relay.db.commit()
+                    dual = Path(relay.update("test", playback)["subtitle"]).read_text(encoding="utf-8")
+                self.assertIn("[JP] DVD\n[TW] DVD", dual)
+                self.assertIn("[原文] こんにちは\n[TW] 你好", dual)
             finally:
                 relay.close()
 

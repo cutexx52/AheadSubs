@@ -1,6 +1,6 @@
 # Development guidance
 
-- On Windows, prefer Python scripts, native executables, and Cmd for repository work. Use PowerShell when a Windows operation needs it.
+- Develop and verify the WPF app, PotPlayer integration, Windows CUDA runtime, and Windows installers with the Windows-native agent and Windows tools. Keep the Windows checkout on a Windows drive. Prefer PowerShell 7 for native shell commands and Python for repository scripts. Use CMD for CMD-specific tasks. Use WSL 2 for Linux-only tests and tooling. See the [Codex Windows guide](https://learn.chatgpt.com/docs/windows/windows-app).
 - Keep player adapters, the background service, inference, and the desktop UI independently runnable where practical. Define playback exchange in [the HTTP protocol](docs/server.md) and desktop operations in [the bridge](docs/desktop.md). Keep player-specific behavior in its adapter.
 - Segment the media timeline independently of ASR and translation. Use VAD pauses on both sides of the playhead and a bounded audio window. Scheduler chunks manage work and cache ownership. Keep the subtitle timestamps on the media timeline.
 - Route upstream failures through the shared provider error contract. Classify content moderation only from an explicit error code or completion reason. Add provider aliases at the boundary and keep upstream bodies, credentials, and private media content out of diagnostic logs.

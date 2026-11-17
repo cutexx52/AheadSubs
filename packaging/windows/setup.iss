@@ -16,6 +16,7 @@ Compression=lzma2/fast
 LZMANumBlockThreads=2
 SolidCompression=yes
 WizardStyle=modern
+SetupIconFile=..\..\assets\aheadsubs.ico
 OutputDir={#ReleaseDir}
 OutputBaseFilename={#ArtifactName}-setup
 UninstallDisplayIcon={app}\Local Video Subtitle Translator.exe

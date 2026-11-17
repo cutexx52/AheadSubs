@@ -19,6 +19,24 @@ from ..inference.recognition_cache import RecognitionCache
 from .history import create_history, remember_failed_cues, remember_media
 
 
+BILINGUAL_SUFFIX = "-bilingual-v2"
+SUBTITLE_LABELS = {
+    "ja": "JP", "jpn": "JP", "ko": "KR", "kor": "KR", "en": "EN", "eng": "EN",
+    "zh": "CN", "zho": "CN", "zh-cn": "CN", "zh-hans": "CN",
+    "zh-tw": "TW", "zh-hant": "TW", "zho-hant": "TW",
+}
+
+
+def subtitle_label(language, fallback):
+    if not language or language.casefold() in {"auto", "und"}:
+        return fallback
+    code = language.lower().replace("_", "-")
+    base = code.split("-")[0]
+    if not (2 <= len(base) <= 3 and base.isascii() and base.isalpha()):
+        return fallback
+    return SUBTITLE_LABELS.get(code, SUBTITLE_LABELS.get(base, base.upper()))
+
+
 @dataclass(frozen=True)
 class Playback:
     path: Path
@@ -93,7 +111,8 @@ def _translate_cues(cues, translator, language, target, *, previous=(), followin
         if provider_error(exc).kind == "content_blocked":
             return [Cue(cue.start, cue.end, "", cue.text, "content_blocked") for cue in cues]
         raise TranslationFailure(cues) from exc
-    return [Cue(cue.start, cue.end, text, cue.text) for cue, text in zip(cues, texts, strict=True)]
+    return [Cue(cue.start, cue.end, text, cue.text, source_language=language)
+            for cue, text in zip(cues, texts, strict=True)]
 
 
 def _context_lines(cues, *, previous=False):
@@ -271,8 +290,8 @@ class Relay:
             identity.append(["translation-context-v1", asdict(self.translation_settings)])
         return hashlib.sha256(json.dumps(identity).encode()).hexdigest()
 
-    def _render(self, key, bilingual=False):
-        subtitle_id = f"{key}-bilingual" if bilingual else key
+    def _render(self, key, playback):
+        subtitle_id = f"{key}{BILINGUAL_SUFFIX}" if playback.bilingual else key
         path = self.root / f"{subtitle_id}.srt"
         revision, = self.db.execute("SELECT COUNT(*) FROM chunks WHERE key=?", (key,)).fetchone()
         if not revision:
@@ -287,7 +306,11 @@ class Relay:
             def content(cue):
                 translated = " ".join(cue.text.splitlines())
                 original = " ".join((cue.original or "").splitlines())
-                return f"{translated}\n{original}" if bilingual and original and original != translated else translated
+                if playback.bilingual and original:
+                    source = subtitle_label(cue.source_language or playback.source, "原文")
+                    target = subtitle_label(playback.target, "译文")
+                    return f"[{source}] {original}\n[{target}] {translated}"
+                return translated
 
             temp = path.with_suffix(f".{os.getpid()}.tmp")
             visible = (cue for cue in cues if clear_dialogue(cue.text) and clear_dialogue(cue.original or cue.text))
@@ -305,7 +328,7 @@ class Relay:
             if previous is None or previous.key != key:
                 remember_media(self.db, key, playback, self.speech_translator is None)
             self.sessions[identifier] = Session(playback, key, time.monotonic())
-            path, revision = self._render(key, playback.bilingual)
+            path, revision = self._render(key, playback)
             index = int(playback.position // self.chunk)
             first = index
             error = self.errors.get((key, index))
@@ -350,7 +373,7 @@ class Relay:
         self.sessions = {name: s for name, s in self.sessions.items() if now - s.updated < 10}
         active = {session.key for session in self.sessions.values()}
         self.rendered = {key: revision for key, revision in self.rendered.items()
-                         if key.removesuffix("-bilingual") in active}
+                         if key.removesuffix(BILINGUAL_SUFFIX) in active}
         self.errors = {job: detail for job, detail in self.errors.items() if job[0] in active}
         if self.recognition_cache and not active:
             self.recognition_cache.clear_completed()

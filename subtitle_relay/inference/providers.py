@@ -18,6 +18,7 @@ class Cue:
     text: str
     original: str | None = None
     status: str | None = None
+    source_language: str | None = None
 
 
 class Recognizer(Protocol):

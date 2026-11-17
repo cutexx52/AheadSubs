@@ -46,7 +46,8 @@ class TranslationContextTest(unittest.TestCase):
             "source": "ja", "target": "zh", "lines": {"0": "one", "1": "two"},
             "previous": ["previous"], "following": ["following"], "style": "Use casual wording",
         })
-        self.assertEqual(result, [Cue(20.8, 21.6, "一", "one"), Cue(22, 23.4, "二", "two")])
+        self.assertEqual(result, [Cue(20.8, 21.6, "一", "one", source_language="ja"),
+                                  Cue(22, 23.4, "二", "two", source_language="ja")])
 
     def test_adaptive_span_crossing_chunk_boundary_is_recognized_only_by_its_owner(self):
         segmenter = SimpleNamespace(settings=Segmentation(), planning_margin=12,
@@ -59,7 +60,7 @@ class TranslationContextTest(unittest.TestCase):
             playback = Playback(Path("movie.mp4"), 7.5, source="ja")
             self.assertEqual(translate_chunk(playback, 0, 8, recognizer, translator, segmenter=segmenter), [])
             actual = translate_chunk(playback, 1, 8, recognizer, translator, segmenter=segmenter)
-        self.assertEqual(actual, [Cue(7.25, 8.5, "开头", "始まり")])
+        self.assertEqual(actual, [Cue(7.25, 8.5, "开头", "始まり", source_language="ja")])
         self.assertEqual(recognizer.recognize.call_count, 1)
 
     def test_rejects_chat_output_that_includes_context_or_omits_a_line(self):

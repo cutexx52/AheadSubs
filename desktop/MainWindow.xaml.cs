@@ -36,12 +36,16 @@ public partial class MainWindow : Window
         Vad.ItemsSource = new Choice[] { new("Silero · 默认", "silero"), new("阿里 FSMN · 可选", "fsmn") };
         InstallChoice.ItemsSource = LocalModels;
         InstallChoice.SelectedIndex = 0;
+        using var iconStream = System.Windows.Application.GetResourceStream(
+            new Uri("Assets/AheadSubs.ico", UriKind.Relative)).Stream;
+        var appIcon = new System.Drawing.Icon(iconStream);
         tray = new Forms.NotifyIcon
         {
-            Icon = System.Drawing.SystemIcons.Application,
+            Icon = appIcon,
             Text = "视频字幕翻译 · 正在连接", Visible = !preview,
             ContextMenuStrip = new Forms.ContextMenuStrip()
         };
+        tray.Disposed += (_, _) => appIcon.Dispose();
         if (preview)
         {
             settings = new JsonObject { ["source"] = "ja", ["target"] = "zh", ["asr"] = "qwen",
