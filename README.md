@@ -17,7 +17,7 @@ Generate translated SRT subtitles for local videos ahead of playback, using on-d
 ## 快速开始
 
 1. 按[Windows 安装指南](docs/windows.md)启动助手。首次使用需要下载本地模型。
-2. 第一次运行时选择 **安装本地模型并启动**。没有可用 Vulkan GPU 时，选择 **无可用显卡：安装 CPU 方案**。服务就绪后可按视频选择源语言。
+2. 在 **翻译** 首页展开 **快速预设**。选择方案并下载缺少的模型，然后点击 **应用方案**。没有可用 Vulkan GPU 时可选 **纯本地 · CPU**。[查看预设和模型管理](docs/desktop.md#日常使用)
 3. 在 PotPlayer 打开本地视频，按 **Ctrl+Alt+J** 开启预读，按 **Ctrl+Alt+K** 停止当前窗口的预读。mpv 可以从助手安装右键菜单，详见[播放器适配](docs/adapters.md)。
 
 关闭设置窗口会隐藏到系统托盘。右键托盘图标选 **停止并退出** 会停止后台并释放模型资源。升级保留已有设置、模型和字幕缓存。

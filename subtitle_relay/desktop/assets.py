@@ -1,9 +1,10 @@
 import os
 import shutil
 import winreg
+from dataclasses import replace
 from pathlib import Path
 
-from .runtime import LAUNCHER, PORT, PYTHON, ROOT, QWEN, config, save_config
+from .runtime import DATA, LAUNCHER, PORT, PYTHON, ROOT, QWEN, config, healthy, lock_service, save_config
 
 LOCAL_MODELS = {
     "[本地] Whisper Small": "Systran/faster-whisper-small",
@@ -16,15 +17,18 @@ MODEL_ASSETS = {
 QWEN_LABELS = {"[本地] Qwen3-ASR 0.6B": "0.6b", "[本地] Qwen3-ASR 1.7B": "1.7b"}
 
 
+def model_hub():
+    hf_home = Path(os.environ.get("HF_HOME", Path.home() / ".cache" / "huggingface"))
+    return Path(os.environ.get("HF_HUB_CACHE", os.environ.get("HUGGINGFACE_HUB_CACHE", hf_home / "hub")))
+
+
 def model_ready(label):
     from subtitle_relay.inference.qwen import installed
 
     if label in QWEN_LABELS:
         return installed(QWEN, QWEN_LABELS[label])
     if label in LOCAL_MODELS:
-        hf_home = Path(os.environ.get("HF_HOME", Path.home() / ".cache" / "huggingface"))
-        hub = Path(os.environ.get("HF_HUB_CACHE", hf_home / "hub"))
-        snapshots = hub / ("models--" + LOCAL_MODELS[label].replace("/", "--")) / "snapshots"
+        snapshots = model_hub() / ("models--" + LOCAL_MODELS[label].replace("/", "--")) / "snapshots"
         return any(all((snapshot / name).is_file() for name in MODEL_ASSETS[label])
                    for snapshot in snapshots.glob("*"))
     return True
@@ -39,6 +43,44 @@ def install_model(label):
         from huggingface_hub import snapshot_download
 
         snapshot_download(LOCAL_MODELS[label])
+
+
+def active_models(settings):
+    if settings["route"] != "asr+mt":
+        return set()
+    speech = {"qwen": "qwen-" + settings["qwen_size"], "local": "whisper-small"}.get(settings["asr"])
+    return {speech, "nllb" if settings["mt"] == "local" else None} - {None}
+
+
+def uninstall_model(model_id, label):
+    DATA.mkdir(parents=True, exist_ok=True)
+    with (DATA / "starting.lock").open("a+b") as startup:
+        lock_service(startup, wait=True)
+        if healthy() and model_id in active_models(config()):
+            raise ValueError("请先切换模型或停止字幕服务，再卸载这个模型。")
+        if label in QWEN_LABELS:
+            from ..inference.qwen import paths
+
+            _, model, _ = paths(QWEN, QWEN_LABELS[label])
+            model.unlink(missing_ok=True)
+            return
+        from huggingface_hub import scan_cache_dir
+
+        hub = model_hub().resolve()
+        repository = hub / ("models--" + LOCAL_MODELS[label].replace("/", "--"))
+        if not repository.is_dir():
+            return
+        cache = scan_cache_dir(hub)
+        repos = frozenset(repo for repo in cache.repos if repo.repo_path == repository)
+        cache = replace(cache, repos=repos)
+        commits = {revision.commit_hash for repo in repos for revision in repo.revisions}
+        if not commits:
+            raise ValueError("缓存不完整，无法卸载这个模型。")
+        removal = cache.delete_revisions(*commits)
+        for path in removal.repos | removal.snapshots | removal.refs | removal.blobs:
+            if not path.resolve().is_relative_to(repository) or not path.resolve().is_relative_to(hub):
+                raise ValueError("缓存位置不属于这个模型，无法卸载。")
+        removal.execute()
 
 
 def mpv_directory():

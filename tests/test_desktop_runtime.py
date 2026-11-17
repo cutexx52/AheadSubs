@@ -9,6 +9,59 @@ from unittest.mock import patch
 
 @unittest.skipUnless(os.name == "nt", "Desktop runtime requires Windows")
 class DiagnosticsTest(unittest.TestCase):
+    def test_preset_preflight_reports_only_requested_missing_requirements(self):
+        from subtitle_relay.desktop import bridge, runtime
+
+        with patch.object(bridge.shutil, "which", return_value="ffmpeg"), \
+                patch.object(bridge.hardware, "vulkan_available", return_value=True) as vulkan, \
+                patch.object(bridge.hardware, "cuda_available", return_value=False) as cuda, \
+                patch.object(runtime, "config", return_value=runtime.DEFAULTS), \
+                patch.dict(os.environ, {"DASHSCOPE_API_KEY": ""}):
+            self.assertEqual(bridge.check_requirements(None), {"missing": []})
+            vulkan.assert_not_called()
+            cuda.assert_not_called()
+            self.assertEqual(bridge.check_requirements("vulkan,cuda,dashscope"), {"missing": ["cuda", "dashscope"]})
+            with patch.dict(os.environ, {"DASHSCOPE_API_KEY": "sk-test-preset"}):
+                self.assertEqual(bridge.check_requirements("dashscope"), {"missing": []})
+                self.assertEqual(bridge.check_requirements("dashscope", "https://example.org"), {"missing": ["dashscope"]})
+
+    def test_qwen_model_uninstall_protects_running_route_and_shared_assets(self):
+        from subtitle_relay.desktop import assets, bridge, runtime
+        from subtitle_relay.inference.qwen import paths
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            executable, model, aligner = paths(root, "1.7b")
+            executable.parent.mkdir()
+            smaller = paths(root, "0.6b")[1]
+            for path in (executable, model, aligner, smaller):
+                path.touch()
+            with patch.object(assets, "DATA", root), patch.object(assets, "QWEN", root), \
+                    patch.object(assets, "config", return_value={**runtime.DEFAULTS, "asr": "qwen"}), \
+                    patch.object(assets, "healthy", side_effect=[True, False]):
+                with self.assertRaises(ValueError):
+                    assets.uninstall_model("qwen-1.7b", bridge.MODELS["qwen-1.7b"])
+                self.assertTrue(model.exists())
+                assets.uninstall_model("qwen-1.7b", bridge.MODELS["qwen-1.7b"])
+            self.assertFalse(model.exists())
+            self.assertTrue(all(path.exists() for path in (executable, aligner, smaller)))
+
+    def test_uninstall_targets_only_the_selected_hugging_face_repository(self):
+        from subtitle_relay.desktop import assets, bridge
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            hub = root / "hub"
+            for name in ("models--Systran--faster-whisper-small", "models--Adom4600--nllb-200-distilled-600M-ct2-int8"):
+                model = hub / name / "snapshots" / "a1b2c3" / "model.bin"
+                model.parent.mkdir(parents=True)
+                model.touch()
+            with patch.object(assets, "DATA", root), patch.object(assets, "model_hub", return_value=hub), \
+                    patch.object(assets, "healthy", return_value=False):
+                assets.uninstall_model("whisper-small", bridge.MODELS["whisper-small"])
+            self.assertFalse((hub / "models--Systran--faster-whisper-small").exists())
+            self.assertTrue((hub / "models--Adom4600--nllb-200-distilled-600M-ct2-int8").exists())
+
     def test_typed_credentials_are_encrypted_and_redacted_by_the_bridge(self):
         from subtitle_relay.desktop import bridge, credentials, runtime
 

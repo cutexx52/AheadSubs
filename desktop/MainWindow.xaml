@@ -7,6 +7,28 @@
   <Style x:Key="PageTitle" TargetType="TextBlock"><Setter Property="FontSize" Value="27"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Margin" Value="0,0,0,8"/></Style>
   <Style x:Key="Card" TargetType="Border"><Setter Property="Background" Value="White"/><Setter Property="BorderBrush" Value="#E3E7ED"/><Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="10"/><Setter Property="Padding" Value="20"/><Setter Property="Margin" Value="0,0,0,16"/></Style>
   <Style x:Key="Section" TargetType="TextBlock"><Setter Property="FontSize" Value="16"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Margin" Value="0,0,0,8"/></Style>
+  <Style x:Key="PresetExpander" TargetType="Expander">
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Expander">
+    <Border Background="White" BorderBrush="#E3E7ED" BorderThickness="1" CornerRadius="6">
+     <StackPanel>
+      <ToggleButton Content="{TemplateBinding Header}" IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+       <ToggleButton.Template><ControlTemplate TargetType="ToggleButton">
+        <Border x:Name="HeaderFrame" CornerRadius="5" Padding="12,7" Background="Transparent" BorderThickness="1" BorderBrush="Transparent">
+         <DockPanel><Path x:Name="Chevron" Data="M 0,0 L 4,4 L 8,0" Stroke="#526076" StrokeThickness="1.25" VerticalAlignment="Center" DockPanel.Dock="Right" Margin="8,0,0,0"/><ContentPresenter VerticalAlignment="Center"/></DockPanel>
+        </Border>
+        <ControlTemplate.Triggers>
+         <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="HeaderFrame" Property="Background" Value="#F2F5FB"/></Trigger>
+         <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="HeaderFrame" Property="BorderBrush" Value="#5280D4"/></Trigger>
+         <Trigger Property="IsChecked" Value="True"><Setter TargetName="Chevron" Property="Data" Value="M 0,4 L 4,0 L 8,4"/></Trigger>
+        </ControlTemplate.Triggers>
+       </ControlTemplate></ToggleButton.Template>
+      </ToggleButton>
+      <ContentPresenter x:Name="PresetBody" Visibility="Collapsed"/>
+     </StackPanel>
+    </Border>
+    <ControlTemplate.Triggers><Trigger Property="IsExpanded" Value="True"><Setter TargetName="PresetBody" Property="Visibility" Value="Visible"/></Trigger></ControlTemplate.Triggers>
+   </ControlTemplate></Setter.Value></Setter>
+  </Style>
   <Style TargetType="TabItem"><Setter Property="Foreground" Value="#596273"/><Setter Property="FontWeight" Value="Medium"/><Setter Property="Margin" Value="10,3"/>
    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="TabItem"><Border x:Name="NavBorder" Background="Transparent" CornerRadius="7" Padding="18,13"><ContentPresenter ContentSource="Header"/></Border><ControlTemplate.Triggers><Trigger Property="IsSelected" Value="True"><Setter TargetName="NavBorder" Property="Background" Value="#E8EDF9"/><Setter Property="Foreground" Value="#234CA0"/><Setter Property="FontWeight" Value="SemiBold"/></Trigger><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="NavBorder" Property="Background" Value="#EAF0F6"/></Trigger><Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="NavBorder" Property="BorderBrush" Value="#547BC1"/><Setter TargetName="NavBorder" Property="BorderThickness" Value="1"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter>
   </Style>
@@ -22,6 +44,20 @@
    <TabControl.Template><ControlTemplate TargetType="TabControl"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="176"/><ColumnDefinition/></Grid.ColumnDefinitions><Border Background="#F0F2F5" BorderBrush="#E3E7ED" BorderThickness="0,0,1,0"><StackPanel Margin="0,22,0,0"><TabPanel IsItemsHost="True"/></StackPanel></Border><ContentPresenter Grid.Column="1" ContentSource="SelectedContent"/></Grid></ControlTemplate></TabControl.Template>
    <TabItem Header="翻译" x:Name="TranslationTab"><ScrollViewer x:Name="TranslationScroll" Style="{StaticResource PageScroll}"><StackPanel>
     <TextBlock Text="翻译设置" Style="{StaticResource PageTitle}"/>
+    <Expander x:Name="PresetDisclosure" Margin="0,0,0,12" Style="{StaticResource PresetExpander}" Expanded="PresetOpened">
+     <StackPanel Margin="10,8,10,4">
+      <ComboBox x:Name="PresetChoice" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="PresetChanged"/>
+      <TextBlock x:Name="PresetDetail" Style="{StaticResource Hint}" Margin="0,6,0,0"/>
+      <TextBlock x:Name="PresetStatus" Style="{StaticResource Hint}" Margin="0,4,0,0" AutomationProperties.LiveSetting="Polite"/>
+      <WrapPanel Margin="0,6,0,0">
+       <Button x:Name="PresetDownload" Click="DownloadPreset" MinHeight="28" Padding="9,4" Visibility="Collapsed"/>
+       <Button x:Name="PresetModels" Click="GoPresetModels" MinHeight="28" Padding="9,4" Visibility="Collapsed"/>
+       <Button x:Name="PresetKeys" Click="GoPresetKeys" MinHeight="28" Padding="9,4" Visibility="Collapsed"/>
+       <Button x:Name="PresetRetry" Click="PresetOpened" MinHeight="28" Padding="9,4" Visibility="Collapsed"/>
+       <Button x:Name="PresetApply" Click="ApplyPreset" MinHeight="28" Padding="9,4" Visibility="Collapsed"/>
+      </WrapPanel>
+     </StackPanel>
+    </Expander>
     <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="语言与显示" Style="{StaticResource Section}"/>
      <Grid Margin="0,10,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="24"/><ColumnDefinition/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="视频语言" Margin="0,0,0,8" Foreground="#596273"/><ComboBox x:Name="SourceLanguage" DisplayMemberPath="Label" SelectedValuePath="Value" AutomationProperties.Name="视频语言"/></StackPanel><StackPanel Grid.Column="2"><TextBlock Text="翻译为" Margin="0,0,0,8" Foreground="#596273"/><ComboBox x:Name="TargetLanguage" DisplayMemberPath="Label" SelectedValuePath="Value" AutomationProperties.Name="目标字幕语言"/></StackPanel></Grid>
      <CheckBox x:Name="Bilingual" Content="双语字幕 · 原文在上，译文在下" Margin="0,20,0,0"/>
@@ -42,12 +78,7 @@
       </StackPanel>
      </Expander>
      <TextBlock x:Name="ComputeSummary" Style="{StaticResource Hint}" Margin="0,12,0,0" Visibility="Collapsed"/>
-     <StackPanel x:Name="DeviceSelection" Visibility="Collapsed">
-      <TextBlock Text="Whisper / NLLB 的本地运算设备" Style="{StaticResource Label}"/><ComboBox x:Name="Device" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="DeviceChanged" AutomationProperties.Name="本地运算设备"/>
-      <TextBlock Text="CUDA 需要 NVIDIA 显卡和兼容驱动，推荐使用 CUDA 安装包。" Style="{StaticResource Hint}" Margin="0,8,0,0"/>
-     </StackPanel>
     </StackPanel></Border>
-    <Border x:Name="FirstRunPanel" Background="#E8EDF9" CornerRadius="8" Padding="18" Margin="0,0,0,16" Visibility="Collapsed"><DockPanel><Button Content="准备本地模型" Click="GoModels" DockPanel.Dock="Right" Margin="16,0,0,0"/><StackPanel><TextBlock Text="还没有可用的本地模型" FontWeight="SemiBold"/><TextBlock Text="一次下载，之后本地运行无需 API 费用。" Style="{StaticResource Hint}" Margin="0,5,0,0"/></StackPanel></DockPanel></Border>
     <TextBlock x:Name="ServiceDetail" Text="正在读取服务状态。" Style="{StaticResource Hint}"/><TextBlock x:Name="SessionStatus" Style="{StaticResource Hint}" Margin="0,6,0,0" Visibility="Collapsed"/>
    </StackPanel></ScrollViewer></TabItem>
    <TabItem Header="字幕检查" x:Name="InspectTab"><Grid Margin="32,28,32,24" TextElement.Foreground="#242A35" TextElement.FontWeight="Normal"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
@@ -75,25 +106,37 @@
     </StackPanel></Border>
    </StackPanel></ScrollViewer></TabItem>
    <TabItem Header="本地模型" x:Name="ModelsTab"><ScrollViewer Style="{StaticResource PageScroll}"><StackPanel>
-    <TextBlock Text="本地模型" Style="{StaticResource PageTitle}"/>
+    <StackPanel.Resources>
+     <DataTemplate x:Key="ModelRow">
+      <Border Padding="0,8" BorderBrush="#E3E7ED" BorderThickness="0,0,0,1">
+       <DockPanel>
+        <Button Content="{Binding Action}" IsEnabled="{Binding CanAct}" ToolTip="{Binding DisabledReason}" ToolTipService.ShowOnDisabled="True" Tag="{Binding}" Click="ManageModel" DockPanel.Dock="Right" Margin="12,0,0,0" VerticalAlignment="Center" MinWidth="78"/>
+        <StackPanel>
+         <TextBlock Text="{Binding Label}" FontWeight="SemiBold"/>
+         <TextBlock Text="{Binding Details}" Style="{StaticResource Hint}" Margin="0,3,0,0"/>
+         <TextBlock Text="{Binding Status}"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource Hint}"><Style.Triggers><DataTrigger Binding="{Binding Status}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
+        </StackPanel>
+       </DockPanel>
+      </Border>
+     </DataTemplate>
+    </StackPanel.Resources>
+    <TextBlock x:Name="ModelsHeading" Style="{StaticResource PageTitle}"/>
     <Border Style="{StaticResource Card}"><StackPanel>
-     <TextBlock Text="下载与占用" Style="{StaticResource Section}"/>
-     <ItemsControl x:Name="ModelDownloads">
-      <ItemsControl.ItemTemplate><DataTemplate>
-       <Border Padding="0,10" BorderBrush="#E3E7ED" BorderThickness="0,0,0,1"><DockPanel>
-        <Button Content="{Binding Action}" IsEnabled="{Binding CanDownload}" Tag="{Binding Id}" Click="InstallModel" DockPanel.Dock="Right" Margin="12,0,0,0" VerticalAlignment="Center" MinWidth="78"/>
-        <StackPanel><TextBlock Text="{Binding Label}" FontWeight="SemiBold"/><TextBlock Text="{Binding Details}" Style="{StaticResource Hint}" Margin="0,3,0,0"/></StackPanel>
-       </DockPanel></Border>
-      </DataTemplate></ItemsControl.ItemTemplate>
-     </ItemsControl>
-     <TextBlock Text="Qwen3-ASR 共用对齐模型和 Vulkan 运行库，首次安装另占约 0.63 GB。" Style="{StaticResource Hint}" Margin="0,10,0,0"/>
+     <TextBlock x:Name="AsrModelHeading" Style="{StaticResource Section}"/>
+     <ItemsControl x:Name="SpeechDownloads" ItemTemplate="{StaticResource ModelRow}"/>
+     <TextBlock x:Name="SharedModelsHint" Style="{StaticResource Hint}" Margin="0,8,0,0"/>
+     <TextBlock x:Name="WhisperDeviceLabel" Style="{StaticResource Label}"/>
+     <ComboBox x:Name="WhisperDevice" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="DeviceChanged"/>
     </StackPanel></Border>
     <Border Style="{StaticResource Card}"><StackPanel>
-     <TextBlock Text="整套本地方案" Style="{StaticResource Section}"/>
-     <Grid Margin="0,6,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="24"/><ColumnDefinition/></Grid.ColumnDefinitions>
-      <StackPanel><TextBlock Text="Vulkan 显卡" FontWeight="SemiBold"/><TextBlock Text="Qwen3-ASR 0.6B + NLLB" Style="{StaticResource Hint}" Margin="0,4,0,10"/><Button x:Name="SetupLocalButton" Content="安装并启用本地方案" Click="SetupLocal" HorizontalAlignment="Left"/></StackPanel>
-      <StackPanel Grid.Column="2"><TextBlock Text="仅 CPU" FontWeight="SemiBold"/><TextBlock Text="Whisper Small + NLLB" Style="{StaticResource Hint}" Margin="0,4,0,10"/><Button x:Name="SetupCpuButton" Content="安装并启用 CPU 方案" Click="SetupCpu" HorizontalAlignment="Left"/></StackPanel>
-     </Grid>
+     <TextBlock x:Name="MtModelHeading" Style="{StaticResource Section}"/>
+     <ItemsControl x:Name="TranslationDownloads" ItemTemplate="{StaticResource ModelRow}"/>
+     <TextBlock x:Name="NllbDeviceLabel" Style="{StaticResource Label}"/>
+     <ComboBox x:Name="NllbDevice" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="DeviceChanged"/>
+    </StackPanel></Border>
+    <Border Style="{StaticResource Card}"><StackPanel>
+     <TextBlock x:Name="VadModelHeading" Style="{StaticResource Section}"/>
+     <TextBlock x:Name="VadModelHint" Style="{StaticResource Hint}"/>
     </StackPanel></Border>
    </StackPanel></ScrollViewer></TabItem>
    <TabItem Header="云端模型" x:Name="KeysTab"><ScrollViewer Style="{StaticResource PageScroll}"><StackPanel>

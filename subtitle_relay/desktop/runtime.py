@@ -30,6 +30,7 @@ DEFAULTS = {
     "translation_enhancements": {},
     "asr_url": "http://127.0.0.1:8000/v1", "asr_model": "qwen3-asr",
     "asr": "local", "mt": "local", "device": "cpu", "whisper_model": "small",
+    "asr_device": "", "mt_device": "",
     "llm_model": "gpt-4.1-mini", "llm_url": "http://127.0.0.1:11434/v1", "key_file": "",
     "qwen_mt_model": "qwen-mt-flash", "qwen_mt_url": "", "qwen_mt_key_file": "",
     "dashscope_asr_model": "qwen-audio-3.1-asr-flash",

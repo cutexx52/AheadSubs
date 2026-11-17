@@ -51,7 +51,8 @@ def make_relay(args):
     dashscope_url = args.qwen_mt_url.strip().rstrip("/") or DASHSCOPE_DEFAULT_URL
     settings = Segmentation(args.before, args.after, args.max_speech, args.min_silence_ms,
                             args.pad_ms, args.vad_threshold, not args.no_vad, args.backfill, args.min_speech)
-    if args.device == "cuda" and (args.asr == "local" or args.mt == "local"):
+    asr_device, mt_device = args.asr_device or args.device, args.mt_device or args.device
+    if not args.ast and ((args.asr == "local" and asr_device == "cuda") or (args.mt == "local" and mt_device == "cuda")):
         configure_cuda()
     cloud = (openai_client(args.key_file, api_key=desktop_key("openai"))
              if "openai" in (args.asr, args.mt) or args.ast else None)
@@ -59,7 +60,7 @@ def make_relay(args):
     translator = None
     if not args.ast:
         if args.asr == "local":
-            recognizer = FasterWhisper(args.whisper_model, args.device, min(args.workers, 2))
+            recognizer = FasterWhisper(args.whisper_model, asr_device, min(args.workers, 2))
         elif args.asr in {"compatible", "qwen"}:
             key = desktop_key("compatible-asr", args.asr_url) if args.asr == "compatible" else None
             client = openai_client(endpoint=args.asr_url, endpoint_key="RELAY_ASR_API_KEY", api_key=key)
@@ -70,7 +71,7 @@ def make_relay(args):
         else:
             recognizer = OpenAIWhisper(cloud)
         if args.mt == "local":
-            translator = NllbTranslation(args.nllb_model, args.device, min(args.workers, 2))
+            translator = NllbTranslation(args.nllb_model, mt_device, min(args.workers, 2))
         elif args.mt == "qwen-mt":
             translator = QwenMtTranslation(qwen_mt_client(dashscope_url, args.qwen_mt_key_file,
                                                           api_key=desktop_key("dashscope")),
@@ -82,6 +83,9 @@ def make_relay(args):
             translator = ChatTranslation(client, args.llm_model, reasoning_effort=effort)
     profile = ["v3-media-clock", args.asr, args.mt, args.ast, args.whisper_model, args.nllb_model,
                args.llm_model, args.llm_url, args.device, asdict(settings)]
+    devices = [asr_device if args.asr == "local" else None, mt_device if args.mt == "local" else None]
+    if not args.ast and any(device is not None and device != args.device for device in devices):
+        profile.append(devices)
     if settings.enabled:
         profile.append("pause-planner-v1")
     if args.asr in {"compatible", "qwen"} and not args.ast:
@@ -114,6 +118,8 @@ def main():
     server.add_argument("--qwen-mt-key-file")
     server.add_argument("--ast", action="store_true", help="Use OpenAI speech translation to English")
     server.add_argument("--device", choices=["cpu", "cuda"], default="cuda")
+    server.add_argument("--asr-device", choices=["cpu", "cuda"], help="Override --device for local Whisper")
+    server.add_argument("--mt-device", choices=["cpu", "cuda"], help="Override --device for local NLLB")
     server.add_argument("--whisper-model", default="small")
     server.add_argument("--nllb-model", default="Adom4600/nllb-200-distilled-600M-ct2-int8")
     server.add_argument("--llm-model", default="gpt-4.1-mini")

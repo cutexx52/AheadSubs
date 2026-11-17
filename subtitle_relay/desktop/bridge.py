@@ -5,7 +5,7 @@ import shutil
 import sys
 from contextlib import redirect_stdout
 
-from . import assets, credentials, runtime
+from . import assets, credentials, hardware, runtime
 from ..inference.dashscope import DASHSCOPE_ASR_MODELS
 from ..inference.providers import QWEN_MT_MODELS, qwen_mt_credentials
 from ..server.engine import TranslationSettings
@@ -28,8 +28,30 @@ def status():
             "settings": {key: settings[key] for key in runtime.DEFAULTS},
             "credentials": credentials.public_state(settings),
             "models": {model: assets.model_ready(label) for model, label in MODELS.items()},
+            "active_models": sorted(assets.active_models(settings)) if health else [],
             "potplayer_detected": integrations["potplayer"]["detected"], "integrations": integrations,
             "ffmpeg_detected": bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))}
+
+
+def check_requirements(item, endpoint=None):
+    requested = set(item.split(",")) if item else set()
+    if not requested <= {"vulkan", "cuda", "dashscope"}:
+        raise ValueError("未知的预设运行条件。")
+    missing = []
+    if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
+        missing.append("ffmpeg")
+    if "vulkan" in requested and not hardware.vulkan_available():
+        missing.append("vulkan")
+    if "cuda" in requested and not hardware.cuda_available():
+        missing.append("cuda")
+    if "dashscope" in requested:
+        settings = runtime.config()
+        try:
+            qwen_mt_credentials(settings["qwen_mt_url"] if endpoint is None else endpoint,
+                                api_key=credentials.resolve(settings, "dashscope"))
+        except ValueError:
+            missing.append("dashscope")
+    return {"missing": missing}
 
 
 def apply(updates):
@@ -51,6 +73,7 @@ def apply(updates):
     for key, options in {
         "asr": {"local", "openai", "compatible", "qwen", "dashscope"}, "qwen_size": {"0.6b", "1.7b"},
         "mt": {"local", "openai", "compatible", "qwen-mt"}, "device": {"cpu", "cuda"},
+        "asr_device": {"", "cpu", "cuda"}, "mt_device": {"", "cpu", "cuda"},
         "diagnostics": {"0", "1"}, "pot_hotkey": {"0", "1"}, "vad_model": {"silero", "fsmn"},
         "bilingual": {"0", "1"},
         "route": {"asr+mt", "OpenAI AST (English)"}, "qwen_mt_model": QWEN_MT_MODELS,
@@ -110,6 +133,9 @@ def validate_enhancements(values):
 def run_command(command, item=None, folder=None):
     if command == "status":
         return status()
+    if command == "preset-check":
+        text = sys.stdin.read()
+        return check_requirements(item, json.loads(text)["qwen_mt_url"] if text else None)
     if command == "inspect":
         return inspect_cache(runtime.DATA / "cache" / "cache.sqlite3", item)
     if command == "install":
@@ -117,6 +143,11 @@ def run_command(command, item=None, folder=None):
             raise ValueError("请选择已支持的本地模型。")
         if not assets.model_ready(MODELS[item]):
             assets.install_model(MODELS[item])
+        return status()
+    if command == "uninstall":
+        if item not in MODELS:
+            raise ValueError("请选择已支持的本地模型。")
+        assets.uninstall_model(item, MODELS[item])
         return status()
     if command == "apply":
         return apply(json.load(sys.stdin))
@@ -151,7 +182,7 @@ def run_command(command, item=None, folder=None):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("status", "install", "apply", "save-credentials", "stop", "integrate", "unintegrate", "logs", "inspect",
+    parser.add_argument("command", choices=("status", "preset-check", "install", "uninstall", "apply", "save-credentials", "stop", "integrate", "unintegrate", "logs", "inspect",
                                            "pot-windows", "pot-start", "pot-stop"))
     parser.add_argument("item", nargs="?")
     parser.add_argument("--folder")

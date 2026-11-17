@@ -13,10 +13,11 @@ public partial class MainWindow : Window
 {
     private sealed record Choice(string Label, string Value);
     private static readonly Choice[] LocalModels =
-    [new("Qwen3-ASR 0.6B · 识别 · Vulkan GPU", "qwen-0.6b"), new("Qwen3-ASR 1.7B · 识别 · Vulkan GPU", "qwen-1.7b"),
-     new("Whisper Small · 识别 · CPU / CUDA", "whisper-small"), new("NLLB-200 600M · 翻译 · CPU / CUDA", "nllb")];
-    private static readonly string[] ModelSizes = ["0.63", "1.33", "0.49", "0.65"];
-    private sealed record ModelDownload(string Id, string Label, string Details, string Action, bool CanDownload);
+    [new("Qwen3-ASR 0.6B", "qwen-0.6b"), new("Qwen3-ASR 1.7B", "qwen-1.7b"),
+     new("Whisper Small", "whisper-small"), new("NLLB-200 600M INT8", "nllb")];
+    private static readonly double[] ModelSizes = [0.63, 1.33, 0.49, 0.65];
+    private sealed record ModelDownload(string Id, string Label, string Details, string Status, string Action,
+        bool Installed, bool CanAct, string? DisabledReason);
     private static readonly Choice[] DashScopeSpeechModels =
     [new("[云端] Qwen-Audio 3.1 ASR Flash", "qwen-audio-3.1-asr-flash"),
      new("[云端] Qwen-Audio 3.0 ASR Flash", "qwen-audio-3.0-asr-flash")];
@@ -44,9 +45,8 @@ public partial class MainWindow : Window
             new("英语", "en"), new("中文", "zh"), new("韩语", "ko") };
         TargetLanguage.ItemsSource = new Choice[] { new("简体中文", "zh"), new("繁體中文", "zh-TW"),
             new("日语", "ja"), new("英语", "en"), new("韩语", "ko"), new("法语", "fr"), new("德语", "de"), new("西班牙语", "es") };
-        Device.ItemsSource = new Choice[] { new("CPU · 无需独立显卡", "cpu"), new("GPU · NVIDIA CUDA", "cuda") };
+        InitializeSetup();
         Vad.ItemsSource = new Choice[] { new("Silero · 默认", "silero"), new("阿里 FSMN · 可选", "fsmn") };
-        UpdateModelDownloads();
         CloudProvider.ItemsSource = new Choice[] { new("阿里云百炼 · Qwen", "dashscope"),
             new("OpenAI", "openai"), new("自定义兼容接口", "compatible") };
         CloudProvider.SelectedIndex = 0;
@@ -67,6 +67,7 @@ public partial class MainWindow : Window
             settings = new JsonObject { ["source"] = "ja", ["target"] = "zh", ["asr"] = "qwen",
                 ["qwen_size"] = "1.7b", ["mt"] = "qwen-mt", ["qwen_mt_model"] = "qwen-mt-flash", ["bilingual"] = "1" };
             models = new JsonObject { ["qwen-0.6b"] = false, ["qwen-1.7b"] = true, ["whisper-small"] = false, ["nllb"] = true };
+            activeModels = ["qwen-1.7b"];
             integrations = new JsonObject { ["potplayer"] = new JsonObject { ["installed"] = true, ["configured"] = true, ["detected"] = true },
                 ["mpv"] = new JsonObject { ["detected"] = true } };
             UpdatePlayers();
@@ -107,7 +108,6 @@ public partial class MainWindow : Window
             ? "dashscope" : speech == "compatible" || mt == "compatible" ? "compatible" : "openai";
         SettingsPanel.SelectedItem = KeysTab;
     }
-    private void GoModels(object sender, RoutedEventArgs e) => SettingsPanel.SelectedItem = ModelsTab;
 
     private async Task LoadPotPlayerMenu(Forms.ToolStripMenuItem menu)
     {
@@ -159,8 +159,9 @@ public partial class MainWindow : Window
 
     private async void PageChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (e.Source == SettingsPanel && SettingsPanel.SelectedItem == InspectTab && initialized && !previewMode)
-            await Inspect();
+        if (e.Source != SettingsPanel || !initialized || previewMode) return;
+        if (SettingsPanel.SelectedItem == InspectTab) await Inspect();
+        if (SettingsPanel.SelectedItem == TranslationTab && PresetDisclosure.IsExpanded) await CheckPreset();
     }
 
     private void LoadControls()
@@ -174,10 +175,11 @@ public partial class MainWindow : Window
                         entry["previous_cues"]?.ToString() ?? "4", entry["context_chars"]?.ToString() ?? "250",
                         entry["prompt"]?.ToString() ?? "");
         LlmModel.Text = Setting("llm_model");
+        WhisperDevice.SelectedValue = Setting("asr_device") is { Length: > 0 } asrDevice ? asrDevice : Setting("device", "cpu");
+        NllbDevice.SelectedValue = Setting("mt_device") is { Length: > 0 } mtDevice ? mtDevice : Setting("device", "cpu");
         PopulateModels();
         SourceLanguage.SelectedValue = Setting("source"); TargetLanguage.SelectedValue = Setting("target", "zh");
         Bilingual.IsChecked = Setting("bilingual", "0") is "1" or "true" or "True";
-        Device.SelectedValue = Setting("device", "cpu");
         previousVad = Setting("vad_model", "silero"); Vad.SelectedValue = previousVad;
         VadThreshold.Text = Setting("vad_threshold", previousVad == "fsmn" ? "0.8" : "0.5");
         Backfill.Text = Setting("backfill", "4");
@@ -216,6 +218,7 @@ public partial class MainWindow : Window
             using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
             var result = await bridge.Run("status", cancellationToken: timeout.Token);
             string previousModels = models.ToJsonString();
+            activeModels = (result["active_models"] as JsonArray ?? new()).Select(item => item!.GetValue<string>()).ToHashSet();
             models = result["models"] as JsonObject ?? new();
             bool running = result["running"]?.GetValue<bool>() == true;
             ServiceStatus.Text = running ? "字幕服务已就绪" : "字幕服务已停止";
@@ -247,15 +250,14 @@ public partial class MainWindow : Window
                 if (speech.Length > 0) SpeechModel.SelectedValue = speech;
                 if (translation.Length > 0) TranslationModel.SelectedValue = translation;
             }
-            FirstRunPanel.Visibility = !Installed("nllb") && !Installed("qwen-0.6b") && !Installed("qwen-1.7b")
-                ? Visibility.Visible : Visibility.Collapsed;
-            if (previousModels != models.ToJsonString()) UpdateModelDownloads();
+            UpdateModelDownloads();
+            if (PresetDisclosure.IsExpanded) UpdatePresetGuide();
         }
         catch (Exception ex)
         {
             ServiceStatus.Text = "无法连接后台";
             ServiceDetail.Text = Friendly(ex);
-            if (!initialized) { LoadControls(); SourceLanguage.SelectedIndex = 0; TargetLanguage.SelectedIndex = 0; Device.SelectedIndex = 0; Vad.SelectedIndex = 0; }
+            if (!initialized) { LoadControls(); SourceLanguage.SelectedIndex = 0; TargetLanguage.SelectedIndex = 0; Vad.SelectedIndex = 0; }
         }
         finally { refreshing = false; }
     }
@@ -382,35 +384,43 @@ public partial class MainWindow : Window
 
     private void UpdateCompute()
     {
-        if (ComputeSummary is null || DeviceSelection is null || Device is null || SpeechModel is null || TranslationModel is null)
-            return;
+        if (ComputeSummary is null || WhisperDevice is null || NllbDevice is null) return;
         string speech = Selected(SpeechModel), mt = Selected(TranslationModel);
-        string device = Selected(Device) == "cuda" ? "NVIDIA CUDA" : "CPU";
         var routes = new List<string>();
-        if (speech.StartsWith("qwen-", StringComparison.Ordinal) && !IsDashScopeSpeech(speech)) routes.Add("识别：Vulkan GPU");
-        else if (speech == "whisper-small") routes.Add("识别：" + device);
-        if (mt == "nllb") routes.Add("翻译：" + device);
+        if (speech.StartsWith("qwen-", StringComparison.Ordinal) && !IsDashScopeSpeech(speech))
+            routes.Add(SetupText.Get("asr-device", "Vulkan GPU"));
+        else if (speech == "whisper-small") routes.Add(SetupText.Get("asr-device", DeviceName(WhisperDevice)));
+        if (mt == "nllb") routes.Add(SetupText.Get("mt-device", DeviceName(NllbDevice)));
         ComputeSummary.Text = string.Join("  ·  ", routes);
-        ComputeSummary.Visibility = routes.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-        DeviceSelection.Visibility = speech == "whisper-small" || mt == "nllb" ? Visibility.Visible : Visibility.Collapsed;
+        ComputeSummary.Visibility = Visible(routes.Count > 0);
+        UpdatePresetHeading();
     }
+
+    private static string DeviceName(System.Windows.Controls.ComboBox selector) =>
+        SetupText.Get(Selected(selector) == "cuda" ? "cuda-device" : "cpu-device");
+
+    private static string ModelName(string id) => LocalModels.First(model => model.Value == id).Label;
 
     private void UpdateModelDownloads()
     {
-        ModelDownloads.ItemsSource = LocalModels.Select((model, index) =>
+        var rows = LocalModels.Select((model, index) =>
         {
-            string[] parts = model.Label.Split(" · ", 2);
-            bool downloaded = Installed(model.Value);
-            return new ModelDownload(model.Value, parts[0], $"{parts[1]} · 约 {ModelSizes[index]} GB",
-                downloaded ? "已下载" : "下载", !downloaded);
+            string id = model.Value;
+            bool downloaded = Installed(id), inUse = activeModels.Contains(id);
+            string hardware = id.StartsWith("qwen-", StringComparison.Ordinal) ? "Vulkan GPU" : "CPU / NVIDIA CUDA";
+            string status = downloaded ? SetupText.Get(inUse ? "active-model" : "installed-model")
+                : guidedModels.Contains(id) ? SetupText.Get("needed") : "";
+            return new ModelDownload(id, model.Label, SetupText.Get("model-info", hardware, ModelSizes[index]), status,
+                SetupText.Get(downloaded ? "remove-model" : "download-model"), downloaded, !downloaded || !inUse,
+                inUse ? SetupText.Get("uninstall-active") : null);
         }).ToArray();
-        SetupLocalButton.Content = Installed("qwen-0.6b") && Installed("nllb") ? "启用本地方案" : "安装并启用本地方案";
-        SetupCpuButton.Content = Installed("whisper-small") && Installed("nllb") ? "启用 CPU 方案" : "安装并启用 CPU 方案";
+        SpeechDownloads.ItemsSource = rows.Where(row => row.Id != "nllb").ToArray();
+        TranslationDownloads.ItemsSource = rows.Where(row => row.Id == "nllb").ToArray();
     }
 
-    private JsonObject CollectSettings()
+    private JsonObject CollectSettings(TranslationPreset? preset = null)
     {
-        string speech = Selected(SpeechModel), translation = Selected(TranslationModel);
+        string speech = preset?.Speech ?? Selected(SpeechModel), translation = preset?.Translation ?? Selected(TranslationModel);
         if (speech.Length == 0 || translation.Length == 0)
             throw new InvalidOperationException("请选择语音识别和字幕翻译模型；本地模型需先在模型管理中安装。");
         if (!int.TryParse(ChunkSeconds.Text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int chunk) || chunk < 4 || chunk > 20)
@@ -419,7 +429,9 @@ public partial class MainWindow : Window
             throw new InvalidOperationException("最长语音段请填写 2 到 20 之间的秒数。");
         var value = new JsonObject
         {
-            ["source"] = Selected(SourceLanguage), ["device"] = Selected(Device), ["route"] = "asr+mt", ["pot_hotkey"] = "1",
+            ["source"] = Selected(SourceLanguage), ["route"] = "asr+mt", ["pot_hotkey"] = "1",
+            ["asr_device"] = preset is { Speech: "whisper-small" } ? preset.Device : Selected(WhisperDevice),
+            ["mt_device"] = preset is { Translation: "nllb" } ? preset.Device : Selected(NllbDevice),
             ["target"] = Selected(TargetLanguage), ["bilingual"] = Bilingual.IsChecked == true ? "1" : "0",
             ["translation_enhancements"] = CollectEnhancements(),
             ["vad_threshold"] = VadThreshold.Text.Trim(), ["backfill"] = Backfill.Text.Trim(), ["min_speech"] = MinSpeech.Text.Trim(),
@@ -456,6 +468,7 @@ public partial class MainWindow : Window
         {
             ActionStatus.Text = Friendly(ex);
             ActionStatus.Foreground = System.Windows.Media.Brushes.Firebrick;
+            await Refresh(force: true);
             ShowSettings();
         }
         finally { busy = false; SetBusy(false); }
@@ -477,25 +490,18 @@ public partial class MainWindow : Window
     private async void Stop(object sender, RoutedEventArgs e) => await Act("正在停止后台并释放资源…",
         async () => { await bridge.Run("stop"); }, "服务已停止，后台资源已释放。");
 
-    private async void SetupLocal(object sender, RoutedEventArgs e) => await Act("正在下载并准备本地模型，首次可能需要几分钟…",
-        async () =>
+    private async void ManageModel(object sender, RoutedEventArgs e)
+    {
+        if (((FrameworkElement)sender).Tag is not ModelDownload row || !row.CanAct) return;
+        if (row.Installed && System.Windows.MessageBox.Show(this,
+            SetupText.Get(row.Id.StartsWith("qwen-", StringComparison.Ordinal) ? "uninstall-ask-local" : "uninstall-ask", row.Label),
+            "AheadSubs", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes)
+            return;
+        await Act(SetupText.Get(row.Installed ? "uninstalling" : "downloading", row.Label), async () =>
         {
-            foreach (string id in new[] { "qwen-0.6b", "nllb" })
-                if (!Installed(id)) { ActionStatus.Text = "正在安装 " + id + "，请保持网络连接…"; await bridge.Run("install", id); }
-            await bridge.Run("apply", input: new JsonObject { ["asr"] = "qwen", ["qwen_size"] = "0.6b", ["mt"] = "local", ["source"] = Selected(SourceLanguage), ["target"] = Selected(TargetLanguage), ["bilingual"] = Bilingual.IsChecked == true ? "1" : "0", ["device"] = "cpu", ["route"] = "asr+mt", ["pot_hotkey"] = "1", ["diagnostics"] = "0" });
-        }, "本地模型已就绪。到 PotPlayer 按 Ctrl+Alt+J 开始翻译。", reloadSettings: true);
-
-    private async void SetupCpu(object sender, RoutedEventArgs e) => await Act("正在准备 CPU 本地方案，首次可能需要几分钟…",
-        async () =>
-        {
-            foreach (string id in new[] { "whisper-small", "nllb" })
-                if (!Installed(id)) { ActionStatus.Text = "正在安装 " + id + "，请保持网络连接…"; await bridge.Run("install", id); }
-            await bridge.Run("apply", input: new JsonObject { ["asr"] = "local", ["whisper_model"] = "small", ["mt"] = "local", ["source"] = Selected(SourceLanguage), ["target"] = Selected(TargetLanguage), ["bilingual"] = Bilingual.IsChecked == true ? "1" : "0", ["device"] = "cpu", ["route"] = "asr+mt", ["pot_hotkey"] = "1", ["diagnostics"] = "0" });
-        }, "CPU 本地方案已就绪。速度取决于处理器，可在高级设置中更换设备。", reloadSettings: true);
-
-    private async void InstallModel(object sender, RoutedEventArgs e) => await Act("正在下载并安装模型，请保持网络连接…",
-        async () => { await bridge.Run("install", (string)((FrameworkElement)sender).Tag); },
-        "模型已下载，可在翻译页选用。");
+            await bridge.Run(row.Installed ? "uninstall" : "install", row.Id);
+        }, SetupText.Get(row.Installed ? "uninstalled" : "downloaded"));
+    }
 
     private void UpdatePlayers()
     {
@@ -624,10 +630,10 @@ public partial class MainWindow : Window
         VerifyControls();
         Directory.CreateDirectory(directory);
         string[] pages = ["translation", "subtitles", "players", "models", "keys", "advanced", "advanced-vad",
-                          "advanced-read-ahead", "translation-context"];
+                          "advanced-read-ahead", "translation-context", "presets"];
         for (int index = 0; index < pages.Length; index++)
         {
-            SettingsPanel.SelectedIndex = index == 8 ? 0 : Math.Min(index, 5);
+            SettingsPanel.SelectedIndex = index >= 8 ? 0 : Math.Min(index, 5);
             if (index is 6 or 7 && AdvancedTab.Content is ScrollViewer advanced)
                 advanced.ScrollToVerticalOffset(index == 6 ? 600 : 1100);
             if (index == 8)
@@ -635,6 +641,16 @@ public partial class MainWindow : Window
                 TranslationModel.SelectedValue = "gpt-4.1-mini";
                 TranslationEnhancement.IsExpanded = true;
                 TranslationScroll.ScrollToVerticalOffset(320);
+            }
+            if (index == 9)
+            {
+                TranslationModel.SelectedValue = "qwen-mt-flash";
+                TranslationEnhancement.IsExpanded = false;
+                PresetChoice.SelectedValue = "cpu";
+                missingRequirements = [];
+                UpdatePresetGuide();
+                PresetDisclosure.IsExpanded = true;
+                TranslationScroll.ScrollToTop();
             }
             RootLayout.Measure(new System.Windows.Size(1040, 760));
             RootLayout.Arrange(new Rect(0, 0, 1040, 760));
@@ -658,14 +674,36 @@ public partial class MainWindow : Window
         Require(ConfigurePotPlayer.Visibility == Visibility.Collapsed && RemovePotPlayer.Visibility == Visibility.Visible
                 && ConfigureMpv.Visibility == Visibility.Visible && RemoveMpv.Visibility == Visibility.Collapsed,
                 "each player has one setup action");
-        var catalog = ((IEnumerable<ModelDownload>)ModelDownloads.ItemsSource).ToDictionary(model => model.Id);
-        Require(catalog["qwen-1.7b"] is { Action: "已下载", CanDownload: false }
-                && catalog["whisper-small"].Details.Contains("0.49 GB") && catalog["whisper-small"].CanDownload,
+        var catalog = ((IEnumerable<ModelDownload>)SpeechDownloads.ItemsSource).Concat((IEnumerable<ModelDownload>)TranslationDownloads.ItemsSource).ToDictionary(model => model.Id);
+        Require(catalog["qwen-1.7b"] is { Installed: true, CanAct: false }
+                && catalog["whisper-small"].Details.Contains(0.49.ToString("0.00", CultureInfo.CurrentUICulture)) && catalog["whisper-small"].CanAct,
                 "model size and download state");
         LoadKeys(new JsonObject { ["openai"] = new JsonObject { ["mode"] = "direct", ["saved"] = true } });
         Require(CollectKeyEdits().Count == 0, "loading a stored key leaves it untouched");
         var values = CollectSettings();
         Require(values["target"]?.ToString() == "zh" && values["bilingual"]?.ToString() == "1", "language and bilingual settings");
+        Require(!PresetDisclosure.IsExpanded && TranslationPreset.All.Length == 4, "four presets stay collapsed on launch");
+        PresetChoice.SelectedValue = "cpu";
+        missingRequirements = [];
+        UpdatePresetGuide();
+        Require(PresetDownload.Visibility == Visibility.Visible && PresetModels.Visibility == Visibility.Visible
+            && PresetApply.Visibility == Visibility.Collapsed, "offer either download path for missing models");
+        GoPresetModels(PresetModels, new RoutedEventArgs());
+        Require(SettingsPanel.SelectedItem == ModelsTab && guidedModels.SetEquals(["whisper-small"]), "model management highlights the missing model");
+        SettingsPanel.SelectedItem = TranslationTab;
+        PresetChoice.SelectedValue = "recommended";
+        missingRequirements = ["dashscope"];
+        UpdatePresetGuide();
+        Require(PresetKeys.Visibility == Visibility.Visible && PresetApply.Visibility == Visibility.Collapsed,
+            "missing credentials route to Bailian");
+        missingRequirements = [];
+        UpdatePresetGuide();
+        Require(PresetApply.Visibility == Visibility.Visible && PresetDownload.Visibility == Visibility.Collapsed, "ready preset can be applied");
+        values = CollectSettings(TranslationPreset.All.Single(p => p.Id == "high-gpu"));
+        Require(values["qwen_size"]?.ToString() == "1.7b" && values["mt_device"]?.ToString() == "cuda"
+            && values["source"]?.ToString() == "ja" && values["bilingual"]?.ToString() == "1", "preset keeps the language and display preferences");
+        Require(Selected(TranslationModel) == "qwen-mt-flash", "preset selection alone leaves the current route intact");
+        Require(SetupText.Format(CultureInfo.GetCultureInfo("ja-JP"), "download") == "Download now", "unknown locale falls back to English");
         Require(values["min_speech"]?.ToString() == "3" && values["pad_ms"]?.ToString() == "80", "segmentation defaults");
         TargetLanguage.SelectedValue = "en"; Bilingual.IsChecked = false;
         values = CollectSettings();
@@ -694,9 +732,9 @@ public partial class MainWindow : Window
         Require(SpeechCost.Text.Contains("0.04–0.08"), "regional hourly estimate");
         QwenUrl.Text = "";
         SpeechModel.SelectedValue = "qwen-1.7b";
-        TranslationModel.SelectedValue = "nllb"; Device.SelectedValue = "cuda";
+        TranslationModel.SelectedValue = "nllb"; NllbDevice.SelectedValue = "cuda";
         Require(ComputeSummary.Text.Contains("Vulkan") && ComputeSummary.Text.Contains("CUDA"), "separate GPU routes");
-        Device.SelectedValue = "cpu";
+        NllbDevice.SelectedValue = "cpu";
         TranslationModel.SelectedValue = "qwen-mt-flash";
         VadThreshold.Text = "0.5"; Vad.SelectedValue = "fsmn";
         Require(VadThreshold.Text == "0.8", "VAD default threshold migration");
