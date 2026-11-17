@@ -2,12 +2,14 @@
 import argparse
 import json
 import shutil
+import sqlite3
 import sys
 from contextlib import redirect_stdout
 
 from . import assets, runtime
+from ..inference.chatgpt_auth import ChatGPTAccounts
 from ..inference.dashscope import DASHSCOPE_ASR_MODELS
-from ..inference.providers import QWEN_MT_MODELS, openai_key, qwen_mt_credentials
+from ..inference.providers import MINIMAX_MODEL, QWEN_MT_MODELS, minimax_key, openai_key, qwen_mt_credentials
 from ..server.engine import TranslationSettings
 from ..server.history import inspect_cache
 
@@ -24,8 +26,14 @@ def status():
     settings = runtime.config()
     health = runtime.service_health()
     integrations = {player: assets.integration_status(player) for player in ("potplayer", "mpv")}
+    try:
+        accounts = ChatGPTAccounts().status()
+    except (OSError, ValueError, sqlite3.Error):
+        accounts = []
     return {"running": health is not None, "active_sessions": (health or {}).get("active_sessions"),
             "settings": settings, "models": {model: assets.model_ready(label) for model, label in MODELS.items()},
+            "chatgpt_accounts": accounts,
+            "minimax_model": MINIMAX_MODEL,
             "potplayer_detected": integrations["potplayer"]["detected"], "integrations": integrations,
             "ffmpeg_detected": bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))}
 
@@ -45,7 +53,7 @@ def apply(updates):
         settings[key] = str(value).strip()
     for key, options in {
         "asr": {"local", "openai", "compatible", "qwen", "dashscope"}, "qwen_size": {"0.6b", "1.7b"},
-        "mt": {"local", "openai", "compatible", "qwen-mt"}, "device": {"cpu", "cuda"},
+        "mt": {"local", "openai", "compatible", "qwen-mt", "chatgpt", "minimax"}, "device": {"cpu", "cuda"},
         "diagnostics": {"0", "1"}, "pot_hotkey": {"0", "1"}, "vad_model": {"silero", "fsmn"},
         "bilingual": {"0", "1"},
         "route": {"asr+mt", "OpenAI AST (English)"}, "qwen_mt_model": QWEN_MT_MODELS,
@@ -74,8 +82,12 @@ def apply(updates):
         raise ValueError("未找到 FFmpeg 和 FFprobe。请使用 Windows 发布包，或为源码运行配置 PATH。")
     if settings["route"] == "OpenAI AST (English)" or "openai" in (settings["asr"], settings["mt"]):
         openai_key(settings["key_file"])
+    if settings["route"] == "asr+mt" and settings["mt"] == "chatgpt":
+        validate_chatgpt(settings["chatgpt_account"], settings["chatgpt_model"])
     if (settings["mt"] == "qwen-mt" or settings["asr"] == "dashscope") and settings["route"] != "OpenAI AST (English)":
         qwen_mt_credentials(settings["qwen_mt_url"], settings["qwen_mt_key_file"])
+    if settings["mt"] == "minimax" and settings["route"] == "asr+mt":
+        minimax_key(settings["minimax_key_file"])
     runtime.save_config(settings)
     runtime.PAUSED.unlink(missing_ok=True)
     runtime.background_start(restart=True)
@@ -86,7 +98,7 @@ def validate_enhancements(values):
     if not isinstance(values, dict):
         raise ValueError("翻译增强设置格式无效。")
     for model, value in values.items():
-        if not (model.partition(":")[0] in {"openai", "compatible", "qwen-mt"}
+        if not (model.partition(":")[0] in {"openai", "compatible", "qwen-mt", "chatgpt", "minimax"}
                 and isinstance(value, dict) and value.keys() == {"enabled", "previous_cues", "prompt"}
                 and isinstance(value["enabled"], bool) and isinstance(value["prompt"], str)):
             raise ValueError("翻译增强设置格式无效。")
@@ -94,7 +106,32 @@ def validate_enhancements(values):
     return values
 
 
+def validate_chatgpt(account, model):
+    profile = next((item for item in ChatGPTAccounts().status() if item["id"] == account), {})
+    if not profile.get("connected"):
+        raise ValueError("请在云端配置中登录 ChatGPT 并授权使用订阅。")
+    if not any(item["id"] == model for item in profile["models"]):
+        raise ValueError("请在云端配置中选择此 ChatGPT 账号可用的模型。")
+
+
 def run_command(command, item=None, folder=None):
+    if command.startswith("chatgpt-"):
+        accounts = ChatGPTAccounts()
+        result = {}
+        if command == "chatgpt-login":
+            item = accounts.sign_in(item)
+            result["selected"] = item
+            if any(p["id"] == item and p["connected"] for p in accounts.status()):
+                try:
+                    accounts.models(item)
+                except ValueError as exc:
+                    result["notice"] = str(exc)
+        elif command == "chatgpt-models":
+            accounts.models(item)
+        elif command == "chatgpt-logout":
+            result["revoked"] = accounts.sign_out(item)
+        result["accounts"] = accounts.status()
+        return result
     if command == "status":
         return status()
     if command == "inspect":
@@ -134,7 +171,8 @@ def run_command(command, item=None, folder=None):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("command", choices=("status", "install", "apply", "stop", "integrate", "unintegrate", "logs", "inspect",
-                                           "pot-windows", "pot-start", "pot-stop"))
+                                           "pot-windows", "pot-start", "pot-stop", "chatgpt-status", "chatgpt-login",
+                                           "chatgpt-models", "chatgpt-logout"))
     parser.add_argument("item", nargs="?")
     parser.add_argument("--folder")
     args = parser.parse_args()

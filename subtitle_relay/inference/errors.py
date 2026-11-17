@@ -5,6 +5,7 @@ ERROR_MESSAGES = {
     "content_blocked": "请求被服务商的内容审核拦截",
     "moderation_unavailable": "服务商的内容审核暂时不可用",
     "authentication_failed": "API 密钥无效，请检查密钥设置",
+    "chatgpt_sign_in_required": "请在云端配置中重新登录并授权使用 ChatGPT 订阅",
     "permission_denied": "API 服务拒绝访问，请检查账号或模型权限",
     "not_found": "API 模型或接口不存在，请检查模型名与地址",
     "rate_limited": "API 达到限额，请检查额度、余额或请求频率",
@@ -41,6 +42,12 @@ def provider_error(error, *, default="processing_failed"):
         kind = "content_blocked"
     elif "internalerror.datainspection" in aliases:
         kind = "moderation_unavailable"
+    elif "subscriptionsharingusagelimitexceeded" in aliases:
+        kind = "rate_limited"
+    elif "subscriptionsharingusageunavailable" in aliases:
+        kind = "provider_unavailable"
+    elif aliases & {"subscriptionsharinginvaliduser", "subscriptionsharinginvalidclient"}:
+        kind = "chatgpt_sign_in_required"
     elif isinstance(error, TimeoutError) or status == 408:
         kind = "request_timeout"
     elif isinstance(status, int) and 500 <= status <= 599:

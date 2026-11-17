@@ -152,7 +152,9 @@ def smoke_test(stage, cuda):
     python = stage / "runtime" / "python.exe"
     code = (
         "from pathlib import Path; import shutil, tkinter, _tkinter, _ssl, sqlite3, "
-        "av, ctranslate2, kaldi_native_fbank, onnxruntime, openai, psutil, pystray, subtitle_relay; "
+        "av, ctranslate2, kaldi_native_fbank, onnxruntime, openai, jwt, psutil, pystray, subtitle_relay; "
+        "from subtitle_relay.inference.chatgpt_auth import _dpapi; "
+        "assert 'RS256' in jwt.algorithms.get_default_algorithms() and _dpapi(_dpapi(b'check'), decrypt=True) == b'check'; "
         "root=Path(__import__('sys').base_prefix).parent; "
         "assert Path(shutil.which('ffmpeg')).parent == root / 'bin'; "
         "assert Path(subtitle_relay.__file__).resolve().is_relative_to(root); "
