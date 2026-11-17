@@ -8,6 +8,7 @@ from mcp.server.stdio import stdio_server
 from mcp_types import CallToolResult, ListToolsResult, TextContent, Tool, ToolAnnotations
 
 from .automation import OPERATIONS, OperationError, invoke
+from .automation_text import text
 
 
 def serve_stdio(port, *, desktop=False):
@@ -18,18 +19,18 @@ def serve_stdio(port, *, desktop=False):
             return True
 
     if not mcp_enabled():
-        print("MCP access is off. Enable it in the AheadSubs desktop app.", file=sys.stderr)
+        print(text("error.mcp_disabled"), file=sys.stderr)
         return 1
 
     def checkpoint():
         anyio.from_thread.check_cancelled()
         if not mcp_enabled():
-            raise OperationError("mcp_disabled", "MCP access is off in the AheadSubs desktop app.")
+            raise OperationError("mcp_disabled")
 
     async def list_tools(_ctx, _params):
         return ListToolsResult(tools=[
-            Tool(name=f"aheadsubs_{name}", description=operation.description,
-                 input_schema=operation.arguments.model_json_schema(),
+            Tool(name=f"aheadsubs_{name}", description=text(f"operation.{name}"),
+                 input_schema=operation.schema(),
                  annotations=ToolAnnotations(read_only_hint=(name == "status"), open_world_hint=(name != "status")))
             for name, operation in OPERATIONS.items()
         ])

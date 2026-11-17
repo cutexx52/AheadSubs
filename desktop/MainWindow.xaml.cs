@@ -43,6 +43,7 @@ public partial class MainWindow : Window
     {
         previewMode = preview;
         InitializeComponent();
+        LoadAutomationText();
         SourceLanguage.ItemsSource = new Choice[] { new("自动识别", ""), new("日语", "ja"),
             new("英语", "en"), new("中文", "zh"), new("韩语", "ko") };
         TargetLanguage.ItemsSource = new Choice[] { new("简体中文", "zh"), new("繁體中文", "zh-TW"),
@@ -173,22 +174,37 @@ public partial class MainWindow : Window
         if (SettingsPanel.SelectedItem == AutomationTab) await ChangeAutomation();
     }
 
+    private void LoadAutomationText()
+    {
+        AutomationTab.Language = System.Windows.Markup.XmlLanguage.GetLanguage(AutomationText.Culture.Name);
+        AutomationTab.Header = AutomationTitle.Text = AutomationText.Get("Title");
+        AutomationIntro.Text = AutomationText.Get("Intro");
+        McpHint.Text = AutomationText.Get("McpHint");
+        McpStatus.Text = CliStatus.Text = AutomationText.Get("Loading");
+        McpToggle.Content = AutomationText.Get("Enable");
+        CopyMcpButton.Content = AutomationText.Get("Copy");
+        System.Windows.Automation.AutomationProperties.SetName(McpConfiguration, AutomationText.Get("Configuration"));
+        CliTitle.Text = AutomationText.Get("CliTitle");
+        CliHint.Text = AutomationText.Get("CliHint");
+        CliToggle.Content = AutomationText.Get("Install");
+    }
+
     private void UpdateAutomation(JsonObject result)
     {
         mcpEnabled = result["mcp_enabled"]?.GetValue<bool>() == true;
         cliInstalled = result["cli_installed"]?.GetValue<bool>() == true;
         bool cliAvailable = result["cli_available"]?.GetValue<bool>() == true;
-        McpStatus.Text = mcpEnabled ? "已开启" : "已关闭";
-        McpToggle.Content = mcpEnabled ? "关闭 MCP 接入" : "开启 MCP 接入";
+        McpStatus.Text = AutomationText.Get(mcpEnabled ? "Enabled" : "Disabled");
+        McpToggle.Content = AutomationText.Get(mcpEnabled ? "Disable" : "Enable");
         McpToggle.IsEnabled = true;
         CopyMcpButton.IsEnabled = mcpEnabled;
         McpConfiguration.Visibility = mcpEnabled ? Visibility.Visible : Visibility.Collapsed;
         McpConfiguration.Text = mcpEnabled ? result["mcp_config"]?.ToJsonString(
             new System.Text.Json.JsonSerializerOptions { WriteIndented = true }) ?? "" : "";
-        CliStatus.Text = cliInstalled ? "已添加到 PATH" : "未安装";
-        CliToggle.Content = cliInstalled ? "从 PATH 移除" : "安装 CLI";
+        CliStatus.Text = AutomationText.Get(cliInstalled ? "Installed" : "NotInstalled");
+        CliToggle.Content = AutomationText.Get(cliInstalled ? "Remove" : "Install");
         CliToggle.IsEnabled = cliAvailable;
-        if (!cliAvailable) CliHint.Text = "源码运行时，在项目目录执行 python -m pip install . 安装 CLI。";
+        CliHint.Text = AutomationText.Get(cliAvailable ? "CliHint" : "SourceHint");
     }
 
     private async Task ChangeAutomation(string? action = null, string success = "")
@@ -200,29 +216,29 @@ public partial class MainWindow : Window
             UpdateAutomation(await bridge.Run("automation", action, cancellationToken: timeout.Token));
             AutomationStatus.Text = success;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            AutomationStatus.Text = Friendly(ex);
+            AutomationStatus.Text = AutomationText.Get("Failed");
             if (action is not null) await ChangeAutomation(success: AutomationStatus.Text);
         }
     }
 
     private async void ToggleMcp(object sender, RoutedEventArgs e) => await ChangeAutomation(
-        mcpEnabled ? "mcp-disable" : "mcp-enable", mcpEnabled ? "已关闭 MCP 接入。" : "已开启。复制配置后重新连接客户端。");
+        mcpEnabled ? "mcp-disable" : "mcp-enable", AutomationText.Get(mcpEnabled ? "DisabledNotice" : "EnabledNotice"));
 
     private async void ToggleCli(object sender, RoutedEventArgs e) => await ChangeAutomation(
-        cliInstalled ? "cli-remove" : "cli-install", cliInstalled ? "已从用户 PATH 移除。" : "已添加到用户 PATH。请重新打开终端。");
+        cliInstalled ? "cli-remove" : "cli-install", AutomationText.Get(cliInstalled ? "RemovedNotice" : "InstalledNotice"));
 
     private void CopyMcpConfig(object sender, RoutedEventArgs e)
     {
         try
         {
             System.Windows.Clipboard.SetText(McpConfiguration.Text);
-            AutomationStatus.Text = "已复制 MCP 配置。";
+            AutomationStatus.Text = AutomationText.Get("Copied");
         }
         catch (System.Runtime.InteropServices.ExternalException)
         {
-            AutomationStatus.Text = "暂时无法访问剪贴板，可以选择配置文本手动复制。";
+            AutomationStatus.Text = AutomationText.Get("ClipboardUnavailable");
         }
     }
 

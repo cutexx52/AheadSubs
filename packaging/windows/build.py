@@ -211,10 +211,21 @@ def smoke_installer(installer, directory, cuda):
     try:
         run(installer, *silent, "/NOICONS", f"/DIR={target}")
         smoke_test(target, cuda)
+        reply = subprocess.check_output([target / "runtime" / "python.exe", "-m",
+                                         "subtitle_relay.desktop.bridge", "automation", "cli-install"], cwd=target)
+        if not json.loads(reply).get("cli_installed"):
+            raise RuntimeError("Installer smoke could not register the bundled CLI on the user PATH")
     finally:
         uninstaller = target / "unins000.exe"
         if uninstaller.is_file():
             run(uninstaller, *silent)
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment") as key:
+            path, _ = winreg.QueryValueEx(key, "Path")
+    except FileNotFoundError:
+        path = ""
+    if os.path.normcase(str(target / "cli")) in map(os.path.normcase, path.split(";")):
+        raise RuntimeError("The uninstaller left the bundled CLI on the user PATH")
 
 
 def find_iscc(downloads):

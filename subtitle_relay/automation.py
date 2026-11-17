@@ -15,17 +15,18 @@ from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from .automation_text import text
 from .client import RelayClient, RelayHTTPError
 
 
 DEFAULT_PORT = 8769
-MediaPath = Annotated[str, Field(min_length=1, max_length=4096, description="Path to a local media file")]
+MediaPath = Annotated[str, Field(min_length=1, max_length=4096, description="field.path")]
 Language = Annotated[str, Field(min_length=1, max_length=32)]
 
 
 class OperationError(RuntimeError):
-    def __init__(self, code, message):
-        super().__init__(message)
+    def __init__(self, code, message=None, **values):
+        super().__init__(message if message is not None else text(f"error.{code}", **values))
         self.code = code
 
     def result(self):
@@ -37,16 +38,16 @@ class Arguments(BaseModel):
 
 
 class Translation(Arguments):
-    text: str = Field(min_length=1, max_length=4000, description="Text to translate")
-    source: Language = Field(description="Source language code, for example ja")
-    target: Language = Field(description="Target language code, for example zh")
+    text: str = Field(min_length=1, max_length=4000, description="field.text")
+    source: Language = Field(description="field.source")
+    target: Language = Field(description="field.target")
 
 
 class MediaOptions(Arguments):
-    source: Language | None = Field(None, description="Source language code. Use auto for detection; omit for the service default")
-    target: Language | None = Field(None, description="Target language code. Omit for the service default")
-    audio: int = Field(0, ge=0, le=255, description="Zero-based audio stream ordinal")
-    bilingual: bool | None = Field(None, description="Include the original text. Omit for the service default")
+    source: Language | None = Field(None, description="field.media_source")
+    target: Language | None = Field(None, description="field.media_target")
+    audio: int = Field(0, ge=0, le=255, description="field.audio")
+    bilingual: bool | None = Field(None, description="field.bilingual")
 
     def playback_options(self):
         options = self.model_dump(include=set(MediaOptions.model_fields), exclude_unset=True)
@@ -59,28 +60,28 @@ class MediaOptions(Arguments):
 
 
 class Session(Arguments):
-    session: str = Field(min_length=1, max_length=100, description="Unique playback session ID")
+    session: str = Field(min_length=1, max_length=100, description="field.session")
 
 
 class PlaybackUpdate(Session, MediaOptions):
     path: MediaPath
-    position: float = Field(ge=0, le=10_000_000, description="Position in media seconds")
-    duration: float | None = Field(None, gt=0, le=10_000_000, description="Total media duration in seconds")
-    speed: float = Field(1, ge=0.1, le=5, description="Playback speed")
-    ahead: float = Field(20, ge=1, le=120, description="Look-ahead in seconds")
+    position: float = Field(ge=0, le=10_000_000, description="field.position")
+    duration: float | None = Field(None, gt=0, le=10_000_000, description="field.duration")
+    speed: float = Field(1, ge=0.1, le=5, description="field.speed")
+    ahead: float = Field(20, ge=1, le=120, description="field.ahead")
 
 
 class Generation(MediaOptions):
     path: MediaPath
-    output: str = Field(min_length=1, max_length=4096, description="Destination .srt file in an existing directory")
-    overwrite: bool = Field(False, description="Replace an existing destination file")
-    timeout: float = Field(1800, gt=0, le=86400, description="Maximum processing time in seconds")
+    output: str = Field(min_length=1, max_length=4096, description="field.output")
+    overwrite: bool = Field(False, description="field.overwrite")
+    timeout: float = Field(1800, gt=0, le=86400, description="field.timeout")
 
 
 def media_path(value):
     path = Path(value).resolve()
     if not path.is_file():
-        raise OperationError("media_not_found", "Choose a media file accessible to the local AheadSubs service.")
+        raise OperationError("media_not_found")
     return path
 
 
@@ -94,13 +95,13 @@ def media_duration(path, audio, timeout):
         metadata = json.loads(output)
         duration = float(metadata["format"]["duration"])
     except FileNotFoundError as exc:
-        raise OperationError("ffprobe_not_found", "FFprobe was not found. Use the Windows bundle or put FFprobe on PATH.") from exc
+        raise OperationError("ffprobe_not_found") from exc
     except (subprocess.CalledProcessError, ValueError, KeyError, TypeError) as exc:
-        raise OperationError("invalid_media", "FFprobe could not read the media duration.") from exc
+        raise OperationError("invalid_media") from exc
     if not math.isfinite(duration) or not 0 < duration <= 10_000_000:
-        raise OperationError("invalid_media", "Media duration is outside the supported range.")
+        raise OperationError("invalid_media")
     if audio >= len(metadata.get("streams", [])):
-        raise OperationError("invalid_audio", "The selected audio stream does not exist.")
+        raise OperationError("invalid_audio")
     return duration
 
 
@@ -126,7 +127,7 @@ def status(client, _, checkpoint):
     except (URLError, TimeoutError):
         return {"running": False, "active_sessions": 0}
     if health.get("service") != "subtitle-relay":
-        raise OperationError("unexpected_service", "The configured port is not serving AheadSubs.")
+        raise OperationError("unexpected_service")
     return {"running": True, "active_sessions": health["active_sessions"]}
 
 
@@ -154,7 +155,7 @@ def generate_subtitles(client, args, checkpoint):
     path = media_path(args.path)
     output = Path(args.output).absolute()
     if output.suffix.lower() != ".srt" or output.resolve() == path or not output.parent.is_dir():
-        raise OperationError("invalid_output", "Choose a separate .srt destination in an existing directory.")
+        raise OperationError("invalid_output")
     if not args.overwrite and (output.exists() or output.is_symlink()):
         raise FileExistsError(output)
     deadline = time.monotonic() + args.timeout
@@ -163,7 +164,7 @@ def generate_subtitles(client, args, checkpoint):
         checkpoint()
         seconds = deadline - time.monotonic()
         if seconds <= 0:
-            raise OperationError("generation_timeout", "Subtitle generation timed out. Completed chunks can be reused on retry.")
+            raise OperationError("generation_timeout")
         return seconds
 
     duration = media_duration(path, args.audio, min(remaining(), 15))
@@ -174,14 +175,14 @@ def generate_subtitles(client, args, checkpoint):
         while True:
             reply = playback_result(client.send("playback", dict(request, position=position), timeout=min(remaining(), 5)))
             if generation is not None and reply["subtitle_generation"] != generation:
-                raise OperationError("generation_changed", "The media or service profile changed during processing. Retry the export.")
+                raise OperationError("generation_changed")
             generation = reply["subtitle_generation"]
             ready = reply["ready_ahead"]
             if ready >= duration - position and reply["subtitle"]:
                 remaining()
                 cache = Path(reply["subtitle"])
                 if output.resolve() == cache.resolve():
-                    raise OperationError("invalid_output", "Choose a destination outside the current subtitle cache file.")
+                    raise OperationError("invalid_output")
                 export_subtitle(cache, output, args.overwrite)
                 return {"subtitle": str(output.resolve()), "duration": duration, "has_cues": reply["subtitle_has_cues"]}
             if ready > 0:
@@ -195,41 +196,46 @@ def generate_subtitles(client, args, checkpoint):
 
 @dataclass(frozen=True)
 class Operation:
-    description: str
     arguments: type[Arguments]
     run: Callable
 
+    def schema(self):
+        schema = self.arguments.model_json_schema()
+        for field in schema["properties"].values():
+            if "description" in field:
+                field["description"] = text(field["description"])
+        return schema
+
 
 OPERATIONS = {
-    "status": Operation("Check whether the local subtitle service is running.", Arguments, status),
-    "translate_text": Operation("Translate text using the active AheadSubs translation provider.", Translation, translate_text),
-    "generate_subtitles": Operation("Generate a complete SRT for a local media file using the active profile.", Generation, generate_subtitles),
-    "update_playback": Operation("Start or refresh a look-ahead session. Poll with the same ID; it expires after 10 seconds of inactivity.",
-                                 PlaybackUpdate, update_playback),
-    "close_playback": Operation("Release a look-ahead session and retain its cached subtitles.", Session, close_playback),
+    "status": Operation(Arguments, status),
+    "translate_text": Operation(Translation, translate_text),
+    "generate_subtitles": Operation(Generation, generate_subtitles),
+    "update_playback": Operation(PlaybackUpdate, update_playback),
+    "close_playback": Operation(Session, close_playback),
 }
 
 
 def invoke(name, arguments, port=DEFAULT_PORT, checkpoint=lambda: None):
     if name not in OPERATIONS:
-        return OperationError("unknown_operation", "Unknown AheadSubs operation.").result()
+        return OperationError("unknown_operation").result()
     operation = OPERATIONS[name]
     try:
         options = operation.arguments.model_validate(arguments)
         return {"ok": True, **operation.run(RelayClient(port), options, checkpoint)}
     except ValidationError as exc:
         issue = exc.errors(include_input=False)[0]
-        field = ".".join(map(str, issue["loc"]))
-        return OperationError("invalid_arguments", f"{field}: {issue['msg']}").result()
+        field = ".".join(map(str, issue["loc"])) or "arguments"
+        return OperationError("invalid_arguments", field=field).result()
     except OperationError as exc:
         return exc.result()
     except RelayHTTPError as exc:
         return OperationError(exc.error_code or f"http_{exc.status}", str(exc)).result()
     except (TimeoutError, subprocess.TimeoutExpired):
-        return OperationError("request_timeout", "The local AheadSubs request or media probe timed out.").result()
+        return OperationError("request_timeout").result()
     except URLError:
-        return OperationError("service_unavailable", f"Start AheadSubs or check the local service port ({port}).").result()
+        return OperationError("service_unavailable", port=port).result()
     except FileExistsError:
-        return OperationError("output_exists", "The destination already exists. Set overwrite to replace it.").result()
+        return OperationError("output_exists").result()
     except (OSError, ValueError, KeyError, TypeError):
-        return OperationError("operation_failed", "AheadSubs could not complete the operation. Check the files and local service.").result()
+        return OperationError("operation_failed").result()

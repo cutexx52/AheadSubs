@@ -5,21 +5,22 @@ import sys
 from pathlib import Path
 
 from .automation import DEFAULT_PORT, OPERATIONS, invoke
+from .automation_text import text
 
 
 def port_number(value):
     port = int(value)
     if not 1 <= port <= 65535:
-        raise argparse.ArgumentTypeError("port must be between 1 and 65535")
+        raise argparse.ArgumentTypeError(text("cli.port_error"))
     return port
 
 
 def add_operation(commands, name, operation):
-    command = commands.add_parser(name.replace("_", "-"), help=operation.description,
-                                  description=operation.description)
+    description = text(f"operation.{name}")
+    command = commands.add_parser(name.replace("_", "-"), help=description, description=description)
     command.set_defaults(operation=name)
     command.add_argument("--port", type=port_number, default=argparse.SUPPRESS)
-    schema = operation.arguments.model_json_schema()
+    schema = operation.schema()
     for field, details in schema["properties"].items():
         kind = details.get("type") or next((item.get("type") for item in details.get("anyOf", ())
                                             if item.get("type") != "null"), None)
@@ -31,19 +32,19 @@ def add_operation(commands, name, operation):
         else:
             options["type"] = {"integer": int, "number": float, "string": str}.get(kind, json.loads)
         if name == "translate_text" and field == "text":
-            options["help"] += " (use - to read from stdin)"
+            options["help"] = text("field.text_stdin", description=options["help"])
         command.add_argument(argument, **options)
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(prog="aheadsubs", description="Automate the local AheadSubs subtitle service.")
-    parser.add_argument("--port", type=port_number, default=DEFAULT_PORT, help="Local subtitle service port")
+    parser = argparse.ArgumentParser(prog="aheadsubs", description=text("cli.intro"))
+    parser.add_argument("--port", type=port_number, default=DEFAULT_PORT, help=text("cli.port"))
     commands = parser.add_subparsers(dest="command", required=True)
     for name, operation in OPERATIONS.items():
         add_operation(commands, name, operation)
-    mcp = commands.add_parser("mcp", help="Run the MCP stdio server for a local agent")
+    mcp = commands.add_parser("mcp", help=text("cli.mcp"))
     mcp.add_argument("--port", type=port_number, default=argparse.SUPPRESS)
-    mcp.add_argument("--desktop", action="store_true", help="Honor the desktop app's MCP access switch")
+    mcp.add_argument("--desktop", action="store_true", help=text("cli.desktop"))
     values = vars(parser.parse_args(argv))
     command, port = values.pop("command"), values.pop("port")
     if command == "mcp":

@@ -147,10 +147,11 @@ def run_command(command, item=None, folder=None):
     if command == "status":
         return status()
     if command == "automation":
+        from ..automation_text import text
         from .automation import configure
 
         if item not in (None, "mcp-enable", "mcp-disable", "cli-install", "cli-remove"):
-            raise ValueError("不支持的接入操作。")
+            raise ValueError(text("error.integration_action"))
         return configure(item)
     if command == "inspect":
         return inspect_cache(runtime.DATA / "cache" / "cache.sqlite3", item)

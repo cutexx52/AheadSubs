@@ -163,19 +163,19 @@
     </StackPanel></Border>
     <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="诊断" Style="{StaticResource Section}"/><CheckBox x:Name="Diagnostics" Content="记录详细诊断日志" Margin="0,8,0,10"/><TextBlock Text="仅排查问题时开启。关闭诊断不会隐藏必要的错误提示。" Style="{StaticResource Hint}"/><Button Content="打开日志目录" Click="OpenLogs" HorizontalAlignment="Left" Margin="0,18,0,0"/></StackPanel></Border>
    </StackPanel></ScrollViewer></TabItem>
-   <TabItem Header="接入" x:Name="AutomationTab"><ScrollViewer Style="{StaticResource PageScroll}"><StackPanel>
-    <TextBlock Text="接入" Style="{StaticResource PageTitle}"/>
-    <TextBlock Text="让本机 Agent 和脚本使用 AheadSubs 翻译文本、生成 SRT 或控制字幕预读。请先在翻译页启动字幕服务。接入任务使用当前模型配置。" Style="{StaticResource Hint}" Margin="0,0,0,16"/>
+   <TabItem x:Name="AutomationTab"><ScrollViewer Style="{StaticResource PageScroll}"><StackPanel>
+    <TextBlock x:Name="AutomationTitle" Style="{StaticResource PageTitle}"/>
+    <TextBlock x:Name="AutomationIntro" Style="{StaticResource Hint}" Margin="0,0,0,16"/>
     <Border Style="{StaticResource Card}"><StackPanel>
-     <DockPanel><TextBlock x:Name="McpStatus" Text="正在读取" Style="{StaticResource Hint}" DockPanel.Dock="Right"/><TextBlock Text="MCP" Style="{StaticResource Section}"/></DockPanel>
-     <TextBlock Text="开启后，将配置添加到支持 stdio 的本机客户端。连接时由客户端启动 MCP 服务。使用云端模型时，任务会调用已配置的服务商。" Style="{StaticResource Hint}" Margin="0,8,0,12"/>
-     <WrapPanel Margin="0,0,0,8"><Button x:Name="McpToggle" Content="开启 MCP 接入" IsEnabled="False" Click="ToggleMcp"/><Button x:Name="CopyMcpButton" Content="复制 MCP 配置" IsEnabled="False" Click="CopyMcpConfig"/></WrapPanel>
-     <TextBox x:Name="McpConfiguration" IsReadOnly="True" FontFamily="Consolas" TextWrapping="Wrap" MaxHeight="174" VerticalScrollBarVisibility="Auto" Visibility="Collapsed" AutomationProperties.Name="MCP 客户端配置"/>
+     <DockPanel><TextBlock x:Name="McpStatus" Style="{StaticResource Hint}" DockPanel.Dock="Right"/><TextBlock Text="MCP" Style="{StaticResource Section}"/></DockPanel>
+     <TextBlock x:Name="McpHint" Style="{StaticResource Hint}" Margin="0,8,0,12"/>
+     <WrapPanel Margin="0,0,0,8"><Button x:Name="McpToggle" IsEnabled="False" Click="ToggleMcp"/><Button x:Name="CopyMcpButton" IsEnabled="False" Click="CopyMcpConfig"/></WrapPanel>
+     <TextBox x:Name="McpConfiguration" IsReadOnly="True" FontFamily="Consolas" TextWrapping="Wrap" MaxHeight="174" VerticalScrollBarVisibility="Auto" Visibility="Collapsed"/>
     </StackPanel></Border>
     <Border Style="{StaticResource Card}"><StackPanel>
-     <DockPanel><TextBlock x:Name="CliStatus" Text="正在读取" Style="{StaticResource Hint}" DockPanel.Dock="Right"/><TextBlock Text="命令行 CLI" Style="{StaticResource Section}"/></DockPanel>
-     <TextBlock x:Name="CliHint" Text="安装后，重新打开终端并运行 aheadsubs status。用 aheadsubs --help 查看命令。" Style="{StaticResource Hint}" Margin="0,8,0,12"/>
-     <Button x:Name="CliToggle" Content="安装 CLI" IsEnabled="False" Click="ToggleCli" HorizontalAlignment="Left"/>
+     <DockPanel><TextBlock x:Name="CliStatus" Style="{StaticResource Hint}" DockPanel.Dock="Right"/><TextBlock x:Name="CliTitle" Style="{StaticResource Section}"/></DockPanel>
+     <TextBlock x:Name="CliHint" Style="{StaticResource Hint}" Margin="0,8,0,12"/>
+     <Button x:Name="CliToggle" IsEnabled="False" Click="ToggleCli" HorizontalAlignment="Left"/>
     </StackPanel></Border>
     <TextBlock x:Name="AutomationStatus" Style="{StaticResource Hint}" AutomationProperties.LiveSetting="Polite"/>
    </StackPanel></ScrollViewer></TabItem>

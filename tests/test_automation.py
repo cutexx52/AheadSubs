@@ -1,17 +1,92 @@
 import json
+import os
+import sys
 import tempfile
 import unittest
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
-from unittest.mock import Mock, patch
+from string import Formatter
+from unittest.mock import MagicMock, Mock, patch
+
+import anyio
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
 
 from subtitle_relay.automation import invoke
+from subtitle_relay.automation_text import MESSAGES
 from subtitle_relay.cli import main
 from subtitle_relay.client import RelayHTTPError
 
 
 class AutomationTest(unittest.TestCase):
+    def test_locales_preserve_protocol_and_fall_back_to_english(self):
+        messages = []
+        for language in ("en", "zh-CN", "fr-FR"):
+            with patch.dict(os.environ, {"AHEADSUBS_UI_LOCALE": language}):
+                result = invoke("close_playback", {})
+                self.assertEqual(result["error_code"], "invalid_arguments")
+                self.assertIn("session", result["error"])
+                messages.append(result["error"])
+        self.assertNotEqual(messages[0], messages[1])
+        self.assertEqual(messages[0], messages[2])
+        for key, variants in MESSAGES.items():
+            fields = [{name for _, name, _, _ in Formatter().parse(value) if name} for value in variants]
+            self.assertEqual(fields[0], fields[1], key)
+
+    def test_mcp_discovers_localized_schema_and_returns_shared_error(self):
+        async def check():
+            params = StdioServerParameters(command=sys.executable, args=["-m", "subtitle_relay.cli", "mcp"],
+                                           cwd=Path(__file__).resolve().parents[1],
+                                           env={"AHEADSUBS_UI_LOCALE": "zh-CN"})
+            with anyio.fail_after(20):
+                async with stdio_client(params) as streams, ClientSession(*streams) as client:
+                    await client.initialize()
+                    tools = {tool.name: tool for tool in (await client.list_tools()).tools}
+                    generation = tools["aheadsubs_generate_subtitles"]
+                    self.assertEqual(set(generation.input_schema["required"]), {"path", "output"})
+                    self.assertEqual(generation.input_schema["properties"]["path"]["description"], "本机媒体文件路径")
+                    result = await client.call_tool("aheadsubs_close_playback", {})
+                    self.assertTrue(result.is_error)
+                    with patch.dict(os.environ, {"AHEADSUBS_UI_LOCALE": "zh-CN"}):
+                        self.assertEqual(result.structured_content, invoke("close_playback", {}))
+
+        anyio.run(check)
+
+    @unittest.skipUnless(os.name == "nt", "Windows user PATH registration")
+    def test_desktop_bridge_registers_cli_without_changing_other_path_entries(self):
+        from subtitle_relay.desktop import automation
+        from subtitle_relay.desktop.bridge import run_command
+
+        with tempfile.TemporaryDirectory(prefix="接入 ") as directory:
+            root = Path(directory)
+            cli = root / "cli"
+            cli.mkdir()
+            (cli / "aheadsubs.exe").touch()
+            original = r"%SystemRoot%\Other;C:\Tools"
+            entries = {"Path": original}
+            registry = automation.winreg
+
+            def write(_, name, __, kind, value):
+                self.assertEqual(kind, registry.REG_EXPAND_SZ)
+                entries[name] = value
+
+            with patch.object(automation.runtime, "ROOT", root), patch.object(automation.runtime, "DATA", root / "data"), \
+                 patch.object(registry, "OpenKey", return_value=MagicMock()), \
+                 patch.object(registry, "CreateKeyEx", return_value=MagicMock()), \
+                 patch.object(registry, "QueryValueEx", side_effect=lambda _, name: (entries[name], registry.REG_EXPAND_SZ)), \
+                 patch.object(registry, "SetValueEx", side_effect=write), patch.object(automation.ctypes, "windll", MagicMock()):
+                initial = run_command("automation")
+                self.assertFalse(initial["cli_installed"])
+                self.assertFalse(initial["mcp_enabled"])
+                for _ in range(2):
+                    self.assertTrue(run_command("automation", "cli-install")["cli_installed"])
+                self.assertEqual(entries["Path"], f"{cli};{original}")
+                self.assertFalse(run_command("automation", "cli-remove")["cli_installed"])
+                self.assertEqual(entries["Path"], original)
+                self.assertTrue(run_command("automation", "mcp-enable")["mcp_enabled"])
+                self.assertFalse(run_command("automation", "mcp-disable")["mcp_enabled"])
+
     def test_cli_and_shared_operation_preserve_provider_error_code(self):
         client = Mock()
         client.translate_text.side_effect = RelayHTTPError(502, "Provider denied this request", "content_blocked")

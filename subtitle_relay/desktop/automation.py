@@ -7,6 +7,7 @@ from ctypes import wintypes
 from pathlib import Path
 
 from . import runtime
+from ..automation_text import text
 
 
 def mcp_enabled():
@@ -34,7 +35,7 @@ def is_app_directory(entry):
 
 def set_cli_installed(installed):
     if installed and not (cli_directory() / "aheadsubs.exe").is_file():
-        raise ValueError("源码运行请在终端执行 python -m pip install . 安装 CLI。")
+        raise ValueError(text("error.cli_not_bundled"))
     with winreg.CreateKeyEx(winreg.HKEY_CURRENT_USER, "Environment", 0,
                             winreg.KEY_QUERY_VALUE | winreg.KEY_SET_VALUE) as key:
         entries, kind = path_entries(key)
