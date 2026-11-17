@@ -15,6 +15,22 @@ from subtitle_relay.providers import Cue, OpenAIWhisper
 
 class RelayTest(unittest.TestCase):
     @unittest.skipUnless(os.name == "nt", "PotPlayer requires Windows")
+    def test_potplayer_first_load_waits_for_a_real_subtitle_cue(self):
+        from subtitle_relay.potplayer import PotPlayer
+
+        player = PotPlayer.__new__(PotPlayer)
+        player.subtitle = player.track = None
+        player.load_subtitle = Mock()
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "subtitle.srt"
+            path.write_bytes(b"\xef\xbb\xbf\r\n")
+            player.publish(str(path), 1)
+            player.load_subtitle.assert_not_called()
+            path.write_text("1\n00:00:00,100 --> 00:00:01,000\nHello\n", encoding="utf-8")
+            player.publish(str(path), 2)
+            player.load_subtitle.assert_called_once_with(path)
+
+    @unittest.skipUnless(os.name == "nt", "PotPlayer requires Windows")
     def test_potplayer_path_access_denied_offers_manual_resolution(self):
         import psutil
         from subtitle_relay.potplayer import MediaPathUnavailable, current_media

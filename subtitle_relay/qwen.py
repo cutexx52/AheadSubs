@@ -21,7 +21,7 @@ MODELS = {
 }
 MODEL_FILES = {
     "0.6b": (631026336, "f63771c02dfa486d9399d41ab6ab8cd2d8ca24e077cd32130ea1f67f4fd8dade"),
-    "1.7b": (1490915200, "ec197cef7ccc589fdcae1becc3f4a3de119d0a41e790b898b519b1a048dad8d4"),
+    "1.7b": (1334415232, "1f1d26ee044f0f041b0a7bfcf6d560996103c951acbde6eb48ccb24e7edfc69c"),
 }
 ALIGNER_FILE = (529001216, "a7bb4cbeacc6414f11a5d23dc7661a51a941a71e6d559dc7b408b52473f2ae84")
 

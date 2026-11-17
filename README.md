@@ -11,11 +11,11 @@
 
 **PotPlayer** 标签提供两个入口：
 
-常用方式：启动 Relay 服务后，在正在播放的 PotPlayer 窗口按 **Ctrl+Alt+J**。再次按同一键停止该窗口的预读。启用后，预读会跟随同一窗口切换视频；如果 Windows 无法提供完整路径，Relay 会在该窗口已确认的目录查找对应文件，找不到时才询问。快捷键由 Relay 服务注册，可在 PotPlayer 标签关闭，重启服务后生效。先使用带文件名的 PotPlayer 标题格式；无法识别标题时可走扩展菜单或助手里的 Attach。
+常用方式：启动 Relay 服务后，在正在播放的 PotPlayer 窗口按 **Ctrl+Alt+J** 开启预读，按 **Ctrl+Alt+K** 停止。启用后，预读会跟随同一窗口切换视频；如果 Windows 无法提供完整路径，Relay 会在该窗口已确认的目录查找对应文件，找不到时才询问。快捷键由 Relay 服务注册，可在 PotPlayer 标签关闭，重启服务后生效。先使用带文件名的 PotPlayer 标题格式；无法识别标题时可走扩展菜单或助手里的 Attach。
 
 - **Open video with translated subtitles…** 选择本地视频或 Windows 共享文件，服务先准备起始字幕，再用新 PotPlayer 窗口加载 SRT。后续更新会触发 PotPlayer 原生 Reload Subtitle 命令。已打开的视频也可用 **Select media and start pre-reading…** 手动绑定，助手会把首份 SRT 交给指定窗口。SRT 保存在后台缓存目录，默认是 `%LOCALAPPDATA%\Subtitle Relay\cache`。
 - **Install PotPlayer translation menu** 安装原生 **Subtitle Relay (local service)** 翻译引擎。重开 PotPlayer 后，在实时字幕翻译的引擎列表选择它，并指定来源和目标语言。该回调处理 PotPlayer 传入的现成字幕文本。观看已经由后台生成译文的 SRT 时，可关闭 PotPlayer 自己的字幕翻译以免重复处理。
-- 已经在 PotPlayer 打开视频时，在 **F5 → 扩展功能 → 实时字幕翻译** 的列表选 **Subtitle Relay - Start audio pre-read**，打开它的**设置**并点**确定**。扩展把当前视频的文件名交给后台。用 **Ctrl+Alt+J** 停止预读。默认译成简体中文、预读 20 秒并读第一条音轨。
+- 已经在 PotPlayer 打开视频时，在 **F5 → 扩展功能 → 实时字幕翻译** 的列表选 **Subtitle Relay - Start audio pre-read**，打开它的**设置**并点**确定**。扩展把当前视频的文件名交给后台。用 **Ctrl+Alt+K** 停止预读。默认译成简体中文、预读 20 秒并读第一条音轨。
 
 ## 单独运行后台
 
@@ -26,6 +26,8 @@ python -m venv .venv
 ```
 
 本地默认使用 faster-whisper `small` 和 NLLB 600M INT8，经 CTranslate2 在 CUDA 上运行。CPU 可用 `--device cpu`。NLLB 支持 ISO 简写和模型语言代码，例如 `en`、`ja`、`zh`、`zh-TW`。默认 checkpoint 的基础权重使用 CC BY-NC 4.0，可通过 `--nllb-model` 指向其他兼容权重或指定 `--mt compatible`。
+
+也可以在「文本翻译」选择 `[远程] qwen-mt-flash`、`qwen-mt-lite` 或 `qwen-mt-plus`，并在「高级设置」填写与百炼工作空间对应的 **Qwen-MT Base URL** 和单独的 **Qwen-MT 密钥文件**。也可使用 `DASHSCOPE_API_KEY` 环境变量。命令行参数为 `--mt qwen-mt --qwen-mt-model qwen-mt-flash --qwen-mt-url … --qwen-mt-key-file …`。每条字幕独立翻译并保留原有时间戳。见[百炼 API Key 帮助](https://www.alibabacloud.com/help/en/model-studio/get-api-key)和[Qwen-MT 接口说明](https://www.alibabacloud.com/help/en/model-studio/qwen-mt-api)。
 
 ```cmd
 .venv\Scripts\python -m subtitle_relay serve --asr openai --mt openai --key-file D:\path\outside-repo\openai

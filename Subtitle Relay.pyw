@@ -32,6 +32,7 @@ DEFAULTS = {
     "asr_url": "http://127.0.0.1:8000/v1", "asr_model": "qwen3-asr",
     "asr": "local", "mt": "local", "device": "cuda", "whisper_model": "small",
     "llm_model": "gpt-4.1-mini", "llm_url": "http://127.0.0.1:11434/v1", "key_file": "",
+    "qwen_mt_model": "qwen-mt-flash", "qwen_mt_url": "", "qwen_mt_key_file": "",
     "chunk": "8", "before": "2", "after": "2", "max_speech": "12",
     "min_silence_ms": "450", "pad_ms": "160", "vad_threshold": "0.5", "backfill": "4",
 }
@@ -211,7 +212,7 @@ def pot_event(event, detail, hwnd=None):
         log.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')}{window} {event} {detail}\n")
 
 
-def native_potplayer(encoded=None, foreground=None):
+def native_potplayer(encoded=None, foreground=None, disable=False):
     from subtitle_relay.potplayer import (MediaPathUnavailable, caller_potplayer, current_media,
                                           list_windows, media_from_folder)
 
@@ -228,7 +229,7 @@ def native_potplayer(encoded=None, foreground=None):
             continue
     if foreground:
         match = next((title for hwnd, title in list_windows() if hwnd == foreground), None)
-        if not match or not match.endswith(" - PotPlayer"):
+        if match is None or (not disable and not match.endswith(" - PotPlayer")):
             raise RuntimeError("This PotPlayer window title does not identify the current file.")
         filename = match.removesuffix(" - PotPlayer")
     if filename is None:
@@ -276,12 +277,20 @@ def native_potplayer(encoded=None, foreground=None):
         try:
             msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
         except OSError:
-            if not foreground:
+            if disable:
+                stop.touch()
+                report("off", "预读已关闭")
+            elif foreground:
+                if stop.exists():
+                    report("stopping", "预读正在关闭，稍等后按 Ctrl+Alt+J 开启。")
+                else:
+                    report("already-active", "当前窗口的预读已开启")
+            else:
                 pot_event("already-active", "PotPlayer 重复调用了预读扩展", hwnd)
-                feedback.close()
-                return
-            stop.touch()
-            report("off", "预读已关闭")
+            feedback.close(2 if foreground else 0)
+            return
+        if disable:
+            report("already-off", "当前窗口的预读已关闭")
             feedback.close(2)
             return
         try:
@@ -370,6 +379,7 @@ def run_native_adapter(hwnd, media, stop, report, resolve_media):
 
 def gui(initial_media=None):
     from subtitle_relay.potplayer import list_windows
+    from subtitle_relay.providers import QWEN_MT_MODELS, openai_key, qwen_mt_credentials
 
     root = tk.Tk()
     root.title(f"Subtitle Relay — {Path(initial_media).name}" if initial_media else "Subtitle Relay")
@@ -408,20 +418,32 @@ def gui(initial_media=None):
         "[本地] Whisper Small": "local", **dict.fromkeys(QWEN_LABELS, "qwen"),
         "[远程] OpenAI Whisper": "openai", "[自定义] 语音识别 API": "compatible",
     }
+    qwen_mt_models = {f"[远程] {model}": model for model in QWEN_MT_MODELS}
+    openai_models = {f"[远程] OpenAI {model}": model
+                     for model in (settings["llm_model"].get(), "gpt-4.1-mini", "gpt-6-luna")}
     mt_models = {"[本地] NLLB-200 600M INT8": "local",
-                 f"[远程] OpenAI {settings['llm_model'].get()}": "openai",
+                 **dict.fromkeys(openai_models, "openai"),
+                 **dict.fromkeys(qwen_mt_models, "qwen-mt"),
                  "[自定义] 文本翻译 API": "compatible"}
     speech = tk.StringVar(value=next((label for label, kind in asr_models.items()
                                      if kind == settings["asr"].get() and
                                      (kind != "qwen" or QWEN_LABELS[label] == settings["qwen_size"].get())), ""))
     translation = tk.StringVar(value=next((label for label, kind in mt_models.items()
-                                           if kind == settings["mt"].get()), ""))
+                                           if kind == settings["mt"].get() and
+                                           (kind != "qwen-mt" or qwen_mt_models[label] ==
+                                            settings["qwen_mt_model"].get())), ""))
     ttk.Label(setup, text="语音识别").grid(row=2, column=0, sticky="w", padx=(0, 12), pady=5)
     speech_box = ttk.Combobox(setup, textvariable=speech, state="readonly", width=40)
     speech_box.grid(row=2, column=1, sticky="ew")
     ttk.Label(setup, text="文本翻译").grid(row=3, column=0, sticky="w", padx=(0, 12), pady=5)
     translation_box = ttk.Combobox(setup, textvariable=translation, state="readonly", width=40)
     translation_box.grid(row=3, column=1, sticky="ew")
+
+    def choose_translation(_event):
+        if translation.get() in openai_models:
+            settings["llm_model"].set(openai_models[translation.get()])
+
+    translation_box.bind("<<ComboboxSelected>>", choose_translation)
     ttk.Label(setup, text="视频语言").grid(row=4, column=0, sticky="w", pady=5)
     languages = {"自动识别": "", "日语": "ja", "英语": "en", "中文": "zh", "韩语": "ko"}
     language = tk.StringVar(value=next((name for name, code in languages.items()
@@ -482,6 +504,10 @@ def gui(initial_media=None):
         filedialog.askopenfilename() or settings["key_file"].get())).grid(row=12, column=2, padx=5)
     field(advanced, 13, "device", "Local inference device", ["cuda", "cpu"])
     field(advanced, 14, "route", "Translation path", ["asr+mt", "OpenAI AST (English)"])
+    field(advanced, 15, "qwen_mt_url", "Qwen-MT Base URL")
+    field(advanced, 16, "qwen_mt_key_file", "Qwen-MT 密钥文件")
+    ttk.Button(advanced, text="Browse…", command=lambda: settings["qwen_mt_key_file"].set(
+        filedialog.askopenfilename() or settings["qwen_mt_key_file"].get())).grid(row=16, column=2, padx=5)
 
     def save():
         DATA.mkdir(parents=True, exist_ok=True)
@@ -503,19 +529,21 @@ def gui(initial_media=None):
         elif speech.get() == "[本地] Whisper Small":
             settings["whisper_model"].set("small")
         settings["mt"].set(mt_models[translation.get()])
+        if translation.get() in qwen_mt_models:
+            settings["qwen_mt_model"].set(qwen_mt_models[translation.get()])
         settings["source"].set(languages[language.get()])
         if not PYTHON.is_file():
             messagebox.showerror("Subtitle Relay", "The project .venv is missing. See the installation in README.md.")
             return
-        if ("openai" in (settings["asr"].get(), settings["mt"].get())
-                or settings["route"].get() == "OpenAI AST (English)"):
-            from subtitle_relay.providers import openai_key
-
-            try:
+        try:
+            if ("openai" in (settings["asr"].get(), settings["mt"].get())
+                    or settings["route"].get() == "OpenAI AST (English)"):
                 openai_key(settings["key_file"].get())
-            except ValueError as exc:
-                model_status.set(str(exc))
-                return
+            if settings["mt"].get() == "qwen-mt" and settings["route"].get() != "OpenAI AST (English)":
+                qwen_mt_credentials(settings["qwen_mt_url"].get(), settings["qwen_mt_key_file"].get())
+        except ValueError as exc:
+            model_status.set(str(exc))
+            return
         model_status.set("")
         save()
         with LOG.open("ab") as output:
@@ -577,7 +605,7 @@ def gui(initial_media=None):
     ttk.Label(setup, textvariable=setup_status).grid(row=11, column=1, columnspan=2, sticky="w")
 
     ttk.Button(pot, text="Install PotPlayer translation menu", command=pot_install).pack(anchor="w")
-    ttk.Checkbutton(pot, text="Ctrl+Alt+J toggles pre-read in the active PotPlayer window",
+    ttk.Checkbutton(pot, text="Ctrl+Alt+J 开启预读，Ctrl+Alt+K 关闭预读",
                     variable=settings["pot_hotkey"], onvalue="1", offvalue="0",
                     command=save).pack(anchor="w", pady=(8, 0))
     ttk.Label(pot, text="Open a local video in a new PotPlayer window with a live translated subtitle track.",
@@ -698,10 +726,10 @@ if __name__ == "__main__":
         prepare()
     elif "--background" in sys.argv or "--restart" in sys.argv:
         background_start(restart="--restart" in sys.argv)
-    elif len(sys.argv) >= 3 and sys.argv[1] in {"--pot-toggle", "--pot-hwnd"}:
+    elif len(sys.argv) >= 3 and sys.argv[1] in {"--pot-toggle", "--pot-hwnd", "--pot-stop-hwnd"}:
         try:
-            if sys.argv[1] == "--pot-hwnd":
-                native_potplayer(foreground=int(sys.argv[2]))
+            if sys.argv[1] != "--pot-toggle":
+                native_potplayer(foreground=int(sys.argv[2]), disable=sys.argv[1] == "--pot-stop-hwnd")
             else:
                 native_potplayer("".join(sys.argv[2:]).strip('"'))
         except EOFError:

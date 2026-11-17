@@ -11,7 +11,7 @@ from .engine import Relay
 from .players import Mpv, run_adapter
 from .protocol import RelayClient, serve
 from .providers import (ChatTranslation, FasterWhisper, NllbTranslation, OpenAIWhisper,
-                        configure_cuda, openai_client)
+                        QWEN_MT_MODELS, QwenMtTranslation, configure_cuda, openai_client, qwen_mt_client)
 
 
 class ClockPlayer:
@@ -53,13 +53,19 @@ def make_relay(args):
             recognizer = OpenAIWhisper(cloud)
         if args.mt == "local":
             translator = NllbTranslation(args.nllb_model, args.device, min(args.workers, 2))
+        elif args.mt == "qwen-mt":
+            translator = QwenMtTranslation(qwen_mt_client(args.qwen_mt_url, args.qwen_mt_key_file),
+                                           args.qwen_mt_model)
         else:
             client = cloud if args.mt == "openai" else openai_client(endpoint=args.llm_url)
-            translator = ChatTranslation(client, args.llm_model)
+            effort = "none" if args.mt == "openai" and args.llm_model.startswith("gpt-6-luna") else None
+            translator = ChatTranslation(client, args.llm_model, reasoning_effort=effort)
     profile = ["v2", args.asr, args.mt, args.ast, args.whisper_model, args.nllb_model,
                args.llm_model, args.llm_url, args.device, asdict(settings)]
     if args.asr in {"compatible", "qwen"} and not args.ast:
         profile.extend([args.asr_url if args.asr == "compatible" else args.qwen_size, args.asr_model])
+    if args.mt == "qwen-mt" and not args.ast:
+        profile.extend([args.qwen_mt_model, args.qwen_mt_url.rstrip("/")])
     return Relay(args.cache, recognizer, translator, profile, args.workers, args.chunk,
                  OpenAIWhisper(cloud) if args.ast else None, Segmenter(settings))
 
@@ -73,7 +79,10 @@ def main():
     server.add_argument("--qwen-root", type=Path)
     server.add_argument("--asr-url", default="http://127.0.0.1:8000/v1")
     server.add_argument("--asr-model", default="qwen3-asr")
-    server.add_argument("--mt", choices=["local", "openai", "compatible"], default="local")
+    server.add_argument("--mt", choices=["local", "openai", "compatible", "qwen-mt"], default="local")
+    server.add_argument("--qwen-mt-model", choices=QWEN_MT_MODELS, default=QWEN_MT_MODELS[0])
+    server.add_argument("--qwen-mt-url", default="")
+    server.add_argument("--qwen-mt-key-file")
     server.add_argument("--ast", action="store_true", help="Use OpenAI speech translation to English")
     server.add_argument("--device", choices=["cpu", "cuda"], default="cuda")
     server.add_argument("--whisper-model", default="small")
@@ -126,7 +135,8 @@ def main():
         logger.info(
             "Starting service asr=%s mt=%s qwen_size=%s llm_model=%s ast=%s workers=%d",
             args.asr, args.mt, args.qwen_size if args.asr == "qwen" else "-",
-            args.llm_model if args.mt == "openai" and not args.ast else "-", args.ast, args.workers)
+            {"openai": args.llm_model, "qwen-mt": args.qwen_mt_model}.get(args.mt, "-") if not args.ast else "-",
+            args.ast, args.workers)
         if not (0 <= args.before <= 5 and 0 <= args.after <= 5 and
                 2 <= args.max_speech <= 20 and 40 <= args.min_silence_ms <= 2000 and
                 0 <= args.pad_ms <= 500 and 0 < args.vad_threshold < 1 and

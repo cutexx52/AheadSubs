@@ -46,15 +46,19 @@ def translate_chunk(playback, index, chunk, recognizer, translator, speech_trans
     wav = extract_audio(playback.path, playback.audio, read_start,
                         start + chunk + settings.after - read_start)
     if len(wav) < 400:
+        logging.getLogger(__name__).info("No audio samples start=%.1fs audio_stream=%d", start, playback.audio)
         return []
     translated = []
-    for offset, speech in segmenter.spans(wav) if segmenter else [(0, wav)]:
+    spans = segmenter.spans(wav) if segmenter else [(0, wav)]
+    raw_cues = 0
+    for offset, speech in spans:
         base = read_start + offset
         if speech_translator:
             cues = speech_translator.speech_translate(speech, playback.source, playback.target)
             language = playback.target
         else:
             language, cues = recognizer.recognize(speech, playback.source)
+        raw_cues += len(cues)
         end = base + (len(speech) - 44) / 32000
         # Assign overlapping context to a single chunk by the cue midpoint.
         cues = [Cue(max(base, base + cue.start), min(end, base + cue.end), cue.text) for cue in cues
@@ -69,6 +73,9 @@ def translate_chunk(playback, index, chunk, recognizer, translator, speech_trans
             cues = [Cue(cue.start, cue.end, text, cue.text)
                     for cue, text in zip(cues, texts, strict=True)]
         translated.extend(cues)
+    if not translated:
+        logging.getLogger(__name__).info("No subtitle start=%.1fs source=%s speech_spans=%d asr_cues=%d",
+                                         start, playback.source or "auto", len(spans), raw_cues)
     return translated
 
 
@@ -170,7 +177,7 @@ class Relay:
                                + " ".join(cue.text.splitlines())
                                for index, cue in enumerate(cues, 1))
             temp = path.with_suffix(f".{os.getpid()}.tmp")
-            temp.write_text(body + "\n", encoding="utf-8")
+            temp.write_text(body + "\n" if body else "", encoding="utf-8")
             os.replace(temp, path)
             self.rendered[key] = revision
         return path, revision

@@ -154,30 +154,34 @@ def current_media(pid, filename):
 
 
 def start_hotkey(launcher):
-    """Listen for Ctrl+Alt+J while the server is running."""
+    """Register dedicated start and stop keys for the foreground PotPlayer window."""
     def listen():
         user = ct.WinDLL("user32", use_last_error=True)
         user.GetForegroundWindow.restype = win.HWND
         user.GetMessageW.argtypes = [ct.POINTER(win.MSG), win.HWND, win.UINT, win.UINT]
-        if not user.RegisterHotKey(None, 1, 0x4003, ord("J")):
-            print("PotPlayer hotkey Ctrl+Alt+J is already in use.", flush=True)
+        commands = {}
+        for identifier, key, argument in ((1, "J", "--pot-hwnd"), (2, "K", "--pot-stop-hwnd")):
+            if user.RegisterHotKey(None, identifier, 0x4003, ord(key)):
+                commands[identifier] = argument
+                print(f"PotPlayer hotkey Ctrl+Alt+{key} registered", flush=True)
+            else:
+                print(f"PotPlayer hotkey Ctrl+Alt+{key} is already in use.", flush=True)
+        if not commands:
             return
-        print("PotPlayer hotkey Ctrl+Alt+J registered", flush=True)
         message = win.MSG()
-        previous = 0.0
         try:
             while user.GetMessageW(ct.byref(message), None, 0, 0) > 0:
-                if message.message != 0x312:
+                if message.message != 0x312 or message.wParam not in commands:
                     continue
                 foreground = user.GetForegroundWindow()
-                now = time.monotonic()
-                if now - previous >= 0.65 and any(hwnd == foreground for hwnd, _ in list_windows()):
-                    previous = now
-                    print(f"PotPlayer hotkey received hwnd={foreground:#x}", flush=True)
-                    subprocess.Popen([sys.executable, str(launcher), "--pot-hwnd", str(foreground)],
+                if any(hwnd == foreground for hwnd, _ in list_windows()):
+                    command = commands[message.wParam]
+                    print(f"PotPlayer hotkey {command} hwnd={foreground:#x}", flush=True)
+                    subprocess.Popen([sys.executable, str(launcher), command, str(foreground)],
                                      creationflags=subprocess.CREATE_NO_WINDOW)
         finally:
-            user.UnregisterHotKey(None, 1)
+            for identifier in commands:
+                user.UnregisterHotKey(None, identifier)
 
     Thread(target=listen, daemon=True).start()
 
@@ -256,8 +260,9 @@ class PotPlayer:
                 self.subtitle, self.revision = path, revision
             return
         if self.subtitle != path:
-            if Path(path).stat().st_size <= 1:
-                return
+            with Path(path).open("r", encoding="utf-8-sig") as subtitle:
+                if not subtitle.read(64).strip():
+                    return
             self.load_subtitle(Path(path))
             print(f"Loaded subtitle into PotPlayer: {path}", flush=True)
             self.subtitle, self.revision = path, revision

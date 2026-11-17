@@ -2,7 +2,7 @@ string GetTitle() { return "Subtitle Relay - Start audio pre-read"; }
 string GetVersion() { return "2"; }
 string GetDesc() { return "Start audio pre-read for the current PotPlayer window."; }
 string GetLoginTitle() { return "Subtitle Relay audio pre-read"; }
-string GetLoginDesc() { return "Click OK to start audio pre-read. Use Ctrl+Alt+J in PotPlayer to stop."; }
+string GetLoginDesc() { return "Click OK to start audio pre-read. Use Ctrl+Alt+K in PotPlayer to stop."; }
 string GetUserText() { return "Optional"; }
 string GetPasswordText() { return ""; }
 array<string> GetSrcLangs() { array<string> languages = {""}; return languages; }
