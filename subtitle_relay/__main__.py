@@ -153,7 +153,7 @@ def make_relay(args):
             translator = ChatGPTTranslation(args.chatgpt_account, args.chatgpt_model)
         elif args.mt == "minimax":
             translator = MiniMaxTranslation(args.minimax_key_file, api_key=desktop_key("minimax"))
-        else:
+        elif args.mt != "none":
             client = cloud if args.mt == "openai" else openai_client(
                 endpoint=args.llm_url, api_key=desktop_key("compatible-mt", args.llm_url))
             effort = "none" if args.mt == "openai" and args.llm_model.startswith("gpt-6-luna") else None
@@ -175,12 +175,21 @@ def make_relay(args):
         profile.extend([args.dashscope_asr_model, dashscope_url])
     if settings.enabled and args.vad_model != "silero":
         profile.append(args.vad_model)
+    transcription_profile = [args.asr, asdict(settings), args.vad_model if settings.enabled else None]
+    if args.asr == "local":
+        transcription_profile.extend([args.whisper_model, asr_device])
+    elif args.asr == "compatible":
+        transcription_profile.extend([args.asr_url, args.asr_model])
+    elif args.asr == "qwen":
+        transcription_profile.extend([args.qwen_size, args.asr_model])
+    elif args.asr == "dashscope":
+        transcription_profile.extend([dashscope_url, args.dashscope_asr_model])
     speech_translator = OpenAIWhisper(cloud) if args.ast else None
     segmenter = Segmenter(settings, args.vad_model)
     usage = CloudUsage(args.cache)
     model_status = monitor_pipeline(args, recognizer, translator, speech_translator, dashscope_url, usage)
     return Relay(args.cache, recognizer, translator, profile, args.workers, args.chunk, speech_translator, segmenter,
-                 model_status=model_status, cloud_usage=usage,
+                 model_status=model_status, cloud_usage=usage, transcription_profile=transcription_profile,
                  translation_settings=TranslationSettings(args.translation_previous_cues, args.translation_prompt,
                                                           args.translation_context_chars))
 
@@ -195,7 +204,8 @@ def main():
     server.add_argument("--qwen-root", type=Path)
     server.add_argument("--asr-url", default="http://127.0.0.1:8000/v1")
     server.add_argument("--asr-model", default="qwen3-asr")
-    server.add_argument("--mt", choices=["local", "openai", "compatible", "qwen-mt", "chatgpt", "minimax"], default="local")
+    server.add_argument("--mt", choices=["local", "openai", "compatible", "qwen-mt", "chatgpt", "minimax", "none"],
+                        default="local", help="Text translation backend, or none to keep the source language")
     server.add_argument("--chatgpt-account", default="")
     server.add_argument("--chatgpt-model", default="")
     server.add_argument("--minimax-key-file")

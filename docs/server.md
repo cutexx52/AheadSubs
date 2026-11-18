@@ -2,13 +2,64 @@
 
 [English](server.md) | [简体中文](server.zh-CN.md)
 
-## File transcription API
-
-File transcription produces source-language text and structured recognition segments. Subtitle rendering applies display padding separately. The local API uses the service's background scheduling and yields to playback. Its OpenAI-compatible entry point accepts multipart files and returns JSON or plain text.
-
 The service binds to `127.0.0.1:8769` for local clients by default. Service and player must share media access. All times are seconds on the original media timeline.
 
 Start with `python -m subtitle_relay serve --asr local --mt local --device cpu`. Clients must match any custom `--port`.
+
+## File transcription API
+
+Use `python -m subtitle_relay serve --asr local --mt none --device cpu` for a recognition-only service. File transcription never invokes either translation backend, including when a combined profile supplies the recognizer. The `--ast` speech-translation profile has no recognizer for these routes. With `--mt none`, playback captions contain source text.
+
+The file routes accept multipart uploads and recognize the first audio stream. Omit `language` for automatic recognition of the source speech, including mixed-language speech. An explicit language is a recognition hint. Recognition quality and language coverage depend on the configured model. Choosing a cloud recognizer sends audio segments to that provider. The file routes use the shared worker pool and yield between chunks to playback and folder subtitle work.
+
+Use `127.0.0.1` or `localhost` with the service port. The file routes reject browser requests and never accept a server-side path or URL. The playback routes below have a separate local-path contract. Transcription trusts native processes on the same machine. Keep job IDs private because they grant access to job state, controls and results.
+
+### Durable jobs
+
+Send `X-AheadSubs-Transcription: 1` on each request. Replace `{id}` with the returned job ID.
+
+| Request | Contract |
+| --- | --- |
+| `GET /v1/transcription/capabilities` | Reports backend availability, model alias, segment timestamps, response formats and limits. |
+| `POST /v1/transcription/jobs` | Multipart `file` and optional `language` (`auto` or a language code). Returns `202`, a `Location` header and job state. |
+| `GET /v1/transcription/jobs/{id}` | Returns `id`, `state`, `duration`, requested `language` (`null` for automatic), `completed_chunks`, `total_chunks` and `error_code`. |
+| `GET /v1/transcription/jobs/{id}/result` | Returns the completed result. A pending, failed or cancelled job returns `409`. |
+| `POST /v1/transcription/jobs/{id}/cancel` | Cancels queued or running work. A chunk already in inference may finish, and its cancelled result is discarded. |
+| `POST /v1/transcription/jobs/{id}/resume` | Requeues a failed or cancelled job using its retained input and completed chunks. An outstanding cancelled chunk returns `409` until it finishes. Use the same recognition settings. |
+| `DELETE /v1/transcription/jobs/{id}` | Discards the job, retained input and result. Returns `204`. |
+
+```powershell
+curl.exe -H "X-AheadSubs-Transcription: 1" -F "file=@recording.wav" http://127.0.0.1:8769/v1/transcription/jobs
+```
+
+```json
+{
+  "duration": 2.7,
+  "text": "Good morning.",
+  "segments": [{"start": 0.2, "end": 1.4, "text": "Good morning."}]
+}
+```
+
+Segment times are in seconds from the start of the uploaded audio. They preserve the backend's bounds and overlaps, with the chunk offset applied. A segment carries `language` only when the backend supplies that segment's language. Word timing, speaker labels and confidence are unavailable. Subtitle display padding is applied independently when rendering SRT. An upload with no recognized speech completes with empty `text` and `segments`.
+
+States are `queued`, `running`, `completed`, `failed` and `cancelled`. Queued and interrupted work can continue after a service restart. Completed inputs are removed. Periodic cleanup removes failed or cancelled inputs and completed results after 24 hours or when there are more than 100 terminal jobs. The durable queue and synchronous requests share up to eight retained inputs and 512 MB of normalized input storage.
+
+### OpenAI-compatible file uploads
+
+`POST /v1/audio/transcriptions` accepts multipart `file`, `model=aheadsubs`, optional two-letter `language`, optional `response_format=json` (default) or `text`, and optional `stream=false`. `aheadsubs` selects the configured recognizer. Send a nonempty Bearer value as required by SDKs, such as `local`. That value is for client compatibility and is not a server credential. JSON returns `{"text":"…"}` and `text` returns UTF-8 plain text. Errors use the OpenAI error envelope. Other models, fields and formats are rejected. Use the durable result endpoint for segment timing.
+
+```python
+from openai import OpenAI
+
+client = OpenAI(base_url="http://127.0.0.1:8769/v1", api_key="local", max_retries=0)
+with open("recording.wav", "rb") as audio:
+    result = client.audio.transcriptions.create(model="aheadsubs", file=audio)
+print(result.text)
+```
+
+Pipecat's segmented HTTP `OpenAISTTService` can use the same base URL, model and API key with probability metrics disabled and no prompt, temperature or keywords. Choose an input language that Pipecat supports. Realtime streaming and diarization are outside this file contract.
+
+Both upload routes accept up to 25 MB of WAV, MP3, FLAC, AAC, Ogg/Opus, MP4/M4A/MOV or Matroska/WebM. The decoder needs FFmpeg with its `fd` protocol, included in the Windows runtime. Decoded audio is limited to two hours for durable jobs and 15 minutes for synchronous files. Up to two upload requests can be active, including synchronous waits. File transfer is limited to 30 seconds and decoding to 60 seconds. The synchronous wait ends after 180 seconds and discards its temporary job. Oversize input returns `413`, undecodable audio `415`, and exhausted capacity `429`. Use durable jobs for files whose processing might exceed the synchronous wait.
 
 ## Update playback
 

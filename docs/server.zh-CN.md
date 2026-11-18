@@ -2,13 +2,64 @@
 
 [English](server.md) | [简体中文](server.zh-CN.md)
 
-## 文件转录 API
-
-文件转录输出原语种文本和结构化识别片段。字幕渲染单独处理显示时间的延长。本机 API 使用服务的后台调度，优先处理播放任务。兼容 OpenAI 的入口接受 multipart 文件，输出 JSON 或纯文本。
-
 服务默认绑定 `127.0.0.1:8769`，用于本机客户端。服务和播放器共享文件访问权限。所有 API 时间均使用原媒体时间，单位秒。
 
 可用 `python -m subtitle_relay serve --asr local --mt local --device cpu` 独立启动服务。使用 `--port` 设置端口时，调用者也需配置相同端口。
+
+## 文件转录 API
+
+使用 `python -m subtitle_relay serve --asr local --mt none --device cpu` 启动纯识别服务。即使服务同时配置了识别和翻译，文件转录也只调用识别后端。`--ast` 语音翻译配置没有可供这些接口使用的识别器。使用 `--mt none` 时，播放器显示原语字幕。
+
+文件接口接受 multipart 上传并识别第一条音轨。省略 `language` 可自动识别原语音，也适用于混语。显式语言仅作为识别提示。识别质量与语言覆盖取决于所配置的模型。选用云端识别后端时，音频片段会发给对应服务商。文件任务共享推理工作池，在分块之间让位给播放和目录字幕任务。
+
+请用 `127.0.0.1` 或 `localhost` 加服务端口访问。文件接口拒绝浏览器请求，也不接受服务端路径或 URL。下文的播放接口有单独的本地路径约定。转录接口信任同一台机器上的原生进程。请妥善保存任务 ID，它可用于读取状态、操作任务和获取结果。
+
+### 持久任务
+
+每次请求都带上 `X-AheadSubs-Transcription: 1`，并将 `{id}` 替换为返回的任务 ID。
+
+| 请求 | 约定 |
+| --- | --- |
+| `GET /v1/transcription/capabilities` | 返回后端可用性、模型别名、片段时间戳、响应格式和限制。 |
+| `POST /v1/transcription/jobs` | multipart `file` 和可选的 `language`（`auto` 或语言代码）。返回 `202`、`Location` 响应头和任务状态。 |
+| `GET /v1/transcription/jobs/{id}` | 返回 `id`、`state`、`duration`、请求的 `language`（`null` 表示自动）、`completed_chunks`、`total_chunks` 和 `error_code`。 |
+| `GET /v1/transcription/jobs/{id}/result` | 返回已完成的结果。待处理、失败或已取消的任务返回 `409`。 |
+| `POST /v1/transcription/jobs/{id}/cancel` | 取消排队中或运行中的任务。已进入推理的分块可能继续运行，其结果会被丢弃。 |
+| `POST /v1/transcription/jobs/{id}/resume` | 用保留的输入和已完成的分块继续失败或已取消的任务。已取消的分块仍在处理时返回 `409`，应等它处理结束。恢复时使用相同的识别设置。 |
+| `DELETE /v1/transcription/jobs/{id}` | 删除任务、保留的输入和结果，返回 `204`。 |
+
+```powershell
+curl.exe -H "X-AheadSubs-Transcription: 1" -F "file=@recording.wav" http://127.0.0.1:8769/v1/transcription/jobs
+```
+
+```json
+{
+  "duration": 2.7,
+  "text": "早上好。",
+  "segments": [{"start": 0.2, "end": 1.4, "text": "早上好。"}]
+}
+```
+
+片段时间以秒计，从上传音频的起点算起。片段保留识别后端给出的时间范围和重叠，加上所属分块的偏移。仅当后端提供某个片段的语言时，该片段才返回 `language`。目前没有词级时间戳、说话人标签或置信度。SRT 渲染时单独延长字幕显示时间。没有识别到语音的上传也能完成，`text` 和 `segments` 均为空。
+
+任务状态包括 `queued`、`running`、`completed`、`failed` 和 `cancelled`。服务重启后可继续排队中和中断的任务。任务完成后删除输入音频。定期清理会移除超过 24 小时或超出 100 个终态任务配额的记录，其中包括失败或已取消任务的输入，以及已完成任务的结果。持久队列和同步请求合计最多保留八份输入、共 512 MB 规范化音频。
+
+### 兼容 OpenAI 的文件上传
+
+`POST /v1/audio/transcriptions` 接受 multipart `file`、`model=aheadsubs`、可选的两字母 `language`、可选的 `response_format=json`（默认）或 `text`，以及可选的 `stream=false`。`aheadsubs` 选择当前配置的识别器。请按 SDK 的要求发送非空 Bearer 值，例如 `local`。该值仅用于客户端兼容，不充当服务凭据。JSON 返回 `{"text":"…"}`，`text` 返回 UTF-8 纯文本。错误沿用 OpenAI 响应结构。接口拒绝其他模型、字段和格式。片段时间请从持久任务结果接口获取。
+
+```python
+from openai import OpenAI
+
+client = OpenAI(base_url="http://127.0.0.1:8769/v1", api_key="local", max_retries=0)
+with open("recording.wav", "rb") as audio:
+    result = client.audio.transcriptions.create(model="aheadsubs", file=audio)
+print(result.text)
+```
+
+Pipecat 的分段 HTTP `OpenAISTTService` 可使用相同的 base URL、模型和 API key。请关闭概率指标，省略 prompt、temperature 和 keywords，并选择 Pipecat 支持的输入语言。文件接口的范围不包括实时流式转录和说话人分离。
+
+两种上传接口均支持最多 25 MB 的 WAV、MP3、FLAC、AAC、Ogg/Opus、MP4/M4A/MOV 或 Matroska/WebM 文件。解码需要支持 `fd` 协议的 FFmpeg，Windows 运行库已包含该协议。解码后的音频上限为持久任务两小时、同步请求 15 分钟。最多同时处理两个上传请求，等待同步结果也占用名额。文件传输和解码上限分别为 30 秒和 60 秒。同步等待 180 秒后超时，并清理临时任务。输入超限返回 `413`，无法解码返回 `415`，容量用尽返回 `429`。处理可能超过同步等待时间的文件适合使用持久任务。
 
 ## 更新播放状态
 

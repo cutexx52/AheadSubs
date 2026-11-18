@@ -76,7 +76,7 @@ def catalog(db):
         GROUP BY c.key
         """))
     subtitles = {row[0] for row in db.execute("""
-        SELECT DISTINCT chunks.key FROM chunks, json_each(chunks.cues) AS cue
+        SELECT DISTINCT chunks.key FROM media JOIN chunks ON chunks.key=media.key, json_each(chunks.cues) AS cue
         WHERE json_extract(cue.value, '$.status') IS NULL
             AND trim(json_extract(cue.value, '$.text')) <> ''
         """)}
@@ -84,7 +84,8 @@ def catalog(db):
     for key, language, _ in db.execute("""
         SELECT history.key, lower(replace(json_extract(cue.value, '$.source_language'), '_', '-')) AS lang,
             SUM(json_extract(cue.value, '$.end') - json_extract(cue.value, '$.start')) AS seconds
-        FROM (SELECT key, cues FROM chunks UNION ALL SELECT key, cues FROM failed_cues) AS history,
+        FROM (SELECT key, cues FROM chunks UNION ALL SELECT key, cues FROM failed_cues) AS history
+        JOIN media ON media.key=history.key,
             json_each(history.cues) AS cue
         WHERE lang IS NOT NULL AND lang NOT IN ('', 'auto', 'und')
         GROUP BY history.key, lang ORDER BY seconds DESC, lang

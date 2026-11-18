@@ -34,4 +34,6 @@ Players supply media position and audio track. The service reads the file as nee
 
 One service shares model instances and bounds in-flight chunks. Each window owns a session. Identical media, audio track and processing configuration can share cached results. Sessions expire after stopping or disconnecting; completed disk caches remain reusable. Service shutdown also stops local inference processes it owns.
 
+[File transcription](server.md#file-transcription-api) accepts bounded uploads on loopback. Its jobs share the service scheduler and SQLite chunk store with playback. A transcription chunk calls the recognizer directly and persists its segments independent of the playback cache identity. Playback retains its normal worker priority and applies display padding when rendering SRT.
+
 Add players through the existing protocol and models through provider interfaces. Players need not know about models, VAD or credentials. Browser and other non-file sources first need a media-input and timestamp contract before reusing segmentation and translation. MCP and CLI share operation models in `automation.py`; HTTP remains available for direct integrations.
