@@ -72,7 +72,8 @@
   <data name="CustomMtModel" xml:space="preserve"><value>自定义翻译模型名称</value></data>
   <data name="MtKey" xml:space="preserve"><value>翻译 API Key</value></data>
   <data name="ChooseMt" xml:space="preserve"><value>选用此翻译服务</value></data>
-  <data name="Advanced" xml:space="preserve"><value>高级设置</value></data>
+  <data name="AppSettings" xml:space="preserve"><value>应用设置</value></data>
+  <data name="VadAndLookAhead" xml:space="preserve"><value>语音检测与预读</value></data>
   <data name="Vad" xml:space="preserve"><value>语音检测（VAD）</value></data>
   <data name="VadHint" xml:space="preserve"><value>先判断哪里有人说话，再把这些音频交给识别模型。</value></data>
   <data name="VadModel" xml:space="preserve"><value>语音活动检测模型</value></data>
@@ -204,7 +205,7 @@
   <data name="ExitTitle" xml:space="preserve"><value>退出字幕翻译</value></data>
   <data name="MissingRuntime" xml:space="preserve"><value>找不到随软件提供的运行环境。请重新解压完整安装包，不要单独移动 UI 文件夹。</value></data>
   <data name="LaunchFailed" xml:space="preserve"><value>无法启动字幕服务。</value></data>
-  <data name="InvalidResponse" xml:space="preserve"><value>后台没有返回有效结果。请在高级设置中打开诊断日志后重试。</value></data>
+  <data name="InvalidResponse" xml:space="preserve"><value>后台没有返回有效结果。请在应用设置中打开诊断日志后重试。</value></data>
   <data name="BackendFailed" xml:space="preserve"><value>后台操作失败，请查看诊断日志。</value></data>
   <data name="ReplaceKey" xml:space="preserve"><value>已加密保存。输入新密钥可替换。</value></data>
   <data name="EncryptedKey" xml:space="preserve"><value>保存在当前 Windows 用户下，加密存储。</value></data>
@@ -243,6 +244,6 @@
   <data name="Error_auth-models" xml:space="preserve"><value>无法读取 ChatGPT 模型列表，请重试。</value></data>
   <data name="Error_service-owned" xml:space="preserve"><value>字幕服务由其他程序启动，请从原来的启动方式关闭。</value></data>
   <data name="Error_service-busy" xml:space="preserve"><value>上一项服务操作尚未完成，请稍后重试。</value></data>
-  <data name="Error_service-start" xml:space="preserve"><value>字幕服务启动失败。请打开高级设置中的诊断日志后重试。</value></data>
+  <data name="Error_service-start" xml:space="preserve"><value>字幕服务启动失败。请打开应用设置中的诊断日志后重试。</value></data>
   <data name="Chinese" xml:space="preserve"><value>中文</value></data>
 </root>

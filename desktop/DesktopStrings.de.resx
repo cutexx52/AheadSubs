@@ -72,7 +72,8 @@
   <data name="CustomMtModel" xml:space="preserve"><value>Name des eigenen Übersetzungsmodells</value></data>
   <data name="MtKey" xml:space="preserve"><value>Schlüssel für die Übersetzungs-API</value></data>
   <data name="ChooseMt" xml:space="preserve"><value>Diesen Übersetzungsdienst verwenden</value></data>
-  <data name="Advanced" xml:space="preserve"><value>Erweiterte Einstellungen</value></data>
+  <data name="AppSettings" xml:space="preserve"><value>App-Einstellungen</value></data>
+  <data name="VadAndLookAhead" xml:space="preserve"><value>VAD und Vorauslesen</value></data>
   <data name="Vad" xml:space="preserve"><value>Sprachaktivitätserkennung (VAD)</value></data>
   <data name="VadHint" xml:space="preserve"><value>Erkennt Sprachabschnitte, bevor das Audio an das Erkennungsmodell gesendet wird.</value></data>
   <data name="VadModel" xml:space="preserve"><value>Modell zur Sprachaktivitätserkennung</value></data>
@@ -204,7 +205,7 @@
   <data name="ExitTitle" xml:space="preserve"><value>Untertitelübersetzung beenden</value></data>
   <data name="MissingRuntime" xml:space="preserve"><value>Mitgelieferte Laufzeitumgebung fehlt. Entpacken Sie das gesamte Paket und lassen Sie den UI-Ordner an seinem Platz.</value></data>
   <data name="LaunchFailed" xml:space="preserve"><value>Untertiteldienst konnte nicht gestartet werden.</value></data>
-  <data name="InvalidResponse" xml:space="preserve"><value>Ungültige Dienstantwort. Aktivieren Sie die Diagnoseprotokolle unter „Erweiterte Einstellungen“ und versuchen Sie es erneut.</value></data>
+  <data name="InvalidResponse" xml:space="preserve"><value>Ungültige Dienstantwort. Aktivieren Sie die Diagnoseprotokolle unter „App-Einstellungen“ und versuchen Sie es erneut.</value></data>
   <data name="BackendFailed" xml:space="preserve"><value>Vorgang fehlgeschlagen. Prüfen Sie die Diagnoseprotokolle.</value></data>
   <data name="ReplaceKey" xml:space="preserve"><value>Schlüssel verschlüsselt gespeichert. Geben Sie zum Ersetzen einen neuen Schlüssel ein.</value></data>
   <data name="EncryptedKey" xml:space="preserve"><value>Wird für Ihr Windows-Benutzerkonto verschlüsselt gespeichert.</value></data>

@@ -87,6 +87,10 @@ public partial class MainWindow : Window
                  "args":["-m","aheadsubs.cli","mcp","--desktop"]}}}}
                 """)!.AsObject());
             PreviewFolderTasks();
+            updatePackage = new ReleasePackage("0.1.0", "standard");
+            LocalizeUpdates();
+            AutomaticUpdates.IsChecked = true;
+            UpdateCard.Visibility = Visibility.Visible;
             StatusDashboard.Preview(JsonNode.Parse("""
                 {"ready":true,"active_sessions":2,"workers":{"busy":1,"limit":4},
                  "sources":[{"source":"potplayer","playback":1,"text":0},{"source":"mpv","playback":1,"text":0}],
@@ -737,24 +741,24 @@ public partial class MainWindow : Window
         VerifyControls();
         VerifyInspection();
         Directory.CreateDirectory(directory);
-        string[] pages = ["translation", "subtitles", "players", "models", "keys", "advanced", "advanced-vad",
-                          "advanced-read-ahead", "translation-context", "chatgpt-oauth", "automation", "presets",
-                          "status", "status-cloud", "folder-tasks"];
-        for (int index = 0; index < pages.Length; index++)
+        (string Name, TabItem Tab)[] pages = [
+            ("translation", TranslationTab), ("subtitles", InspectTab), ("players", PlayersTab),
+            ("models", ModelsTab), ("keys", KeysTab), ("vad", VadTab), ("read-ahead", VadTab),
+            ("app-settings", AppSettingsTab), ("translation-context", TranslationTab), ("chatgpt-oauth", KeysTab),
+            ("automation", AutomationTab), ("presets", TranslationTab), ("status", StatusTab),
+            ("status-cloud", StatusTab), ("folder-tasks", FolderTasksTab)
+        ];
+        foreach (var (name, tab) in pages)
         {
-            if (index == 14) SettingsPanel.SelectedItem = FolderTasksTab;
-            else if (index is 12 or 13) SettingsPanel.SelectedItem = StatusTab;
-            else SettingsPanel.SelectedIndex = index switch { 8 or 11 => 0, 9 => 4, 10 => 6, _ => Math.Min(index, 5) };
-            if (index is 6 or 7 && AdvancedTab.Content is ScrollViewer advanced)
-                advanced.ScrollToVerticalOffset(index == 6 ? 600 : 1100);
-            if (index == 8)
+            SettingsPanel.SelectedItem = tab;
+            if (name == "translation-context")
             {
                 TranslationModel.SelectedValue = "gpt-4.1-mini";
                 TranslationEnhancement.IsExpanded = true;
                 TranslationScroll.ScrollToVerticalOffset(320);
             }
-            if (index == 9) CloudProvider.SelectedValue = "chatgpt";
-            if (index == 11)
+            if (name == "chatgpt-oauth") CloudProvider.SelectedValue = "chatgpt";
+            if (name == "presets")
             {
                 TranslationModel.SelectedValue = "qwen-mt-flash";
                 TranslationEnhancement.IsExpanded = false;
@@ -767,8 +771,9 @@ public partial class MainWindow : Window
             RootLayout.Measure(new System.Windows.Size(1040, 760));
             RootLayout.Arrange(new Rect(0, 0, 1040, 760));
             RootLayout.UpdateLayout();
-            if (index == 13) StatusDashboard.ScrollToCloud();
-            if (index == 14 && FolderTasksTab.Content is ScrollViewer folderTasks)
+            if (name == "read-ahead" && VadTab.Content is ScrollViewer vadPage) vadPage.ScrollToBottom();
+            if (name == "status-cloud") StatusDashboard.ScrollToCloud();
+            if (name == "folder-tasks" && FolderTasksTab.Content is ScrollViewer folderTasks)
                 folderTasks.ScrollToVerticalOffset(525);
             Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
             RootLayout.UpdateLayout();
@@ -776,7 +781,7 @@ public partial class MainWindow : Window
             bitmap.Render(RootLayout);
             var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
             encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
-            using var output = File.Create(Path.Combine(directory, pages[index] + ".png"));
+            using var output = File.Create(Path.Combine(directory, name + ".png"));
             encoder.Save(output);
         }
         tray.Dispose();
@@ -789,6 +794,12 @@ public partial class MainWindow : Window
         Require(ConfigurePotPlayer.Visibility == Visibility.Collapsed && RemovePotPlayer.Visibility == Visibility.Visible
                 && ConfigureMpv.Visibility == Visibility.Visible && RemoveMpv.Visibility == Visibility.Collapsed,
                 "each player has one setup action");
+        static bool OnPage(TabItem tab, FrameworkElement control) =>
+            LogicalTreeHelper.FindLogicalNode((DependencyObject)tab.Content, control.Name) == control;
+        Require(OnPage(AppSettingsTab, InterfaceLanguage) && OnPage(AppSettingsTab, Diagnostics)
+                && OnPage(AppSettingsTab, CheckUpdateButton), "app preferences are on the App settings page");
+        Require(OnPage(TranslationTab, SourceLanguage) && OnPage(TranslationTab, TargetLanguage)
+                && OnPage(VadTab, Vad) && OnPage(VadTab, ChunkSeconds), "subtitle languages and timing controls have their own pages");
         var catalog = ((IEnumerable<ModelDownload>)SpeechDownloads.ItemsSource).Concat((IEnumerable<ModelDownload>)TranslationDownloads.ItemsSource).ToDictionary(model => model.Id);
         Require(catalog["qwen-1.7b"] is { Installed: true, CanAct: false }
                 && catalog["whisper-small"].Details.Contains(0.49.ToString("0.00", InterfaceLocale.Culture)) && catalog["whisper-small"].CanAct,

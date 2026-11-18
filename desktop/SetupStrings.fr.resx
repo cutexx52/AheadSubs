@@ -42,7 +42,7 @@
   <data name="model-asr" xml:space="preserve"><value>Reconnaissance vocale</value></data>
   <data name="model-mt" xml:space="preserve"><value>Traduction</value></data>
   <data name="model-vad" xml:space="preserve"><value>Détection d’activité vocale</value></data>
-  <data name="managed-vad" xml:space="preserve"><value>Silero est inclus. FSMN est préparé lorsque vous le sélectionnez dans les réglages avancés.</value></data>
+  <data name="managed-vad" xml:space="preserve"><value>Silero est inclus. FSMN est préparé lorsque vous le sélectionnez dans « VAD et lecture anticipée ».</value></data>
   <data name="installed-model" xml:space="preserve"><value>Installé</value></data>
   <data name="active-model" xml:space="preserve"><value>Installé · en cours d’utilisation</value></data>
   <data name="download-model" xml:space="preserve"><value>Télécharger</value></data>

@@ -14,7 +14,7 @@
   <data name="Cancel" xml:space="preserve"><value>ダウンロードをキャンセル</value></data>
   <data name="Checking" xml:space="preserve"><value>更新を確認中…</value></data>
   <data name="Available" xml:space="preserve"><value>AheadSubs {0} が利用できます</value></data>
-  <data name="Notification" xml:space="preserve"><value>詳細設定を開いて更新を確認してください。</value></data>
+  <data name="Notification" xml:space="preserve"><value>アプリ設定を開いて更新を確認してください。</value></data>
   <data name="UpToDate" xml:space="preserve"><value>新しい安定版はありません。</value></data>
   <data name="CheckFailed" xml:space="preserve"><value>更新を確認できません。後でもう一度試してください。</value></data>
   <data name="PreferenceFailed" xml:space="preserve"><value>更新設定を保存できませんでした。</value></data>

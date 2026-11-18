@@ -95,6 +95,7 @@ public partial class MainWindow
     private void VerifyLanguageSwitch()
     {
         string[] tabs = ["字幕", "字幕", "字幕", "Subtitles", "자막", "Sous-titres", "Untertitel", "Subtítulos"];
+        SettingsPanel.SelectedItem = AppSettingsTab;
         var initial = InterfaceLocale.Culture;
         var initialTranslation = Selected(TranslationModel);
         LoadChatGptAccounts(System.Text.Json.Nodes.JsonNode.Parse("""
@@ -109,7 +110,8 @@ public partial class MainWindow
         {
             var item = InterfaceLocale.Languages[i];
             InterfaceLanguage.SelectedValue = item.Locale;
-            if (Selected(InterfaceLanguage) != item.Locale || InterfaceLocale.Culture.Name != item.Locale || !Equals(TranslationTab.Header, tabs[i])
+            if (SettingsPanel.SelectedItem != AppSettingsTab || !Equals(AppSettingsTab.Header, UiText.Get("AppSettings"))
+                || Selected(InterfaceLanguage) != item.Locale || InterfaceLocale.Culture.Name != item.Locale || !Equals(TranslationTab.Header, tabs[i])
                 || !TranslationHint.Text.Contains("Second") || TranslationPrompt.Text != "Keep this draft for the second model."
                 || !System.Text.Json.Nodes.JsonNode.DeepEquals(settingsBefore, CollectSettings())
                 || FolderRuleName.Text != "日本語 · café" || Selected(FolderRuleTarget) != "zh")
@@ -120,6 +122,7 @@ public partial class MainWindow
             || InterfaceLocale.Resolve("zh_Hans_SG").Name != "zh-CN" || InterfaceLocale.Resolve("fr-CA").Name != "fr"
             || InterfaceLocale.Resolve("it-IT").Name != "en" || InterfaceLocale.Resolve("??").Name != "en")
             throw new InvalidOperationException("System language or English fallback failed.");
+        SettingsPanel.SelectedItem = TranslationTab;
         FolderRuleName.Text = ruleName;
         TranslationModel.SelectedValue = initialTranslation;
         LoadChatGptAccounts([], "", "");

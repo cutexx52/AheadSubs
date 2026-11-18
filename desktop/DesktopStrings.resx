@@ -72,7 +72,8 @@
   <data name="CustomMtModel" xml:space="preserve"><value>Custom translation model name</value></data>
   <data name="MtKey" xml:space="preserve"><value>Translation API key</value></data>
   <data name="ChooseMt" xml:space="preserve"><value>Use this translation service</value></data>
-  <data name="Advanced" xml:space="preserve"><value>Advanced settings</value></data>
+  <data name="AppSettings" xml:space="preserve"><value>App settings</value></data>
+  <data name="VadAndLookAhead" xml:space="preserve"><value>VAD and look-ahead</value></data>
   <data name="Vad" xml:space="preserve"><value>Voice activity detection (VAD)</value></data>
   <data name="VadHint" xml:space="preserve"><value>Detect speech before sending audio to the recognition model.</value></data>
   <data name="VadModel" xml:space="preserve"><value>Voice activity detection model</value></data>
@@ -204,7 +205,7 @@
   <data name="ExitTitle" xml:space="preserve"><value>Exit subtitle translation</value></data>
   <data name="MissingRuntime" xml:space="preserve"><value>The bundled runtime was not found. Extract the entire package and keep the UI folder with it.</value></data>
   <data name="LaunchFailed" xml:space="preserve"><value>Could not start the subtitle service.</value></data>
-  <data name="InvalidResponse" xml:space="preserve"><value>The service returned an invalid response. Enable diagnostic logs in Advanced settings and try again.</value></data>
+  <data name="InvalidResponse" xml:space="preserve"><value>The service returned an invalid response. Enable diagnostic logs in App settings and try again.</value></data>
   <data name="BackendFailed" xml:space="preserve"><value>The operation failed. Check the diagnostic logs.</value></data>
   <data name="ReplaceKey" xml:space="preserve"><value>Encrypted key saved. Enter a new key to replace it.</value></data>
   <data name="EncryptedKey" xml:space="preserve"><value>Stored encrypted for your Windows user account.</value></data>
@@ -243,6 +244,6 @@
   <data name="Error_auth-models" xml:space="preserve"><value>Could not read the ChatGPT model list. Try refreshing it.</value></data>
   <data name="Error_service-owned" xml:space="preserve"><value>Another launcher started this subtitle service. Stop it there first.</value></data>
   <data name="Error_service-busy" xml:space="preserve"><value>The previous service operation has not finished. Try again shortly.</value></data>
-  <data name="Error_service-start" xml:space="preserve"><value>The subtitle service could not start. Enable diagnostic logs in Advanced settings and retry.</value></data>
+  <data name="Error_service-start" xml:space="preserve"><value>The subtitle service could not start. Enable diagnostic logs in App settings and retry.</value></data>
   <data name="Chinese" xml:space="preserve"><value>Chinese</value></data>
 </root>

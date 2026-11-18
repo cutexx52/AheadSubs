@@ -4,7 +4,7 @@
 
 ## Everyday use
 
-In **Subtitles → Language and display → Interface language**, choose **Follow Windows** (default) or a display language. Changes take effect immediately. The choices are Simplified Chinese, Traditional Chinese, Japanese, English, Korean, French, German and Spanish. Regional variants use the matching language (for example, French for Canada or Traditional Chinese for Hong Kong). Other Windows display languages fall back to English. The choice is saved for the current user and is independent of the video and subtitle languages.
+In **App settings → Interface language**, choose **Follow Windows** (default) or a display language. Changes take effect immediately. The choices are Simplified Chinese, Traditional Chinese, Japanese, English, Korean, French, German and Spanish. Regional variants use the matching language (for example, French for Canada or Traditional Chinese for Hong Kong). Other Windows display languages fall back to English. The choice is saved for the current user and is independent of the video and subtitle languages.
 
 Open **Setup presets** on the **Subtitles** home page. The control starts collapsed. Once you select a preset, **Download now** fetches the missing models. **Manage models** opens the library with the required downloads marked. When the preset is ready, select **Apply preset**. The audio language, subtitle language, and bilingual setting carry over. Manual model combinations appear as **Custom**.
 
@@ -17,7 +17,9 @@ Open **Setup presets** on the **Subtitles** home page. The control starts collap
 
 The GPU presets check for a Vulkan device. The high-performance preset also checks for an NVIDIA CUDA device and its runtime libraries. The recommended preset checks whether the saved Bailian credential is readable and the service URL is supported. Save a missing key in the Bailian configuration and return to the home page to check again. The provider verifies the credential when a request is sent. If a download fails, retry to reuse any models that finished downloading.
 
-**Local models** groups speech recognition, translation, and voice activity detection. Whisper and NLLB have separate CPU/CUDA selectors. Use the main **Save and apply** action to apply device changes. Existing configurations use their previous device setting until a per-model setting is saved. Stop the subtitle service or switch models before uninstalling a model in use. Uninstalling Whisper or NLLB removes its repository from the shared Hugging Face cache. Uninstalling one Qwen3-ASR model keeps the shared aligner, language detector, and Vulkan runtime. Silero is bundled, and FSMN is prepared when selected in Advanced settings.
+**Local models** groups speech recognition, translation, and voice activity detection. Whisper and NLLB have separate CPU/CUDA selectors. Use the main **Save and apply** action to apply device changes. Existing configurations use their previous device setting until a per-model setting is saved. Stop the subtitle service or switch models before uninstalling a model in use. Uninstalling Whisper or NLLB removes its repository from the shared Hugging Face cache. Uninstalling one Qwen3-ASR model keeps the shared aligner, language detector, and Vulkan runtime. Silero is bundled, and FSMN is prepared when selected under **VAD and look-ahead**.
+
+Under **VAD and look-ahead**, use **Voice activity detection (VAD)** to choose the detector and tune speech boundaries. **Look-ahead and seeking** controls the audio window used to generate subtitles during playback and after a seek.
 
 After upgrading an existing Qwen3-ASR installation, select **Download** for your Qwen3-ASR model under **Local models**, then **Save and apply** on the **Subtitles** page. Setup adds the shared 78 MB language detector and reuses the recognition weights you already downloaded. See [Qwen3-ASR language detection](providers.md#qwen3-asr-language-detection).
 
@@ -71,7 +73,7 @@ Start playback in a supported player to populate the live view. When the service
 
 ## Diagnostics
 
-Logs are off by default. Under Advanced settings (高级设置), enable diagnostics (启用诊断日志), apply and reproduce. Restart look-ahead to capture a whole session. Use Open logs directory (打开日志目录), or `python -m aheadsubs serve --diagnostics`.
+Logs are off by default. Open **App settings → Diagnostics**, select **Record detailed diagnostic logs**, then save and apply before reproducing the issue. Restart look-ahead to capture a whole session. Use **Open log folder**, or `python -m aheadsubs serve --diagnostics`.
 
 Logs live in the [Windows user data directory](windows.md). Inspect paths, hostnames and URLs before sharing. Disable diagnostics afterwards.
 

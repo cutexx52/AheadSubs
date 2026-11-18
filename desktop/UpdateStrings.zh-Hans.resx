@@ -14,7 +14,7 @@
   <data name="Cancel" xml:space="preserve"><value>取消下载</value></data>
   <data name="Checking" xml:space="preserve"><value>正在检查更新…</value></data>
   <data name="Available" xml:space="preserve"><value>AheadSubs {0} 已发布</value></data>
-  <data name="Notification" xml:space="preserve"><value>打开高级设置查看更新。</value></data>
+  <data name="Notification" xml:space="preserve"><value>打开应用设置查看更新。</value></data>
   <data name="UpToDate" xml:space="preserve"><value>暂无更新的正式版本。</value></data>
   <data name="CheckFailed" xml:space="preserve"><value>暂时无法检查更新，请稍后重试。</value></data>
   <data name="PreferenceFailed" xml:space="preserve"><value>无法保存自动检查更新设置。</value></data>

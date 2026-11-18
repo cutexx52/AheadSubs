@@ -15,7 +15,7 @@ Packages include Python and a single LGPL FFmpeg/FFprobe build for probing and e
 
 ## Check for updates
 
-The Windows desktop app checks GitHub for stable releases on startup and while it stays in the tray, at most once every 24 hours. Under **Advanced settings (高级设置) → Software updates**, you can turn off automatic checks or select **Check for updates** at any time. If GitHub is unavailable, you can retry manually while the subtitle service continues to work.
+The Windows desktop app checks GitHub for stable releases on startup and while it stays in the tray, at most once every 24 hours. Under **App settings → Software updates**, you can turn off automatic checks or select **Check for updates** at any time. If GitHub is unavailable, you can retry manually while the subtitle service continues to work.
 
 When an update is available, you can read the release notes. For an installed copy, select **Download and install** and confirm to download the installer for the current standard or CUDA edition. You can cancel while it downloads. After verifying the download size and SHA-256 digest, AheadSubs stops the subtitle service and closes before starting Setup. If verification fails, retry or download the installer manually from the release page. After upgrading, open AheadSubs from the Start menu and start the subtitle service when needed.
 
