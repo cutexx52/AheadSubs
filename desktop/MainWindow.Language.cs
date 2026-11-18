@@ -79,7 +79,7 @@ public partial class MainWindow
             LocalizeInspection();
             SetInspectionFiles(subtitleFiles, (MediaList.SelectedItem as SubtitleFile)?.Id);
             if (SubtitleRows.Items.Count > 0) InspectPreviewNote.Text = InspectionText.Get("PreviewRows");
-            LoadChatGptAccounts(chatGptAccounts, Selected(ChatGptAccount), Selected(ChatGptModel));
+            UpdateChatGptControls();
             foreach (var (_, editor) in KeyEditors()) editor.UpdateMode();
             LoadAutomationText();
             if (lastAutomation is not null) UpdateAutomation(lastAutomation);
@@ -96,6 +96,12 @@ public partial class MainWindow
     {
         string[] tabs = ["字幕", "字幕", "字幕", "Subtitles", "자막", "Sous-titres", "Untertitel", "Subtítulos"];
         var initial = InterfaceLocale.Culture;
+        var initialTranslation = Selected(TranslationModel);
+        LoadChatGptAccounts(System.Text.Json.Nodes.JsonNode.Parse("""
+            [{"id":"example","connected":true,"models":[{"id":"first","name":"First"},{"id":"second","name":"Second"}]}]
+            """)!.AsArray(), "example", "second");
+        TranslationModel.SelectedValue = "chatgpt";
+        TranslationPrompt.Text = "Keep this draft for the second model.";
         var settingsBefore = CollectSettings();
         var ruleName = FolderRuleName.Text;
         FolderRuleName.Text = "日本語 · café";
@@ -104,6 +110,7 @@ public partial class MainWindow
             var item = InterfaceLocale.Languages[i];
             InterfaceLanguage.SelectedValue = item.Locale;
             if (Selected(InterfaceLanguage) != item.Locale || InterfaceLocale.Culture.Name != item.Locale || !Equals(TranslationTab.Header, tabs[i])
+                || !TranslationHint.Text.Contains("Second") || TranslationPrompt.Text != "Keep this draft for the second model."
                 || !System.Text.Json.Nodes.JsonNode.DeepEquals(settingsBefore, CollectSettings())
                 || FolderRuleName.Text != "日本語 · café" || Selected(FolderRuleTarget) != "zh")
                 throw new InvalidOperationException("Language switch or draft preservation failed for " + item.Locale);
@@ -114,5 +121,8 @@ public partial class MainWindow
             || InterfaceLocale.Resolve("it-IT").Name != "en" || InterfaceLocale.Resolve("??").Name != "en")
             throw new InvalidOperationException("System language or English fallback failed.");
         FolderRuleName.Text = ruleName;
+        TranslationModel.SelectedValue = initialTranslation;
+        LoadChatGptAccounts([], "", "");
+        enhancementDrafts.Remove("chatgpt:second");
     }
 }

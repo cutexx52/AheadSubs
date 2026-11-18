@@ -914,23 +914,30 @@ public partial class MainWindow : Window
 
     private void ChatGptAccountChanged(object sender, SelectionChangedEventArgs e) => UpdateChatGptAccount();
 
+    private JsonObject? SelectedChatGptProfile() => chatGptAccounts.OfType<JsonObject>()
+        .FirstOrDefault(item => item["id"]?.ToString() == Selected(ChatGptAccount));
+
     private void UpdateChatGptAccount()
     {
         if (ChatGptModel is null || ChatGptUse is null) return;
-        string id = Selected(ChatGptAccount);
-        var profile = chatGptAccounts.OfType<JsonObject>().FirstOrDefault(item => item["id"]?.ToString() == id);
-        bool connected = profile?["connected"]?.GetValue<bool>() == true;
-        var choices = (profile?["models"] as JsonArray ?? new()).OfType<JsonObject>()
+        var choices = (SelectedChatGptProfile()?["models"] as JsonArray ?? new()).OfType<JsonObject>()
             .Select(item => new Choice(item["name"]?.ToString() ?? "", item["id"]?.ToString() ?? "")).ToList();
         ChatGptModel.ItemsSource = choices;
         ChatGptModel.SelectedIndex = choices.Count > 0 ? 0 : -1;
+        UpdateChatGptControls();
+    }
+
+    private void UpdateChatGptControls()
+    {
+        string id = Selected(ChatGptAccount);
+        bool connected = SelectedChatGptProfile()?["connected"]?.GetValue<bool>() == true;
         ChatGptStatus.Text = connected
-            ? choices.Count > 0 ? UiText.Get("Authorized") : UiText.Get("AuthorizedRefresh")
+            ? ChatGptModel.HasItems ? UiText.Get("Authorized") : UiText.Get("AuthorizedRefresh")
             : id.Length > 0 ? UiText.Get("AuthorizeAgain") : UiText.Get("BrowserSignIn");
         ChatGptReauthorize.IsEnabled = id.Length > 0;
         ChatGptSignOut.IsEnabled = connected;
         ChatGptReloadModels.IsEnabled = connected;
-        ChatGptUse.IsEnabled = connected && choices.Count > 0;
+        ChatGptUse.IsEnabled = connected && ChatGptModel.HasItems;
         UpdateContext();
     }
 
