@@ -29,6 +29,7 @@
 
 - **NLLB 不能作为通用商用方案。** [Meta 原始模型](https://huggingface.co/facebook/nllb-200-distilled-600M)为 CC-BY-NC-4.0。当前配置的 [INT8 转换版](https://huggingface.co/Adom4600/nllb-200-distilled-600M-ct2-int8)没有模型卡，转换不能证明原有限制已被解除。在取得其他有效授权前按非商业模型对待；商业部署应选择许可适合的翻译模型或服务。
 - [Whisper Small 转换版](https://huggingface.co/Systran/faster-whisper-small)标注 MIT；[Qwen3-ASR](https://huggingface.co/Qwen/Qwen3-ASR-1.7B)、[GGUF 转换版](https://huggingface.co/cstr/qwen3-asr-1.7b-GGUF)及 [FSMN-VAD](https://huggingface.co/funasr/fsmn-vad-onnx)标注 Apache-2.0。仍需核对实际下载的模型、对齐器版本并保留署名；运行时许可不等于模型许可。
+- 安装 Qwen3-ASR 时会下载固定版本的[多语言 Whisper Tiny 转换版](https://huggingface.co/ggerganov/whisper.cpp/blob/5359861c739e955e79d9a303bcbc70fb988958b1/ggml-tiny.bin)，用于本地语言检测。转换版标注 MIT，[OpenAI 的 Whisper 原始权重](https://github.com/openai/whisper#license)采用 MIT 许可证。Windows 安装程序不分发该模型。
 - 语音识别及翻译模型在设置时下载。faster-whisper wheel 内含用于离线分段的小型 [Silero VAD v6 模型](https://github.com/SYSTRAN/faster-whisper/pull/1373)，安装包附有 [Silero 许可证](https://github.com/snakers4/silero-vad/blob/v6.0/LICENSE)。云服务条款、账号授权和媒体权利独立于源码许可证。
 
 ## 尚待完成的分发工作

@@ -8,7 +8,7 @@ Choose speech recognition and text translation independently. Fully local proces
 
 | Stage | Option | Requirements |
 | --- | --- | --- |
-| Local recognition | Qwen3-ASR 0.6B / 1.7B | Windows x64 CrispASR Vulkan runtime, Q4_K weights and shared alignment model |
+| Local recognition | Qwen3-ASR 0.6B / 1.7B | Windows x64 CrispASR Vulkan runtime, Q4_K weights, shared aligner and Whisper Tiny language detector |
 | Local recognition | faster-whisper Small | CTranslate2 on CPU or supported NVIDIA CUDA |
 | Local translation | NLLB 600M INT8 | CTranslate2 CPU/CUDA; base weights of the default checkpoint use CC BY-NC 4.0 |
 | Cloud text | Qwen-MT Flash / Lite / Plus | Alibaba Cloud regional URL and key; receives subtitle text |
@@ -31,6 +31,10 @@ python -m aheadsubs serve --asr dashscope --dashscope-asr-model qwen-audio-3.1-a
 The third command is hybrid; the fourth uses cloud recognition and translation with `DASHSCOPE_API_KEY`. Set the regional endpoint appropriate to your key; do not put keys in commands or Git. Qwen3-ASR runs in a shared service-managed process using its own Vulkan runtime; `--device` sets the CTranslate2 fallback device; `--asr-device` overrides it for local Whisper and `--mt-device` for NLLB. [CrispASR](https://github.com/CrispStrobe/CrispASR) · [NLLB model card](https://huggingface.co/facebook/nllb-200-distilled-600M) · [Qwen-MT API](https://www.alibabacloud.com/help/en/model-studio/qwen-mt-api).
 
 Alibaba ASR may omit language codes. When pairing it with NLLB, which needs an explicit input language, select the source language. [Short-audio API](https://help.aliyun.com/zh/model-studio/qwen-audio-asr-http-api).
+
+### Qwen3-ASR language detection
+
+In automatic mode, the local CrispASR process uses multilingual Whisper Tiny to detect the language of each speech segment. Qwen3-ASR then recognizes the speech, and AheadSubs uses the detected language for translation and bilingual labels. An explicit source language skips the detector. Older installations need the [shared model download](desktop.md#everyday-use) because the pinned runtime otherwise falls back to English. The upgraded Qwen3-ASR playback and folder subtitle pipelines regenerate cues when requested so they can use the corrected language.
 
 ## Subscriptions and authorization
 

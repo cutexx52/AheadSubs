@@ -8,7 +8,7 @@
 
 | 阶段 | 选择 | 条件 |
 | --- | --- | --- |
-| 本地语音识别 | Qwen3-ASR 0.6B / 1.7B | Windows x64 CrispASR Vulkan 运行时，下载 Q4_K 权重和共享对齐模型。 |
+| 本地语音识别 | Qwen3-ASR 0.6B / 1.7B | Windows x64 CrispASR Vulkan 运行时、Q4_K 权重、共享对齐模型和 Whisper Tiny 语言检测模型。 |
 | 本地语音识别 | faster-whisper Small | CTranslate2，可用 CPU 或受支持的 NVIDIA CUDA 环境。 |
 | 本地文本翻译 | NLLB 600M INT8 | CTranslate2，可用 CPU 或 CUDA。默认 checkpoint 的基础权重采用 CC BY-NC 4.0。 |
 | 云端文本翻译 | Qwen-MT Flash / Lite / Plus | 阿里云百炼 Base URL 与 API Key。仅向该 provider 发送待翻译的字幕文本。 |
@@ -33,6 +33,10 @@ python -m aheadsubs serve --asr dashscope --dashscope-asr-model qwen-audio-3.1-a
 Qwen3-ASR 由服务管理一个共享的本地进程。CLI 的 `--device` 设置 CTranslate2 默认设备；`--asr-device` 可单独覆盖本地 Whisper，`--mt-device` 可覆盖 NLLB。Qwen3-ASR 使用其自身的 Vulkan 运行时。[CrispASR](https://github.com/CrispStrobe/CrispASR) · [NLLB 模型卡](https://huggingface.co/facebook/nllb-200-distilled-600M) · [Qwen-MT 接口](https://www.alibabacloud.com/help/en/model-studio/qwen-mt-api)
 
 百炼 ASR 原生接口可能不返回语种代码。与需要明确输入语言的 NLLB 搭配时，建议在首页选定源语言。[百炼短音频转录接口](https://help.aliyun.com/zh/model-studio/qwen-audio-asr-http-api)
+
+### Qwen3-ASR 语言检测
+
+在自动识别模式下，本地 CrispASR 进程使用多语言 Whisper Tiny 检测各语音片段的语言，再由 Qwen3-ASR 识别语音。AheadSubs 将检测结果用于翻译和双语字幕标签。手动指定源语言会跳过检测。旧版安装需要[补齐共享模型](desktop.zh-CN.md#日常使用)，否则当前固定版本的运行时会回退到英语。升级后，Qwen3-ASR 播放和目录字幕任务会在有新请求时重新生成字幕，以使用修正后的语言。
 
 ## 订阅与授权
 

@@ -52,7 +52,7 @@
   <data name="uninstalling" xml:space="preserve"><value>正在解除安裝 {0}…</value></data>
   <data name="uninstalled" xml:space="preserve"><value>已解除安裝模型。</value></data>
   <data name="model-info" xml:space="preserve"><value>{0} · 約 {1:0.00} GB</value></data>
-  <data name="shared-info" xml:space="preserve"><value>兩款 Qwen3-ASR 共用約 0.63 GB 的對齊模型和執行庫。</value></data>
+  <data name="shared-info" xml:space="preserve"><value>兩款 Qwen3-ASR 共用約 0.71 GB 的對齊模型、自動語言偵測模型和執行階段檔案。</value></data>
   <data name="whisper-device" xml:space="preserve"><value>Whisper Small 運算裝置</value></data>
   <data name="nllb-device" xml:space="preserve"><value>NLLB 運算裝置</value></data>
   <data name="cpu-device" xml:space="preserve"><value>CPU</value></data>

@@ -52,7 +52,7 @@
   <data name="uninstalling" xml:space="preserve"><value>{0} 제거 중…</value></data>
   <data name="uninstalled" xml:space="preserve"><value>모델을 제거했습니다.</value></data>
   <data name="model-info" xml:space="preserve"><value>{0} · 약 {1:0.00} GB</value></data>
-  <data name="shared-info" xml:space="preserve"><value>두 Qwen3-ASR 모델은 약 0.63 GB의 정렬 데이터와 런타임 파일을 공유합니다.</value></data>
+  <data name="shared-info" xml:space="preserve"><value>두 Qwen3-ASR 모델은 시간 정렬, 자동 언어 감지, 런타임에 필요한 약 0.71 GB의 파일을 공유합니다.</value></data>
   <data name="whisper-device" xml:space="preserve"><value>Whisper Small 연산 장치</value></data>
   <data name="nllb-device" xml:space="preserve"><value>NLLB 연산 장치</value></data>
   <data name="cpu-device" xml:space="preserve"><value>CPU</value></data>

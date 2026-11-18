@@ -52,7 +52,7 @@
   <data name="uninstalling" xml:space="preserve"><value>{0} をアンインストール中…</value></data>
   <data name="uninstalled" xml:space="preserve"><value>モデルをアンインストールしました。</value></data>
   <data name="model-info" xml:space="preserve"><value>{0} · 約 {1:0.00} GB</value></data>
-  <data name="shared-info" xml:space="preserve"><value>2 つの Qwen3-ASR モデルは約 0.63 GB のアライメントデータとランタイムを共有します。</value></data>
+  <data name="shared-info" xml:space="preserve"><value>2 つの Qwen3-ASR モデルは、アライメント、言語の自動検出、ランタイム用のファイル（約 0.71 GB）を共有します。</value></data>
   <data name="whisper-device" xml:space="preserve"><value>Whisper Small の実行デバイス</value></data>
   <data name="nllb-device" xml:space="preserve"><value>NLLB の実行デバイス</value></data>
   <data name="cpu-device" xml:space="preserve"><value>CPU</value></data>

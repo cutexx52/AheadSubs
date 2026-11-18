@@ -52,7 +52,7 @@
   <data name="uninstalling" xml:space="preserve"><value>Desinstalando {0}…</value></data>
   <data name="uninstalled" xml:space="preserve"><value>Modelo desinstalado.</value></data>
   <data name="model-info" xml:space="preserve"><value>{0} · aprox. {1:0.00} GB</value></data>
-  <data name="shared-info" xml:space="preserve"><value>Ambos modelos Qwen3-ASR comparten unos 0,63 GB de datos de alineación y archivos de ejecución.</value></data>
+  <data name="shared-info" xml:space="preserve"><value>Ambos modelos Qwen3-ASR comparten unos 0,71 GB de archivos para la alineación, la detección automática del idioma y la ejecución.</value></data>
   <data name="whisper-device" xml:space="preserve"><value>Dispositivo de Whisper Small</value></data>
   <data name="nllb-device" xml:space="preserve"><value>Dispositivo de NLLB</value></data>
   <data name="cpu-device" xml:space="preserve"><value>CPU</value></data>
