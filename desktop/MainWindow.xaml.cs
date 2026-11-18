@@ -19,11 +19,11 @@ public partial class MainWindow : Window
     private sealed record ModelDownload(string Id, string Label, string Details, string Status, string Action,
         bool Installed, bool CanAct, string? DisabledReason);
     private static readonly Choice[] DashScopeSpeechModels =
-    [new("[云端] Qwen-Audio 3.1 ASR Flash", "qwen-audio-3.1-asr-flash"),
-     new("[云端] Qwen-Audio 3.0 ASR Flash", "qwen-audio-3.0-asr-flash")];
+    [new("Qwen-Audio 3.1 ASR Flash", "qwen-audio-3.1-asr-flash"),
+     new("Qwen-Audio 3.0 ASR Flash", "qwen-audio-3.0-asr-flash")];
     private static readonly Choice[] DashScopeTranslationModels =
-    [new("[云端] Qwen-MT Flash", "qwen-mt-flash"), new("[云端] Qwen-MT Lite", "qwen-mt-lite"),
-     new("[云端] Qwen-MT Plus", "qwen-mt-plus")];
+    [new("Qwen-MT Flash", "qwen-mt-flash"), new("Qwen-MT Lite", "qwen-mt-lite"),
+     new("Qwen-MT Plus", "qwen-mt-plus")];
     private sealed record EnhancementDraft(bool Enabled, string PreviousCues, string ContextChars, string Prompt);
     private readonly Dictionary<string, EnhancementDraft> enhancementDrafts = new();
     private string? enhancementModel;
@@ -56,8 +56,8 @@ public partial class MainWindow : Window
             new("OpenAI · API Key", "openai"), new("ChatGPT 订阅 · OAuth", "chatgpt"),
             new("MiniMax · API Key", "minimax"), new("自定义兼容接口 · API Key", "compatible") };
         CloudProvider.SelectedIndex = 0;
-        DashScopeSpeech.ItemsSource = DashScopeSpeechModels;
-        DashScopeTranslation.ItemsSource = DashScopeTranslationModels;
+        DashScopeSpeech.ItemsSource = DashScopeSpeechModels.Select(CloudChoice).ToArray();
+        DashScopeTranslation.ItemsSource = DashScopeTranslationModels.Select(CloudChoice).ToArray();
         using var iconStream = System.Windows.Application.GetResourceStream(
             new Uri("Assets/AheadSubs.ico", UriKind.Relative)).Stream;
         var appIcon = new System.Drawing.Icon(iconStream);
@@ -384,13 +384,13 @@ public partial class MainWindow : Window
         var speechOptions = LocalModels.Where(m => m.Value != "nllb" && Installed(m.Value))
             .Select(m => new Choice("[本地] " + m.Label, m.Value)).ToList();
         speechOptions.Add(new("[云端] OpenAI Whisper", "openai"));
-        speechOptions.AddRange(DashScopeSpeechModels);
+        speechOptions.AddRange(DashScopeSpeechModels.Select(CloudChoice));
         if (speech == "compatible") speechOptions.Add(new("[自定义] 已配置的语音识别 API", "compatible"));
         SpeechModel.ItemsSource = speechOptions;
         SpeechModel.SelectedValue = speech;
         var translationOptions = new List<Choice>();
         if (Installed("nllb")) translationOptions.Add(new("[本地] NLLB-200 600M INT8 · CPU / CUDA", "nllb"));
-        translationOptions.AddRange(DashScopeTranslationModels);
+        translationOptions.AddRange(DashScopeTranslationModels.Select(CloudChoice));
         translationOptions.Add(new("[云端] OpenAI GPT-4.1 mini", "gpt-4.1-mini"));
         translationOptions.Add(new("[云端] ChatGPT 订阅", "chatgpt"));
         translationOptions.Add(new("[云端] " + miniMaxModel, "minimax"));
@@ -399,8 +399,11 @@ public partial class MainWindow : Window
         if (translation == "compatible") translationOptions.Add(new("[自定义] 已配置的翻译 API", "compatible"));
         TranslationModel.ItemsSource = translationOptions;
         TranslationModel.SelectedValue = translation;
+        UpdateFolderModelChoices(Selected(FolderRuleSpeechModel), Selected(FolderRuleTranslationModel));
         UpdateContext();
     }
+
+    private static Choice CloudChoice(Choice model) => model with { Label = "[云端] " + model.Label };
 
     private void SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -703,7 +706,7 @@ public partial class MainWindow : Window
         {
             var result = await bridge.Run("save-credentials", input: edits);
             LoadKeys(result["credentials"], group);
-        }, "密钥设置已保存。应用翻译设置后生效。");
+        }, AutomationText.Get("CredentialsSaved"));
     }
 
     internal void RenderPreviews(string directory)
@@ -743,6 +746,8 @@ public partial class MainWindow : Window
             RootLayout.Arrange(new Rect(0, 0, 1040, 760));
             RootLayout.UpdateLayout();
             if (index == 13) StatusDashboard.ScrollToCloud();
+            if (index == 14 && FolderTasksTab.Content is ScrollViewer folderTasks)
+                folderTasks.ScrollToVerticalOffset(525);
             Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
             RootLayout.UpdateLayout();
             var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(1040, 760, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);

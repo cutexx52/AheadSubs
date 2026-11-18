@@ -2,12 +2,13 @@
 <root>
   <data name="SubtitleTab" xml:space="preserve"><value>字幕</value></data>
   <data name="SubtitleSettings" xml:space="preserve"><value>字幕设置</value></data>
+  <data name="CredentialsSaved" xml:space="preserve"><value>密钥设置已保存。在「字幕」页应用后生效。</value></data>
   <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
   <data name="Title" xml:space="preserve"><value>接入</value></data>
-  <data name="Intro" xml:space="preserve"><value>让本机 Agent 和脚本使用 AheadSubs 翻译文本、生成 SRT 或控制字幕预读。请先在翻译页启动字幕服务。</value></data>
+  <data name="Intro" xml:space="preserve"><value>让本机 Agent 和脚本使用 AheadSubs 翻译文本、生成 SRT 或控制字幕预读。请先在「字幕」页启动字幕服务。</value></data>
   <data name="Loading" xml:space="preserve"><value>正在读取</value></data>
   <data name="Enabled" xml:space="preserve"><value>已开启</value></data>
   <data name="Disabled" xml:space="preserve"><value>已关闭</value></data>
@@ -47,7 +48,12 @@
   <data name="FolderMin" xml:space="preserve"><value>最小文件大小（MiB）</value></data>
   <data name="FolderMax" xml:space="preserve"><value>最大文件大小（MiB）</value></data>
   <data name="FolderSubtitle" xml:space="preserve"><value>字幕配置</value></data>
-  <data name="FolderModels" xml:space="preserve"><value>使用翻译页保存的语音识别和翻译模型。</value></data>
+  <data name="FolderModels" xml:space="preserve"><value>可分别指定识别和翻译模型，也可沿用全局设置。请在「本地模型」安装模型，在「云端模型」配置凭据。</value></data>
+  <data name="FolderSpeechModel" xml:space="preserve"><value>语音识别模型</value></data>
+  <data name="FolderTranslationModel" xml:space="preserve"><value>字幕翻译模型</value></data>
+  <data name="FolderModelNotInstalled" xml:space="preserve"><value>{0}（未安装）</value></data>
+  <data name="FolderChatGptModel" xml:space="preserve"><value>ChatGPT 订阅</value></data>
+  <data name="FolderCustomModel" xml:space="preserve"><value>已配置的自定义 API</value></data>
   <data name="FolderSource" xml:space="preserve"><value>源语言</value></data>
   <data name="FolderTarget" xml:space="preserve"><value>字幕语言</value></data>
   <data name="FolderAudio" xml:space="preserve"><value>音轨（1–256）</value></data>
@@ -57,7 +63,7 @@
   <data name="FolderIdle" xml:space="preserve"><value>Windows 输入空闲分钟数（0–120，0 表示仅检查 AheadSubs）</value></data>
   <data name="FolderSave" xml:space="preserve"><value>保存规则</value></data>
   <data name="FolderDelete" xml:space="preserve"><value>删除规则</value></data>
-  <data name="FolderDefault" xml:space="preserve"><value>沿用翻译设置</value></data>
+  <data name="FolderDefault" xml:space="preserve"><value>沿用全局设置</value></data>
   <data name="FolderAuto" xml:space="preserve"><value>自动识别</value></data>
   <data name="FolderTranslated" xml:space="preserve"><value>仅译文</value></data>
   <data name="FolderBilingual" xml:space="preserve"><value>双语</value></data>
@@ -93,4 +99,6 @@
   <data name="FolderIssue_generation_timeout" xml:space="preserve"><value>字幕生成超过 24 小时。</value></data>
   <data name="FolderIssue_request_timeout" xml:space="preserve"><value>读取媒体超时。</value></data>
   <data name="FolderIssue_content_blocked" xml:space="preserve"><value>服务提供商返回了内容审核错误。</value></data>
+  <data name="FolderIssue_folder_model_not_installed" xml:space="preserve"><value>请在「本地模型」安装所选模型后重试。</value></data>
+  <data name="FolderIssue_folder_model_unavailable" xml:space="preserve"><value>无法启动所选模型。请检查模型安装、运行库或云端设置后重试。</value></data>
 </root>

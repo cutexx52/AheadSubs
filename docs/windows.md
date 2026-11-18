@@ -26,7 +26,7 @@ Automatic updates follow stable releases only; scheduled previews are optional d
 ## Choose your processing route
 
 - **Fully local:** install a local speech model and NLLB from Local models (本地模型); apply the preset and select your languages. No API key is needed after model downloads.
-- **Hybrid:** install a local speech model, save a cloud translation key under Cloud models (云端模型), then select that recognizer and cloud translator on Translation (翻译).
+- **Hybrid:** install a local speech model, save a cloud translation key under Cloud models (云端模型), then select that recognizer and cloud translator on Subtitles (字幕).
 - **Cloud recognition and translation:** save provider credentials, choose supported cloud ASR and translation models, and apply. Audio segments and text are sent to the selected providers; local extraction and speech detection still run.
 
 Use Players (播放器) → One-click setup (一键配置), restart the player, then enable look-ahead. The [README](../README.md) gives the shortest setup paths; [providers](providers.md) explains credentials and model combinations.

@@ -49,10 +49,10 @@ def configure_cuda():
 
 
 class FasterWhisper:
-    def __init__(self, model: str, device: str, workers: int):
+    def __init__(self, model: str, device: str, workers: int, *, local_files_only=False):
         from faster_whisper import WhisperModel
 
-        self.model = WhisperModel(model, device=device, num_workers=workers,
+        self.model = WhisperModel(model, device=device, num_workers=workers, local_files_only=local_files_only,
                                   compute_type="int8_float16" if device == "cuda" else "int8")
 
     def recognize(self, wav, source):
@@ -292,14 +292,14 @@ class QwenMtTranslation:
 
 
 class NllbTranslation:
-    def __init__(self, model, device, workers):
+    def __init__(self, model, device, workers, *, local_files_only=False):
         import ctranslate2
         from huggingface_hub import snapshot_download
         from tokenizers import Tokenizer
 
         path = Path(model)
         if not path.is_dir():
-            path = Path(snapshot_download(model, allow_patterns=[
+            path = Path(snapshot_download(model, local_files_only=local_files_only, allow_patterns=[
                 "model.bin", "config.json", "*vocabulary.json", "tokenizer.json",
             ]))
         self.tokenizer = Tokenizer.from_file(str(path / "tokenizer.json"))

@@ -4,6 +4,7 @@ import logging
 import time
 from contextlib import ExitStack
 from dataclasses import asdict
+from functools import partial
 from http.client import HTTPConnection, HTTPException
 from ipaddress import ip_address
 from pathlib import Path
@@ -13,7 +14,7 @@ from .inference.audio import Segmentation, Segmenter, VAD_THRESHOLDS
 from .inference.chatgpt import ChatGPTTranslation
 from .inference.dashscope import DASHSCOPE_ASR_MODELS, DashScopeAudio
 from .inference.usage import CloudMeter, CloudUsage, model_label
-from .server.engine import MAX_CONTEXT_CUES, Relay, TranslationSettings
+from .server.engine import MAX_CONTEXT_CUES, Relay, SubtitlePipeline, TranslationSettings
 from .adapters.players import Mpv, run_adapter
 from .client import RelayClient
 from .server.protocol import serve
@@ -63,7 +64,8 @@ def qwen_ready(port):
         connection.close()
 
 
-def monitor_pipeline(args, recognizer, translator, speech_translator, dashscope_url, usage):
+def monitor_pipeline(args, recognizer, translator, speech_translator, dashscope_url, usage, *,
+                     meter_asr=True, meter_mt=True):
     models = []
     qwen_port = None
 
@@ -71,7 +73,9 @@ def monitor_pipeline(args, recognizer, translator, speech_translator, dashscope_
         models.append({"operation": operation, "model": model_label(model), "device": device, "state": state})
 
     def cloud(operation, provider, backend, endpoint=""):
-        backend.usage_meter = CloudMeter(usage, provider, backend.model, endpoint)
+        metered = meter_mt if operation == "mt" else meter_asr
+        if metered:
+            backend.usage_meter = CloudMeter(usage, provider, backend.model, endpoint)
         local(operation, backend.model, "cloud", "configured")
 
     if speech_translator:
@@ -110,7 +114,11 @@ def monitor_pipeline(args, recognizer, translator, speech_translator, dashscope_
     return snapshot
 
 
-def make_relay(args):
+def dashscope_endpoint(args):
+    return args.qwen_mt_url.strip().rstrip("/") or DASHSCOPE_DEFAULT_URL
+
+
+def make_backends(args, desktop_settings, *, shared_asr=None, shared_mt=None, local_files_only=False):
     def desktop_key(provider, endpoint=None):
         if args.desktop_config is None:
             return None
@@ -118,22 +126,21 @@ def make_relay(args):
 
         return resolve(desktop_settings, provider, endpoint)
 
-    desktop_settings = {}
-    if args.desktop_config is not None and args.desktop_config.is_file():
-        desktop_settings = json.loads(args.desktop_config.read_text(encoding="utf-8"))
-    dashscope_url = args.qwen_mt_url.strip().rstrip("/") or DASHSCOPE_DEFAULT_URL
-    settings = Segmentation(args.before, args.after, args.max_speech, args.min_silence_ms,
-                            args.pad_ms, args.vad_threshold, not args.no_vad, args.backfill, args.min_speech)
+    dashscope_url = dashscope_endpoint(args)
     asr_device, mt_device = args.asr_device or args.device, args.mt_device or args.device
-    if not args.ast and ((args.asr == "local" and asr_device == "cuda") or (args.mt == "local" and mt_device == "cuda")):
+    if not args.ast and ((shared_asr is None and args.asr == "local" and asr_device == "cuda")
+                         or (shared_mt is None and args.mt == "local" and mt_device == "cuda")):
         configure_cuda()
-    cloud = (openai_client(args.key_file, api_key=desktop_key("openai"))
-             if "openai" in (args.asr, args.mt) or args.ast else None)
-    recognizer = None
-    translator = None
-    if not args.ast:
+    needs_openai = (args.ast or (shared_asr is None and args.asr == "openai")
+                    or (shared_mt is None and args.mt == "openai"))
+    cloud = openai_client(args.key_file, api_key=desktop_key("openai")) if needs_openai else None
+    if args.ast:
+        return None, None, OpenAIWhisper(cloud)
+    recognizer, translator = shared_asr, shared_mt
+    model_options = {"local_files_only": True} if local_files_only else {}
+    if recognizer is None:
         if args.asr == "local":
-            recognizer = FasterWhisper(args.whisper_model, asr_device, min(args.workers, 2))
+            recognizer = FasterWhisper(args.whisper_model, asr_device, min(args.workers, 2), **model_options)
         elif args.asr in {"compatible", "qwen"}:
             key = desktop_key("compatible-asr", args.asr_url) if args.asr == "compatible" else None
             client = openai_client(endpoint=args.asr_url, endpoint_key="RELAY_ASR_API_KEY", api_key=key)
@@ -143,8 +150,9 @@ def make_relay(args):
                                         api_key=desktop_key("dashscope"))
         else:
             recognizer = OpenAIWhisper(cloud)
+    if translator is None:
         if args.mt == "local":
-            translator = NllbTranslation(args.nllb_model, mt_device, min(args.workers, 2))
+            translator = NllbTranslation(args.nllb_model, mt_device, min(args.workers, 2), **model_options)
         elif args.mt == "qwen-mt":
             translator = QwenMtTranslation(qwen_mt_client(dashscope_url, args.qwen_mt_key_file,
                                                           api_key=desktop_key("dashscope")),
@@ -158,6 +166,12 @@ def make_relay(args):
                 endpoint=args.llm_url, api_key=desktop_key("compatible-mt", args.llm_url))
             effort = "none" if args.mt == "openai" and args.llm_model.startswith("gpt-6-luna") else None
             translator = ChatTranslation(client, args.llm_model, reasoning_effort=effort)
+    return recognizer, translator, None
+
+
+def subtitle_profile(args, settings, translator):
+    dashscope_url = dashscope_endpoint(args)
+    asr_device, mt_device = args.asr_device or args.device, args.mt_device or args.device
     profile = ["v3-media-clock", args.asr, args.mt, args.ast, args.whisper_model, args.nllb_model,
                args.llm_model, args.llm_url, args.device, asdict(settings)]
     devices = [asr_device if args.asr == "local" else None, mt_device if args.mt == "local" else None]
@@ -175,6 +189,16 @@ def make_relay(args):
         profile.extend([args.dashscope_asr_model, dashscope_url])
     if settings.enabled and args.vad_model != "silero":
         profile.append(args.vad_model)
+    return profile
+
+
+def make_relay(args, desktop_settings):
+    settings = Segmentation(args.before, args.after, args.max_speech, args.min_silence_ms,
+                            args.pad_ms, args.vad_threshold, not args.no_vad, args.backfill, args.min_speech)
+    recognizer, translator, speech_translator = make_backends(args, desktop_settings)
+    profile = subtitle_profile(args, settings, translator)
+    dashscope_url = dashscope_endpoint(args)
+    asr_device = args.asr_device or args.device
     transcription_profile = [args.asr, asdict(settings), args.vad_model if settings.enabled else None]
     if args.asr == "local":
         transcription_profile.extend([args.whisper_model, asr_device])
@@ -184,7 +208,6 @@ def make_relay(args):
         transcription_profile.extend([args.qwen_size, args.asr_model])
     elif args.asr == "dashscope":
         transcription_profile.extend([dashscope_url, args.dashscope_asr_model])
-    speech_translator = OpenAIWhisper(cloud) if args.ast else None
     segmenter = Segmenter(settings, args.vad_model)
     usage = CloudUsage(args.cache)
     model_status = monitor_pipeline(args, recognizer, translator, speech_translator, dashscope_url, usage)
@@ -192,6 +215,15 @@ def make_relay(args):
                  model_status=model_status, cloud_usage=usage, transcription_profile=transcription_profile,
                  translation_settings=TranslationSettings(args.translation_previous_cues, args.translation_prompt,
                                                           args.translation_context_chars))
+
+
+def build_folder_pipeline(relay, desktop_settings, args, translation, shared_asr, shared_mt):
+    recognizer, translator, _ = make_backends(args, desktop_settings, shared_asr=shared_asr,
+                                              shared_mt=shared_mt, local_files_only=True)
+    monitor_pipeline(args, recognizer, translator, None, dashscope_endpoint(args), relay.cloud_usage,
+                     meter_asr=shared_asr is None, meter_mt=shared_mt is None)
+    profile = subtitle_profile(args, relay.segmenter.settings, translator)
+    return SubtitlePipeline(recognizer, translator, profile, translation_settings=translation)
 
 
 def main():
@@ -290,12 +322,15 @@ def main():
                 0 <= args.backfill <= 30 and len(args.translation_prompt) <= 1000):
             parser.error("invalid VAD parameters or audio context")
         with ExitStack() as resources:
+            desktop_settings = {}
+            if args.desktop_config is not None and args.desktop_config.is_file():
+                desktop_settings = json.loads(args.desktop_config.read_text(encoding="utf-8"))
             if args.asr == "qwen" and not args.ast:
                 from .inference.qwen import run as run_qwen
 
                 args.asr_url = resources.enter_context(run_qwen(args.qwen_root, args.qwen_size))
                 args.asr_model = "qwen3-asr"
-            relay = make_relay(args)
+            relay = make_relay(args, desktop_settings)
             resources.callback(relay.close)
             if args.pot_hotkey_launcher:
                 from .adapters.potplayer import start_hotkey
@@ -315,7 +350,14 @@ def main():
             if args.desktop_config is not None:
                 from .desktop.folder_tasks import background_worker
 
-                resources.enter_context(background_worker(relay, defaults))
+                build_pipeline = partial(build_folder_pipeline, relay, desktop_settings)
+                resources.enter_context(background_worker(relay, defaults, args, desktop_settings, build_pipeline))
+                global_models = tuple(local_models)
+
+                def service_models():
+                    return sorted(set(global_models) | relay.active_background_models())
+
+                local_models = service_models
             serve(relay, args.port, token, defaults, local_models=local_models)
         return
     if args.interval <= 0:

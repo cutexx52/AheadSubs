@@ -184,6 +184,14 @@ MESSAGES = {
         "Check the folder rule field {field}.",
         "请检查目录规则中的 {field} 字段。",
     ),
+    "error.folder_model_not_installed": (
+        "Install the selected model under Local models and retry.",
+        "请在「本地模型」安装所选模型后重试。",
+    ),
+    "error.folder_model_unavailable": (
+        "Could not start a selected model. Check the model installation, runtime or cloud settings, then retry.",
+        "无法启动所选模型。请检查模型安装、运行库或云端设置后重试。",
+    ),
 }
 
 

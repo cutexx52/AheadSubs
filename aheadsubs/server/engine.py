@@ -239,6 +239,18 @@ def clear_dialogue(text):
     return True
 
 
+class SubtitlePipeline:
+    def __init__(self, recognizer, translator, profile, speech_translator=None,
+                 translation_settings=TranslationSettings()):
+        self.recognizer = recognizer
+        self.translator = translator
+        self.profile = profile
+        self.speech_translator = speech_translator
+        self.source_only = recognizer is not None and translator is None and speech_translator is None
+        self.translation_settings = translation_settings.for_translator(None if speech_translator else translator)
+        self.recognition_cache = RecognitionCache(recognizer) if recognizer and self.translation_settings.previous_cues else None
+
+
 @dataclass
 class Session:
     playback: Playback
@@ -246,6 +258,7 @@ class Session:
     updated: float
     source: str = "http"
     waiting_since: float | None = None
+    pipeline: SubtitlePipeline | None = None
 
 
 @dataclass
@@ -357,12 +370,9 @@ class Relay:
         self.root = Path(root).resolve()
         self.root.mkdir(parents=True, exist_ok=True)
         self.recognizer, self.translator = recognizer, translator
-        self.speech_translator = speech_translator
-        self.source_only = recognizer is not None and translator is None and speech_translator is None
+        self.pipeline = SubtitlePipeline(recognizer, translator, profile, speech_translator, translation_settings)
         self.segmenter = segmenter
-        self.translation_settings = translation_settings.for_translator(None if speech_translator else translator)
-        self.recognition_cache = RecognitionCache(recognizer) if recognizer and self.translation_settings.previous_cues else None
-        self.profile, self.workers, self.chunk = profile, workers, chunk
+        self.workers, self.chunk = workers, chunk
         self.lock = threading.RLock()
         self.status_lock = threading.Lock()
         self.model_status = model_status
@@ -382,6 +392,9 @@ class Relay:
         self.pool = ThreadPoolExecutor(max_workers=workers)
         self.sessions = {}
         self.background_session = None
+        self.background_models = set()
+        self.background_drained = threading.Event()
+        self.background_drained.set()
         self.inflight = set()
         self.errors = {}
         self.rendered = {}
@@ -405,13 +418,14 @@ class Relay:
                 self.cloud_usage.close()
         self.db.close()
 
-    def _identity(self, playback, info=None):
+    def _identity(self, playback, info=None, pipeline=None):
+        pipeline = pipeline or self.pipeline
         if info is None:
             info = playback.path.stat()
-        identity = [self.profile, self.chunk, os.path.normcase(str(playback.path)),
+        identity = [pipeline.profile, self.chunk, os.path.normcase(str(playback.path)),
                     info.st_size, info.st_mtime_ns, playback.audio, playback.source, playback.target]
-        if self.translation_settings != TranslationSettings():
-            identity.append(["translation-context-v3", asdict(self.translation_settings)])
+        if pipeline.translation_settings != TranslationSettings():
+            identity.append(["translation-context-v3", asdict(pipeline.translation_settings)])
         return hashlib.sha256(json.dumps(identity).encode()).hexdigest()
 
     def queue_regeneration(self, selected):
@@ -440,8 +454,8 @@ class Relay:
             info = task.check_media()
             task.playback = replace(playback, duration=duration)
             task.count = math.ceil(duration / self.chunk)
-            remember_media(self.db, task.key, task.playback, self.speech_translator is None,
-                           info, self.chunk, state="queued", translation_available=not self.source_only)
+            remember_media(self.db, task.key, task.playback, self.pipeline.speech_translator is None,
+                           info, self.chunk, state="queued", translation_available=not self.pipeline.source_only)
             self.regeneration = task
             if self.background_session is not None:
                 self.drop(self.background_session)
@@ -474,10 +488,11 @@ class Relay:
             self.rendered[render_key] = revision
         return path, revision
 
-    def update(self, identifier, playback, source="http", *, background=False):
+    def update(self, identifier, playback, source="http", *, background=False, pipeline=None):
+        pipeline = pipeline or self.pipeline
         received = time.monotonic()
         info = playback.path.stat()
-        key = self._identity(playback, info)
+        key = self._identity(playback, info, pipeline)
         with self.lock:
             if not background and self.background_session is not None:
                 self.drop(self.background_session)
@@ -485,9 +500,9 @@ class Relay:
             previous = self.sessions.get(identifier)
             if (previous is None or previous.key != key
                     or playback.duration is not None and playback.duration != previous.playback.duration):
-                remember_media(self.db, key, playback, self.speech_translator is None, info, self.chunk,
-                               translation_available=not self.source_only)
-            session = Session(playback, key, now, source if source in SOURCES else "http")
+                remember_media(self.db, key, playback, pipeline.speech_translator is None, info, self.chunk,
+                               translation_available=not pipeline.source_only)
+            session = Session(playback, key, now, source if source in SOURCES else "http", pipeline=pipeline)
             self.sessions[identifier] = session
             path, revision = self._render(key, playback)
             index = int(playback.position // self.chunk)
@@ -543,12 +558,16 @@ class Relay:
         with self.lock:
             return self.active_sessions() == 0 and self.regeneration is None and not any(self.text_requests.values())
 
-    def update_background(self, identifier, playback):
+    def update_background(self, identifier, playback, pipeline=None):
         with self.lock:
             if not self.background_idle():
                 return None
             self.background_session = identifier
-            return self.update(identifier, playback, background=True)
+            return self.update(identifier, playback, background=True, pipeline=pipeline)
+
+    def active_background_models(self):
+        with self.lock:
+            return self.background_models.copy()
 
     def text_activity(self, source, change):
         with self.lock:
@@ -585,8 +604,8 @@ class Relay:
         self.rendered = {render_key: revision for render_key, revision in self.rendered.items()
                          if render_key[0] in active}
         self.errors = {job: detail for job, detail in self.errors.items() if job[0] in active}
-        if self.recognition_cache and not active:
-            self.recognition_cache.clear_completed()
+        if self.pipeline.recognition_cache and not active:
+            self.pipeline.recognition_cache.clear_completed()
         if not active and not self.inflight and self.regeneration is not None:
             task = self.regeneration
             if task.index == 0:
@@ -622,17 +641,19 @@ class Relay:
                 if index not in done and job not in self.inflight and self.errors.get(job, (0,))[0] <= now:
                     distance = (index - first) * self.chunk / playback.speed if index >= first else 0.5
                     if job not in candidates or distance < candidates[job][0]:
-                        candidates[job] = (distance, playback)
+                        candidates[job] = (distance, playback, session.pipeline)
         background = self.background_session in self.sessions
         limit = 1 if background else self.workers
         for job in sorted(candidates, key=lambda job: candidates[job][0]):
             if len(self.inflight) >= limit:
                 break
             self.inflight.add(job)
-            playback = candidates[job][1]
-            future = self.pool.submit(self._process, playback, job[1])
-            future.add_done_callback(lambda result, job=job, media=playback if background else None:
-                                     self._finish(job, result, background_media=media))
+            _, playback, pipeline = candidates[job]
+            if background:
+                self.background_drained.clear()
+            future = self.pool.submit(self._process, playback, job[1], pipeline=pipeline)
+            future.add_done_callback(lambda result, job=job, media=playback if background else None, pipeline=pipeline:
+                                     self._finish(job, result, background_media=media, pipeline=pipeline))
 
     def _finish_transcription(self, job, task, future):
         with self.lock:
@@ -641,7 +662,8 @@ class Relay:
             finally:
                 self.inflight.remove(job)
 
-    def _process(self, playback, index, *, reuse_recognition=True):
+    def _process(self, playback, index, *, reuse_recognition=True, pipeline=None):
+        pipeline = pipeline or self.pipeline
         audio_seconds = 0
 
         def observe(seconds):
@@ -649,18 +671,18 @@ class Relay:
             audio_seconds = seconds
 
         started = time.monotonic()
-        cues = translate_chunk(playback, index, self.chunk, self.recognizer, self.translator,
-                               self.speech_translator, self.segmenter, self.translation_settings,
-                               self.recognition_cache if reuse_recognition else None, observe_audio=observe)
+        cues = translate_chunk(playback, index, self.chunk, pipeline.recognizer, pipeline.translator,
+                               pipeline.speech_translator, self.segmenter, pipeline.translation_settings,
+                               pipeline.recognition_cache if reuse_recognition else None, observe_audio=observe)
         elapsed = time.monotonic() - started
         return cues, elapsed / audio_seconds if audio_seconds else None
 
-    def _finish(self, job, future, *, regeneration=None, background_media=None):
+    def _finish(self, job, future, *, regeneration=None, background_media=None, pipeline=None):
         with self.lock:
             try:
                 if background_media is not None:
                     try:
-                        if self._identity(background_media) != job[0]:
+                        if self._identity(background_media, pipeline=pipeline) != job[0]:
                             return
                     except OSError:
                         return
@@ -695,3 +717,5 @@ class Relay:
                                                     type(exc).__name__, error.http_status)
             finally:
                 self.inflight.remove(job)
+                if background_media is not None:
+                    self.background_drained.set()

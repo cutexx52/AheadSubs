@@ -109,7 +109,7 @@ Example response:
 }
 ```
 
-`revision` and `subtitle` jointly identify a version; initially they are `0` and `null`. `ready_ahead` is continuous completed coverage from the requested position, including silence. `nearby_cues` indicates an unended cue in nearby processed coverage. `error` describes the current chunk failure; `error_code` is a stable adapter-facing category. Sentence-level moderation blocks remain in inspection records. Seeking, track changes or new files can reduce ready-ahead coverage.
+`revision` and `subtitle` jointly identify a version; initially they are `0` and `null`. `ready_ahead` is continuous completed coverage from the requested position, including silence. `nearby_cues` indicates an unended cue in nearby processed coverage. `error` describes the current chunk failure; `error_code` is a stable adapter-facing category. Sentence-level moderation blocks remain in the subtitle library. Seeking, track changes or new files can reduce ready-ahead coverage.
 
 `subtitle_generation` changes when effective recognition, translation, timeline settings or bilingual display change—even before new cues exist. Players can remove old subtitles and await new results. Returning to identical processing settings can reuse their cache.
 

@@ -2,7 +2,7 @@
 
 [English](tuning.md) | [简体中文](tuning.zh-CN.md)
 
-Start in Subtitle inspection (字幕检查): select a video and compare timestamps, source and translation. The source is the ASR text passed to translation. Failures retain the original and show a reason. Incorrect source text calls for checking source language, speech detection and recognition first; correct source with poor translation calls for a different translator, context or prompt. Direct audio translation has no source text column.
+Start in **Subtitle library (字幕库)**: select a video and compare timestamps, source and translation. The source is the ASR text passed to translation. Failures retain the original and show a reason. Incorrect source text calls for checking source language, speech detection and recognition first; correct source with poor translation calls for a different translator, context or prompt. Direct audio translation has no source text column.
 
 Explicit provider moderation produces a moderation-block message. Per-sentence backends continue other sentences; batch backends identify only a blocked batch. Local NLLB makes no cloud translation requests. Apply a local configuration to generate under that configuration. [Alibaba Cloud error codes](https://help.aliyun.com/zh/model-studio/error-code/#inappropriate-content).
 
@@ -27,7 +27,7 @@ Silero's internal minimum speech duration is `96 ms`; short-pause detection is a
 | Extra pause search before/after | `2 s` each | Expand VAD search beyond the longest speech segment; this entire range is not sent to ASR. |
 | Minimum seek backfill | `4 s` | Include earlier tasks covering the seek target; long segments can expand this to half the maximum segment duration. |
 
-Display extends about 0.6 seconds per side. Short cues aim for 1.4 seconds when space allows, extending at most 1 second per side. Adjacent dialogue shares free gaps only; continuous speech keeps its transitions. Inspection shows recognition timestamps. Display-only changes need no new recognition/translation.
+Display extends about 0.6 seconds per side. Short cues aim for 1.4 seconds when space allows, extending at most 1 second per side. Adjacent dialogue shares free gaps only; continuous speech keeps its transitions. The subtitle library shows recognition timestamps. Display-only changes need no new recognition/translation.
 
 ## Translation context and bilingual display
 

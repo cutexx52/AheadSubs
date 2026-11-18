@@ -29,7 +29,7 @@ Setup presets and integrations have English/Chinese labels; some existing screen
 
 ### Route A — fully local, no API key
 
-1. On the **Translation (翻译)** home page, expand **Setup presets (快速预设)**. Choose **Local · Entry GPU (纯本地 · 独显入门)** for Qwen3-ASR 0.6B + CPU NLLB, or **Local · CPU (纯本地 · CPU)** for Whisper Small + NLLB without a compatible Vulkan GPU. Select **Download now (立即下载)** for missing models, then **Apply preset (应用方案)**.
+1. On the **Subtitles (字幕)** home page, expand **Setup presets (快速预设)**. Choose **Local · Entry GPU (纯本地 · 独显入门)** for Qwen3-ASR 0.6B + CPU NLLB, or **Local · CPU (纯本地 · CPU)** for Whisper Small + NLLB without a compatible Vulkan GPU. Select **Download now (立即下载)** for missing models, then **Apply preset (应用方案)**.
 2. Select the video's source language and your subtitle target language. Keep the preset's models, save/apply any changes and wait for service readiness.
 3. Configure your player below and start look-ahead. The first model download requires network access; subsequent fully local processing does not require a cloud API key.
 
@@ -39,11 +39,11 @@ Shortcut on compatible Vulkan hardware: choose **Recommended · Local speech + c
 
 1. Install a local recognition model: Qwen3-ASR on compatible Vulkan hardware, or Whisper Small on CPU. You do not need NLLB if all translation uses a cloud provider.
 2. In **Cloud models (云端模型)**, select a provider such as **Alibaba Cloud / Qwen-MT**, enter its API key or select a key file, and choose the matching regional endpoint. Save credentials.
-3. On **Translation (翻译)**, keep the local recognition model and select **Qwen-MT Flash** for translation. Choose source/target languages, save/apply, then enable your player.
+3. On **Subtitles (字幕)**, keep the local recognition model and select **Qwen-MT Flash** for translation. Choose source/target languages, save/apply, then enable your player.
 
 This hybrid route uploads subtitle text and any enabled text context, not the audio used by the local recognizer. API usage may be billed by your provider. OpenAI, MiniMax and compatible endpoints are alternatives; eligible ChatGPT accounts can use the implemented OAuth connection. [Provider setup and data flow](docs/providers.md).
 
-**Prefer cloud recognition too?** Configure a supported cloud ASR provider (for example Alibaba Cloud ASR with Qwen-MT using the same regional key), select both cloud models on the Translation page, and apply. This uploads short audio segments for recognition as well as text for translation. Local model downloads are unnecessary for those cloud stages; local audio extraction and speech detection still run.
+**Prefer cloud recognition too?** Configure a supported cloud ASR provider (for example Alibaba Cloud ASR with Qwen-MT using the same regional key), select both cloud models on the Subtitles page, and apply. This uploads short audio segments for recognition as well as text for translation. Local model downloads are unnecessary for those cloud stages; local audio extraction and speech detection still run.
 
 ### Connect a player
 

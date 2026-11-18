@@ -36,7 +36,7 @@ Qwen3-ASR 由服务管理一个共享的本地进程。CLI 的 `--device` 设置
 
 ## 订阅与授权
 
-**ChatGPT** 在 Windows 助手的 **云端模型 → ChatGPT 订阅 · OAuth** 中配置。点击 **使用 ChatGPT 继续**，在浏览器登录并同意使用订阅，回到助手选择账号和模型，点击 **用于翻译 → 保存并应用**。OpenAI 只接收待翻译的字幕文本和启用的翻译上下文。语音识别仍使用 **翻译** 页上选定的识别模型。可从设置里的 **管理 ChatGPT 用量** 查看额度，并在需要时重新授权。CLI 使用 `--mt chatgpt --chatgpt-account <账号标识> --chatgpt-model <模型标识>`，对应标识可通过桌面桥接查询。[OpenAI 官方接入指南](https://developers.openai.com/siwc/token-sharing-open-source)
+**ChatGPT** 在 Windows 助手的 **云端模型 → ChatGPT 订阅 · OAuth** 中配置。点击 **使用 ChatGPT 继续**，在浏览器登录并同意使用订阅，回到助手选择账号和模型，点击 **用于翻译 → 保存并应用**。OpenAI 只接收待翻译的字幕文本和启用的翻译上下文。语音识别仍使用 **字幕** 页上选定的识别模型。可从设置里的 **管理 ChatGPT 用量** 查看额度，并在需要时重新授权。CLI 使用 `--mt chatgpt --chatgpt-account <账号标识> --chatgpt-model <模型标识>`，对应标识可通过桌面桥接查询。[OpenAI 官方接入指南](https://developers.openai.com/siwc/token-sharing-open-source)
 
 **MiniMax** 在 **云端模型 → MiniMax · API Key** 中直接填写密钥或选择密钥文件，也可设置 `MINIMAX_API_KEY`。CLI 使用 `--mt minimax`，可选 `--minimax-key-file`。MiniMax 的通用第三方接入文档提供 M Plan 专用 Key，OAuth 指南对应 OpenClaw。[MiniMax 第三方配置](https://platform.minimax.io/docs/m-plan/other-tools.md) · [MiniMax OpenClaw 指南](https://platform.minimax.io/docs/m-plan/openclaw.md)
 
@@ -79,4 +79,4 @@ VAD 使用 CPU。默认 Silero，可选阿里开源 FunASR FSMN-VAD。第一次�
 
 实现新后端时，保留原文与时间的配对关系，返回可处理的错误，并将影响输出的模型或选项纳入服务的缓存身份。不要把密钥加入身份或日志。测试可用实现相同接口的替身，在没有模型和凭据的环境运行。
 
-推理后端共用 `inference.errors.ProviderError`。有结构化错误码的兼容端点通过统一入口归一；自定义后端可抛出包含同一错误分类的 `ProviderError`。明确的拦截码或 `content_filter` 结束原因记为 `content_blocked`。缺少明确证据的空译文、请求错误或网络故障保留各自的失败分类。字幕检查保留原文与原因；拦截记录跳过同一缓存任务的自动重试。
+推理后端共用 `inference.errors.ProviderError`。有结构化错误码的兼容端点通过统一入口归一；自定义后端可抛出包含同一错误分类的 `ProviderError`。明确的拦截码或 `content_filter` 结束原因记为 `content_blocked`。缺少明确证据的空译文、请求错误或网络故障保留各自的失败分类。字幕库保留原文与原因；拦截记录跳过同一缓存任务的自动重试。
