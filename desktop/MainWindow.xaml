@@ -42,8 +42,8 @@
   </Grid></Border>
   <TabControl x:Name="SettingsPanel" Grid.Row="1" TabStripPlacement="Left" BorderThickness="0" Background="#F5F6F8" SelectionChanged="PageChanged">
    <TabControl.Template><ControlTemplate TargetType="TabControl"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="176"/><ColumnDefinition/></Grid.ColumnDefinitions><Border Background="#F0F2F5" BorderBrush="#E3E7ED" BorderThickness="0,0,1,0"><StackPanel Margin="0,22,0,0"><TabPanel IsItemsHost="True"/></StackPanel></Border><ContentPresenter Grid.Column="1" ContentSource="SelectedContent"/></Grid></ControlTemplate></TabControl.Template>
-   <TabItem Header="翻译" x:Name="TranslationTab"><ScrollViewer x:Name="TranslationScroll" Style="{StaticResource PageScroll}"><StackPanel>
-    <TextBlock Text="翻译设置" Style="{StaticResource PageTitle}"/>
+   <TabItem Header="{local:TaskText SubtitleTab}" x:Name="TranslationTab"><ScrollViewer x:Name="TranslationScroll" Style="{StaticResource PageScroll}"><StackPanel>
+    <TextBlock Text="{local:TaskText SubtitleSettings}" Style="{StaticResource PageTitle}"/>
     <Expander x:Name="PresetDisclosure" Margin="0,0,0,12" Style="{StaticResource PresetExpander}" Expanded="PresetOpened">
      <StackPanel Margin="10,8,10,4">
       <ComboBox x:Name="PresetChoice" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="PresetChanged"/>

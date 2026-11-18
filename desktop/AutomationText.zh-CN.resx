@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
+  <data name="SubtitleTab" xml:space="preserve"><value>字幕</value></data>
+  <data name="SubtitleSettings" xml:space="preserve"><value>字幕设置</value></data>
   <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
