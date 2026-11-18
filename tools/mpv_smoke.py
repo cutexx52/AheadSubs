@@ -53,7 +53,7 @@ def main():
                         return None
 
                 player = wait_for(connect)
-                wait_for(lambda: any(item.get("title") == "Subtitle Relay"
+                wait_for(lambda: any(item.get("title") == "AheadSubs"
                                      for item in player.command("get_property", "menu-data") or []))
                 player.command("script-message-to", "subtitle_relay", "relay-source", args.source,
                                required=True)
