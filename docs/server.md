@@ -2,6 +2,10 @@
 
 [English](server.md) | [简体中文](server.zh-CN.md)
 
+## File transcription API
+
+File transcription produces source-language text and structured recognition segments. Subtitle rendering applies display padding separately. The local API uses the service's background scheduling and yields to playback. Its OpenAI-compatible entry point accepts multipart files and returns JSON or plain text.
+
 The service binds to `127.0.0.1:8769` for local clients by default. Service and player must share media access. All times are seconds on the original media timeline.
 
 Start with `python -m subtitle_relay serve --asr local --mt local --device cpu`. Clients must match any custom `--port`.

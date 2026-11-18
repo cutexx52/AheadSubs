@@ -2,6 +2,10 @@
 
 [English](server.md) | [简体中文](server.zh-CN.md)
 
+## 文件转录 API
+
+文件转录输出原语种文本和结构化识别片段。字幕渲染单独处理显示时间的延长。本机 API 使用服务的后台调度，优先处理播放任务。兼容 OpenAI 的入口接受 multipart 文件，输出 JSON 或纯文本。
+
 服务默认绑定 `127.0.0.1:8769`，用于本机客户端。服务和播放器共享文件访问权限。所有 API 时间均使用原媒体时间，单位秒。
 
 可用 `python -m subtitle_relay serve --asr local --mt local --device cpu` 独立启动服务。使用 `--port` 设置端口时，调用者也需配置相同端口。
