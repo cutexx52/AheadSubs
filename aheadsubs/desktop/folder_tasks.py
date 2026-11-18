@@ -59,14 +59,18 @@ def folder_model_args(args, settings, rule):
 
 @contextmanager
 def folder_pipeline(relay, args, settings, rule, build_pipeline):
+    with relay.lock:
+        args = Namespace(**vars(args))
+        settings = dict(settings)
+        base = relay.pipeline
     selected = folder_model_args(args, settings, rule)
     asr_fields = ("asr", {"local": "whisper_model", "qwen": "qwen_size", "dashscope": "dashscope_asr_model",
                           "compatible": "asr_model"}.get(selected.asr, "asr"))
     mt_fields = ("mt", {"openai": "llm_model", "qwen-mt": "qwen_mt_model"}.get(selected.mt, "mt"))
-    shared_asr = relay.recognizer if not args.ast and all(getattr(args, key) == getattr(selected, key) for key in asr_fields) else None
-    shared_mt = relay.translator if not args.ast and all(getattr(args, key) == getattr(selected, key) for key in mt_fields) else None
+    shared_asr = base.recognizer if not args.ast and all(getattr(args, key) == getattr(selected, key) for key in asr_fields) else None
+    shared_mt = base.translator if not args.ast and all(getattr(args, key) == getattr(selected, key) for key in mt_fields) else None
     if shared_asr is not None and (shared_mt is not None or selected.mt == args.mt == "none"):
-        yield None
+        yield base
         return
 
     local_models = set()
@@ -98,13 +102,13 @@ def folder_pipeline(relay, args, settings, rule, build_pipeline):
             key = runtime.enhancement_key(vars(selected))
             saved = settings.get("translation_enhancements", {}).get(key, {})
             if shared_mt is not None:
-                enhancements = relay.pipeline.translation_settings
+                enhancements = base.translation_settings
             elif saved.get("enabled"):
                 enhancements = TranslationSettings(saved["previous_cues"], saved["prompt"],
                                                    saved.get("context_chars", TranslationSettings.context_chars))
             else:
                 enhancements = TranslationSettings()
-            pipeline = build_pipeline(selected, enhancements, shared_asr, shared_mt)
+            pipeline = build_pipeline(settings, selected, enhancements, shared_asr, shared_mt, base)
         except OperationError:
             raise
         except Exception as exc:

@@ -607,8 +607,11 @@ public partial class MainWindow : Window
     private static string Friendly(Exception error) => error is OperationCanceledException
         ? "后台响应超时。请稍后重试；若持续发生，可开启诊断日志排查。" : error.Message;
 
+    private Task<JsonObject> ApplySettings(JsonObject values) =>
+        bridge.Run("apply", "refresh-in-ui", input: values, progress: stage => ActionStatus.Text = SetupText.Get(stage));
+
     private async void Apply(object sender, RoutedEventArgs e) => await Act("正在应用设置，已开启的窗口会自动接续…",
-        async () => { await bridge.Run("apply", input: CollectSettings()); }, "设置已应用。到播放器按 Ctrl+Alt+J 开启翻译。", reloadSettings: true);
+        async () => { await ApplySettings(CollectSettings()); }, "设置已应用。到播放器按 Ctrl+Alt+J 开启翻译。", reloadSettings: true);
 
     private async void Stop(object sender, RoutedEventArgs e) => await Act("正在停止后台并释放资源…",
         async () => { await bridge.Run("stop"); }, "服务已停止，后台资源已释放。");

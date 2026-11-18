@@ -1,3 +1,4 @@
+from copy import copy
 import hashlib
 import json
 import logging
@@ -241,7 +242,8 @@ def clear_dialogue(text):
 
 class SubtitlePipeline:
     def __init__(self, recognizer, translator, profile, speech_translator=None,
-                 translation_settings=TranslationSettings()):
+                 translation_settings=TranslationSettings(), *, chunk=None, segmenter=None):
+        self.chunk, self.segmenter = chunk, segmenter
         self.recognizer = recognizer
         self.translator = translator
         self.profile = profile
@@ -269,6 +271,7 @@ class Regeneration:
     mtime_ns: int
     count: int
     index: int = 0
+    pipeline: SubtitlePipeline | None = None
 
     def check_media(self):
         try:
@@ -370,7 +373,8 @@ class Relay:
         self.root = Path(root).resolve()
         self.root.mkdir(parents=True, exist_ok=True)
         self.recognizer, self.translator = recognizer, translator
-        self.pipeline = SubtitlePipeline(recognizer, translator, profile, speech_translator, translation_settings)
+        self.pipeline = SubtitlePipeline(recognizer, translator, profile, speech_translator, translation_settings,
+                                         chunk=chunk, segmenter=segmenter)
         self.segmenter = segmenter
         self.workers, self.chunk = workers, chunk
         self.lock = threading.RLock()
@@ -418,11 +422,20 @@ class Relay:
                 self.cloud_usage.close()
         self.db.close()
 
+    def playback_pipeline(self, pipeline):
+        if pipeline is None:
+            return self.pipeline
+        if pipeline.chunk is None:
+            # Older callers supply model overrides and inherit the current timeline.
+            pipeline = copy(pipeline)
+            pipeline.chunk, pipeline.segmenter = self.chunk, self.segmenter
+        return pipeline
+
     def _identity(self, playback, info=None, pipeline=None):
-        pipeline = pipeline or self.pipeline
+        pipeline = self.playback_pipeline(pipeline)
         if info is None:
             info = playback.path.stat()
-        identity = [pipeline.profile, self.chunk, os.path.normcase(str(playback.path)),
+        identity = [pipeline.profile, pipeline.chunk, os.path.normcase(str(playback.path)),
                     info.st_size, info.st_mtime_ns, playback.audio, playback.source, playback.target]
         if pipeline.translation_settings != TranslationSettings():
             identity.append(["translation-context-v3", asdict(pipeline.translation_settings)])
@@ -453,6 +466,7 @@ class Relay:
                 raise InspectionError("inspection_busy")
             info = task.check_media()
             task.playback = replace(playback, duration=duration)
+            task.pipeline = self.pipeline
             task.count = math.ceil(duration / self.chunk)
             remember_media(self.db, task.key, task.playback, self.pipeline.speech_translator is None,
                            info, self.chunk, state="queued", translation_available=not self.pipeline.source_only)
@@ -470,7 +484,7 @@ class Relay:
     def _regenerate_chunk(self, task):
         task.check_media()
         try:
-            return self._process(task.playback, task.index, reuse_recognition=False)
+            return self._process(task.playback, task.index, reuse_recognition=False, pipeline=task.pipeline)
         finally:
             task.check_media()
 
@@ -489,7 +503,7 @@ class Relay:
         return path, revision
 
     def update(self, identifier, playback, source="http", *, background=False, pipeline=None):
-        pipeline = pipeline or self.pipeline
+        pipeline = self.playback_pipeline(pipeline)
         received = time.monotonic()
         info = playback.path.stat()
         key = self._identity(playback, info, pipeline)
@@ -500,12 +514,12 @@ class Relay:
             previous = self.sessions.get(identifier)
             if (previous is None or previous.key != key
                     or playback.duration is not None and playback.duration != previous.playback.duration):
-                remember_media(self.db, key, playback, pipeline.speech_translator is None, info, self.chunk,
+                remember_media(self.db, key, playback, pipeline.speech_translator is None, info, pipeline.chunk,
                                translation_available=not pipeline.source_only)
             session = Session(playback, key, now, source if source in SOURCES else "http", pipeline=pipeline)
             self.sessions[identifier] = session
             path, revision = self._render(key, playback)
-            index = int(playback.position // self.chunk)
+            index = int(playback.position // pipeline.chunk)
             first = index
             error = self.errors.get((key, index))
             completed = self.db.execute("SELECT idx FROM chunks WHERE key=? AND idx>=? ORDER BY idx", (key, index))
@@ -515,12 +529,12 @@ class Relay:
                 index += 1
             completed.close()
             window = playback.ahead * max(1, playback.speed)
-            last = min(index, first + math.ceil(window / self.chunk) + 1)
-            margin = getattr(self.segmenter, "planning_margin", 0) / 2
-            earliest = min(first - 1, int(max(0, playback.position - margin) // self.chunk))
+            last = min(index, first + math.ceil(window / pipeline.chunk) + 1)
+            margin = getattr(pipeline.segmenter, "planning_margin", 0) / 2
+            earliest = min(first - 1, int(max(0, playback.position - margin) // pipeline.chunk))
             nearby_rows = self.db.execute(
                 "SELECT cues FROM chunks WHERE key=? AND idx>=? AND idx<?", (key, earliest, last))
-            end = min(index * self.chunk, playback.duration or math.inf)
+            end = min(index * pipeline.chunk, playback.duration or math.inf)
             nearby = any(not cue.get("status") and cue["end"] > playback.position and cue["start"] < end
                          and clear_dialogue(cue["text"]) and clear_dialogue(cue.get("original") or cue["text"])
                          for (encoded,) in nearby_rows
@@ -529,7 +543,7 @@ class Relay:
             if not background and previous is not None and previous.key == key and now - previous.updated < SESSION_TIMEOUT:
                 advance = playback.position - previous.playback.position
                 expected = (now - previous.updated) * max(1, playback.speed)
-                if int(previous.playback.position // self.chunk) == first and -0.15 <= advance <= expected + 0.55:
+                if int(previous.playback.position // pipeline.chunk) == first and -0.15 <= advance <= expected + 0.55:
                     session.waiting_since = previous.waiting_since
             if nearby and session.waiting_since is not None:
                 ready_at = time.monotonic()
@@ -621,25 +635,26 @@ class Relay:
             if task is not None:
                 job = (task.key, task.index)
                 self.inflight.add(job)
-                future = self.pool.submit(self.transcriptions.process, task)
+                future = self.pool.submit(self.transcriptions.process, task, self.pipeline)
                 future.add_done_callback(lambda result: self._finish_transcription(job, task, result))
                 return
         candidates = {}
         for session in self.sessions.values():
+            timeline = session.pipeline or self.pipeline
             playback, key = session.playback, session.key
-            first = int(playback.position // self.chunk)
-            backfill = self.segmenter.settings.backfill if self.segmenter else 0
-            backfill = max(backfill, getattr(self.segmenter, "planning_margin", 0) / 2)
-            earliest = int(max(0, playback.position - backfill) // self.chunk)
+            first = int(playback.position // timeline.chunk)
+            backfill = timeline.segmenter.settings.backfill if timeline.segmenter else 0
+            backfill = max(backfill, getattr(timeline.segmenter, "planning_margin", 0) / 2)
+            earliest = int(max(0, playback.position - backfill) // timeline.chunk)
             end = min(playback.position + playback.ahead * max(1, playback.speed),
                       playback.duration or math.inf)
-            last = math.ceil(end / self.chunk)
+            last = math.ceil(end / timeline.chunk)
             done = {idx for (idx,) in self.db.execute(
                 "SELECT idx FROM chunks WHERE key=? AND idx>=? AND idx<?", (key, earliest, last))}
             for index in range(earliest, last):
                 job = (key, index)
                 if index not in done and job not in self.inflight and self.errors.get(job, (0,))[0] <= now:
-                    distance = (index - first) * self.chunk / playback.speed if index >= first else 0.5
+                    distance = (index - first) * timeline.chunk / playback.speed if index >= first else 0.5
                     if job not in candidates or distance < candidates[job][0]:
                         candidates[job] = (distance, playback, session.pipeline)
         background = self.background_session in self.sessions
@@ -671,14 +686,15 @@ class Relay:
             audio_seconds = seconds
 
         started = time.monotonic()
-        cues = translate_chunk(playback, index, self.chunk, pipeline.recognizer, pipeline.translator,
-                               pipeline.speech_translator, self.segmenter, pipeline.translation_settings,
+        cues = translate_chunk(playback, index, pipeline.chunk, pipeline.recognizer, pipeline.translator,
+                               pipeline.speech_translator, pipeline.segmenter, pipeline.translation_settings,
                                pipeline.recognition_cache if reuse_recognition else None, observe_audio=observe)
         elapsed = time.monotonic() - started
         return cues, elapsed / audio_seconds if audio_seconds else None
 
     def _finish(self, job, future, *, regeneration=None, background_media=None, pipeline=None):
         with self.lock:
+            pipeline = pipeline or (regeneration.pipeline if regeneration else self.pipeline)
             try:
                 if background_media is not None:
                     try:
@@ -699,7 +715,7 @@ class Relay:
                     if regeneration.index == regeneration.count:
                         self._end_regeneration("complete")
                 logging.getLogger(__name__).info("Processed media=%s start=%.1fs cues=%d",
-                                                 job[0][:10], job[1] * self.chunk, len(cues))
+                                                 job[0][:10], job[1] * pipeline.chunk, len(cues))
             except Exception as exc:
                 error = provider_error(exc)
                 if isinstance(exc, TranslationFailure):
@@ -713,7 +729,7 @@ class Relay:
                     retry_at = math.inf if error.kind == "content_blocked" else time.monotonic() + 15
                     self.errors[job] = (retry_at, detail, error.kind)
                 logging.getLogger(__name__).warning("Chunk failed media=%s start=%.1fs error=%s type=%s status=%s",
-                                                    job[0][:10], job[1] * self.chunk, error.kind,
+                                                    job[0][:10], job[1] * pipeline.chunk, error.kind,
                                                     type(exc).__name__, error.http_status)
             finally:
                 self.inflight.remove(job)

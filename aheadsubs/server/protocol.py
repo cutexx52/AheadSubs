@@ -2,6 +2,7 @@ import json
 import math
 import os
 import re
+from contextlib import nullcontext
 from secrets import compare_digest
 from threading import BoundedSemaphore, Thread
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -16,7 +17,7 @@ from .transcription_http import TranscriptionHTTP
 
 
 def playback_from_json(data, defaults=None):
-    defaults = defaults or {}
+    defaults = defaults() if callable(defaults) else defaults or {}
     path = Path(data["path"])
     if not path.is_absolute() or not path.is_file():
         raise ValueError("Choose an accessible file on a local drive or Windows share")
@@ -44,7 +45,7 @@ def playback_from_json(data, defaults=None):
                     source or None, target, ahead, bilingual)
 
 
-def create_server(relay, port, control_token=None, playback_defaults=None, *, local_models=None):
+def create_server(relay, port, control_token=None, playback_defaults=None, *, local_models=None, apply_settings=None):
     text_slots = BoundedSemaphore(2)
     transcription = TranscriptionHTTP(relay)
 
@@ -54,7 +55,7 @@ def create_server(relay, port, control_token=None, playback_defaults=None, *, lo
                 return
             if self.path == "/v1/health":
                 self.reply(200, {"service": "subtitle-relay", "pid": os.getpid(),
-                                 "active_sessions": relay.active_sessions(),
+                                 "active_sessions": relay.active_sessions(), "live_settings": apply_settings is not None,
                                  "local_models": local_models() if callable(local_models) else local_models})
             elif self.path == "/v1/status":
                 if self.headers.get("Origin") or self.headers.get("X-AheadSubs-Status") != "1":
@@ -92,12 +93,15 @@ def create_server(relay, port, control_token=None, playback_defaults=None, *, lo
                     self.translate_text(body)
                     return
                 data = json.loads(body)
-                if self.path in {"/v1/shutdown", "/v1/inspection/regenerate"}:
+                if self.path in {"/v1/shutdown", "/v1/inspection/regenerate", "/v1/settings/apply"}:
                     supplied = data.get("token")
                     if not control_token or not isinstance(supplied, str) or not compare_digest(
                         control_token.encode(), supplied.encode()
                     ):
                         self.reply(403, {"error": "service control not authorized"})
+                        return
+                    if self.path == "/v1/settings/apply":
+                        self.reply(200, {"applied": bool(apply_settings and apply_settings(data.get("credentials")))})
                         return
                     if self.path == "/v1/inspection/regenerate":
                         key = data.get("key")
@@ -112,8 +116,10 @@ def create_server(relay, port, control_token=None, playback_defaults=None, *, lo
                 if not isinstance(identifier, str) or not 1 <= len(identifier) <= 100:
                     raise ValueError("invalid session")
                 if self.path == "/v1/playback":
-                    self.reply(200, relay.update(identifier, playback_from_json(data, playback_defaults),
-                                                 self.entry(identifier)))
+                    with relay.lock if apply_settings else nullcontext():
+                        playback = playback_from_json(data, playback_defaults)
+                        result = relay.update(identifier, playback, self.entry(identifier))
+                    self.reply(200, result)
                 elif self.path == "/v1/close":
                     relay.drop(identifier)
                     self.reply(200, {})
@@ -133,7 +139,8 @@ def create_server(relay, port, control_token=None, playback_defaults=None, *, lo
                 self.send_error(501, "Unsupported method ('DELETE')")
 
         def translate_text(self, body):
-            if not relay.translator:
+            translator = relay.translator
+            if not translator:
                 self.reply(409, {"error": "this profile does not include text translation"})
                 return
             payload = parse_qs(body.decode("utf-8"), max_num_fields=3, strict_parsing=True)
@@ -146,7 +153,7 @@ def create_server(relay, port, control_token=None, playback_defaults=None, *, lo
             source_app = self.entry()
             relay.text_activity(source_app, 1)
             try:
-                translated = relay.translator.translate([content], source, target)[0]
+                translated = translator.translate([content], source, target)[0]
             except Exception as exc:
                 error = provider_error(exc, default="translation_failed")
                 self.reply(502, {"error": str(error), "error_code": error.kind})
@@ -176,7 +183,8 @@ def create_server(relay, port, control_token=None, playback_defaults=None, *, lo
     return ThreadingHTTPServer(("127.0.0.1", port), Handler)
 
 
-def serve(relay, port, control_token=None, playback_defaults=None, *, local_models=None):
-    with create_server(relay, port, control_token, playback_defaults, local_models=local_models) as server:
+def serve(relay, port, control_token=None, playback_defaults=None, *, local_models=None, apply_settings=None):
+    with create_server(relay, port, control_token, playback_defaults, local_models=local_models,
+                       apply_settings=apply_settings) as server:
         print(f"AheadSubs listening on 127.0.0.1:{server.server_port}", flush=True)
         server.serve_forever()

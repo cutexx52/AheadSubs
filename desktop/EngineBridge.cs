@@ -20,7 +20,8 @@ internal sealed class EngineBridge
     }
 
     public async Task<JsonObject> Run(string command, string? argument = null,
-        JsonObject? input = null, CancellationToken cancellationToken = default, string? folder = null)
+        JsonObject? input = null, CancellationToken cancellationToken = default, string? folder = null,
+        Action<string>? progress = null)
     {
         string python = new[] { Path.Combine(Root, "runtime", "python.exe"),
             Path.Combine(Root, ".venv", "Scripts", "python.exe") }.FirstOrDefault(File.Exists)
@@ -49,12 +50,18 @@ internal sealed class EngineBridge
             catch (InvalidOperationException) { }
         });
         var output = process.StandardOutput.ReadToEndAsync(cancellationToken);
-        var error = process.StandardError.ReadToEndAsync(cancellationToken);
+        async Task ReadProgress()
+        {
+            while (await process.StandardError.ReadLineAsync(cancellationToken) is { } line)
+                if (line is "apply:restart" or "apply:restart-models" or "apply:load-models" or "apply:start")
+                    progress?.Invoke(line[6..]);
+        }
+        Task error = progress is null ? process.StandardError.ReadToEndAsync(cancellationToken) : ReadProgress();
         if (input is not null) await process.StandardInput.WriteAsync(input.ToJsonString());
         process.StandardInput.Close();
         await process.WaitForExitAsync(cancellationToken);
         string response = await output;
-        _ = await error; // Never display raw subprocess stderr: it may contain private configuration.
+        await error; // Never display raw subprocess stderr: it may contain private configuration.
         JsonObject? data;
         try { data = JsonNode.Parse(response) as JsonObject; }
         catch (System.Text.Json.JsonException)
