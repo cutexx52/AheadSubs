@@ -42,7 +42,7 @@
   <data name="model-asr" xml:space="preserve"><value>音声認識</value></data>
   <data name="model-mt" xml:space="preserve"><value>翻訳</value></data>
   <data name="model-vad" xml:space="preserve"><value>音声区間検出</value></data>
-  <data name="managed-vad" xml:space="preserve"><value>Silero は同梱されています。FSMN は詳細設定で選ぶと準備されます。</value></data>
+  <data name="managed-vad" xml:space="preserve"><value>Silero は同梱されています。FSMN は「音声区間検出と先読み」で選ぶと準備されます。</value></data>
   <data name="installed-model" xml:space="preserve"><value>インストール済み</value></data>
   <data name="active-model" xml:space="preserve"><value>インストール済み · 使用中</value></data>
   <data name="download-model" xml:space="preserve"><value>ダウンロード</value></data>

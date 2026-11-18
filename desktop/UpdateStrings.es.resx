@@ -14,7 +14,7 @@
   <data name="Cancel" xml:space="preserve"><value>Cancelar descarga</value></data>
   <data name="Checking" xml:space="preserve"><value>Buscando actualizaciones…</value></data>
   <data name="Available" xml:space="preserve"><value>AheadSubs {0} está disponible</value></data>
-  <data name="Notification" xml:space="preserve"><value>Abre la configuración avanzada para ver la actualización.</value></data>
+  <data name="Notification" xml:space="preserve"><value>Abre la configuración de la aplicación para ver la actualización.</value></data>
   <data name="UpToDate" xml:space="preserve"><value>No hay una versión estable más reciente.</value></data>
   <data name="CheckFailed" xml:space="preserve"><value>No se pudieron buscar actualizaciones. Inténtalo más tarde.</value></data>
   <data name="PreferenceFailed" xml:space="preserve"><value>No se pudo guardar la preferencia de actualización.</value></data>

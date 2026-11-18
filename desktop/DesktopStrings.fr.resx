@@ -72,7 +72,8 @@
   <data name="CustomMtModel" xml:space="preserve"><value>Nom du modèle de traduction personnalisé</value></data>
   <data name="MtKey" xml:space="preserve"><value>Clé API de traduction</value></data>
   <data name="ChooseMt" xml:space="preserve"><value>Utiliser ce service de traduction</value></data>
-  <data name="Advanced" xml:space="preserve"><value>Réglages avancés</value></data>
+  <data name="AppSettings" xml:space="preserve"><value>Paramètres de l’application</value></data>
+  <data name="VadAndLookAhead" xml:space="preserve"><value>VAD et lecture anticipée</value></data>
   <data name="Vad" xml:space="preserve"><value>Détection d’activité vocale (VAD)</value></data>
   <data name="VadHint" xml:space="preserve"><value>Repère les passages parlés avant de les envoyer au modèle de reconnaissance.</value></data>
   <data name="VadModel" xml:space="preserve"><value>Modèle de détection d’activité vocale</value></data>
@@ -204,7 +205,7 @@
   <data name="ExitTitle" xml:space="preserve"><value>Quitter la traduction des sous-titres</value></data>
   <data name="MissingRuntime" xml:space="preserve"><value>Environnement d’exécution introuvable. Extrayez le paquet complet et conservez le dossier UI à son emplacement.</value></data>
   <data name="LaunchFailed" xml:space="preserve"><value>Impossible de démarrer le service de sous-titres.</value></data>
-  <data name="InvalidResponse" xml:space="preserve"><value>Réponse du service invalide. Activez les journaux de diagnostic dans les réglages avancés et réessayez.</value></data>
+  <data name="InvalidResponse" xml:space="preserve"><value>Réponse du service invalide. Activez les journaux de diagnostic dans les paramètres de l’application et réessayez.</value></data>
   <data name="BackendFailed" xml:space="preserve"><value>Échec de l’opération. Consultez les journaux de diagnostic.</value></data>
   <data name="ReplaceKey" xml:space="preserve"><value>Clé enregistrée et chiffrée. Saisissez une nouvelle clé pour la remplacer.</value></data>
   <data name="EncryptedKey" xml:space="preserve"><value>Stockage chiffré pour votre compte Windows.</value></data>
@@ -243,6 +244,6 @@
   <data name="Error_auth-models" xml:space="preserve"><value>Impossible de lire les modèles ChatGPT. Actualisez la liste.</value></data>
   <data name="Error_service-owned" xml:space="preserve"><value>Un autre programme a lancé ce service. Arrêtez-le d’abord depuis ce programme.</value></data>
   <data name="Error_service-busy" xml:space="preserve"><value>L’opération précédente du service est en cours. Réessayez dans un instant.</value></data>
-  <data name="Error_service-start" xml:space="preserve"><value>Le service n’a pas pu démarrer. Activez les journaux dans les réglages avancés et réessayez.</value></data>
+  <data name="Error_service-start" xml:space="preserve"><value>Le service n’a pas pu démarrer. Activez les journaux dans les paramètres de l’application et réessayez.</value></data>
   <data name="Chinese" xml:space="preserve"><value>Chinois</value></data>
 </root>

@@ -72,7 +72,8 @@
   <data name="CustomMtModel" xml:space="preserve"><value>カスタム翻訳モデル名</value></data>
   <data name="MtKey" xml:space="preserve"><value>翻訳 API キー</value></data>
   <data name="ChooseMt" xml:space="preserve"><value>この翻訳サービスを使用</value></data>
-  <data name="Advanced" xml:space="preserve"><value>詳細設定</value></data>
+  <data name="AppSettings" xml:space="preserve"><value>アプリ設定</value></data>
+  <data name="VadAndLookAhead" xml:space="preserve"><value>音声区間検出と先読み</value></data>
   <data name="Vad" xml:space="preserve"><value>音声区間検出（VAD）</value></data>
   <data name="VadHint" xml:space="preserve"><value>音声認識モデルに送る前に、発話区間を検出します。</value></data>
   <data name="VadModel" xml:space="preserve"><value>音声区間検出モデル</value></data>
@@ -204,7 +205,7 @@
   <data name="ExitTitle" xml:space="preserve"><value>字幕翻訳を終了</value></data>
   <data name="MissingRuntime" xml:space="preserve"><value>同梱のランタイムが見つかりません。パッケージ全体を展開し、UI フォルダーを同じ場所に置いてください。</value></data>
   <data name="LaunchFailed" xml:space="preserve"><value>字幕サービスを起動できません。</value></data>
-  <data name="InvalidResponse" xml:space="preserve"><value>サービスからの応答が無効です。詳細設定で診断ログを有効にして再試行してください。</value></data>
+  <data name="InvalidResponse" xml:space="preserve"><value>サービスからの応答が無効です。アプリ設定で診断ログを有効にして再試行してください。</value></data>
   <data name="BackendFailed" xml:space="preserve"><value>操作に失敗しました。診断ログを確認してください。</value></data>
   <data name="ReplaceKey" xml:space="preserve"><value>暗号化して保存済みです。新しいキーを入力すると置き換わります。</value></data>
   <data name="EncryptedKey" xml:space="preserve"><value>現在の Windows ユーザー用に暗号化して保存します。</value></data>
@@ -243,6 +244,6 @@
   <data name="Error_auth-models" xml:space="preserve"><value>ChatGPT のモデル一覧を読み取れません。更新してください。</value></data>
   <data name="Error_service-owned" xml:space="preserve"><value>字幕サービスを起動した別のアプリから先に停止してください。</value></data>
   <data name="Error_service-busy" xml:space="preserve"><value>前のサービス操作が完了していません。少し待って再試行してください。</value></data>
-  <data name="Error_service-start" xml:space="preserve"><value>字幕サービスを起動できません。詳細設定で診断ログを有効にして再試行してください。</value></data>
+  <data name="Error_service-start" xml:space="preserve"><value>字幕サービスを起動できません。アプリ設定で診断ログを有効にして再試行してください。</value></data>
   <data name="Chinese" xml:space="preserve"><value>中国語</value></data>
 </root>

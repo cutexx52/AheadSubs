@@ -59,8 +59,6 @@
      </StackPanel>
     </Expander>
     <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="{DynamicResource Desktop.LanguageDisplay}" Style="{StaticResource Section}"/>
-     <Label Target="{Binding ElementName=InterfaceLanguage}" Content="{DynamicResource Desktop.InterfaceLanguage}" Padding="0,4,0,4"/>
-     <ComboBox x:Name="InterfaceLanguage" SelectedValuePath="Tag"/>
      <Grid Margin="0,10,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="24"/><ColumnDefinition/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="{DynamicResource Desktop.VideoLanguage}" Margin="0,0,0,8" Foreground="#596273"/><ComboBox x:Name="SourceLanguage" DisplayMemberPath="Label" SelectedValuePath="Value" AutomationProperties.Name="{DynamicResource Desktop.VideoLanguage}"/></StackPanel><StackPanel Grid.Column="2"><TextBlock Text="{DynamicResource Desktop.TranslateTo}" Margin="0,0,0,8" Foreground="#596273"/><ComboBox x:Name="TargetLanguage" DisplayMemberPath="Label" SelectedValuePath="Value" AutomationProperties.Name="{DynamicResource Desktop.TargetLanguage}"/></StackPanel></Grid>
      <CheckBox x:Name="Bilingual" Content="{DynamicResource Desktop.Bilingual}" Margin="0,20,0,0"/>
     </StackPanel></Border>
@@ -249,8 +247,8 @@
      <TextBlock Text="{DynamicResource Desktop.TranslationEndpoint}" Style="{StaticResource Label}"/><TextBox x:Name="LlmUrl" AutomationProperties.Name="{DynamicResource Desktop.CustomMtUrl}"/><TextBox x:Name="LlmModel" AutomationProperties.Name="{DynamicResource Desktop.CustomMtModel}" Margin="0,8,0,12"/><TextBlock Text="{DynamicResource Desktop.MtKey}" Style="{StaticResource Label}"/><local:ApiKeyEditor x:Name="CustomMtKey"/><Button Content="{DynamicResource Desktop.ChooseMt}" HorizontalAlignment="Left" Click="ChooseCustomTranslation"/>
     </StackPanel></Border>
    </StackPanel></ScrollViewer></TabItem>
-   <TabItem Header="{DynamicResource Desktop.Advanced}" x:Name="AdvancedTab"><ScrollViewer Style="{StaticResource PageScroll}"><StackPanel>
-    <TextBlock Text="{DynamicResource Desktop.Advanced}" Style="{StaticResource PageTitle}"/>
+   <TabItem Header="{DynamicResource Desktop.VadAndLookAhead}" x:Name="VadTab"><ScrollViewer Style="{StaticResource PageScroll}"><StackPanel>
+    <TextBlock Text="{DynamicResource Desktop.VadAndLookAhead}" Style="{StaticResource PageTitle}"/>
     <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="{DynamicResource Desktop.Vad}" Style="{StaticResource Section}"/><TextBlock Text="{DynamicResource Desktop.VadHint}" Style="{StaticResource Hint}"/><ComboBox x:Name="Vad" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="VadChanged" AutomationProperties.Name="{DynamicResource Desktop.VadModel}" Margin="0,16,0,0"/>
      <TextBlock Text="{DynamicResource Desktop.Threshold}" Style="{StaticResource Label}"/><TextBox x:Name="VadThreshold" AutomationProperties.Name="{DynamicResource Desktop.VadThreshold}"/><TextBlock Text="{DynamicResource Desktop.ThresholdHint}" Style="{StaticResource Hint}" Margin="0,6,0,0"/>
      <Grid Margin="0,16,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="20"/><ColumnDefinition/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="{DynamicResource Desktop.MinimumSegment}" Margin="0,0,0,8"/><TextBox x:Name="MinSpeech" AutomationProperties.Name="{DynamicResource Desktop.MinimumSpeech}"/><TextBlock Text="{DynamicResource Desktop.MinimumHint}" Style="{StaticResource Hint}" Margin="0,6,0,0"/></StackPanel><StackPanel Grid.Column="2"><TextBlock Text="{DynamicResource Desktop.MaximumSegment}" Margin="0,0,0,8"/><TextBox x:Name="MaxSpeech" AutomationProperties.Name="{DynamicResource Desktop.MaximumSpeech}"/><TextBlock Text="{DynamicResource Desktop.MaximumHint}" Style="{StaticResource Hint}" Margin="0,6,0,0"/></StackPanel></Grid>
@@ -260,19 +258,6 @@
     <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="{DynamicResource Desktop.LookAhead}" Style="{StaticResource Section}"/><TextBlock Text="{DynamicResource Desktop.LookAheadHint}" Style="{StaticResource Hint}"/>
      <Grid Margin="0,16,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="20"/><ColumnDefinition/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="{DynamicResource Desktop.Chunk}" Margin="0,0,0,8"/><TextBox x:Name="ChunkSeconds" AutomationProperties.Name="{DynamicResource Desktop.ChunkSeconds}"/><TextBlock Text="{DynamicResource Desktop.ChunkHint}" Style="{StaticResource Hint}" Margin="0,6,0,0"/></StackPanel><StackPanel Grid.Column="2"><TextBlock Text="{DynamicResource Desktop.Backfill}" Margin="0,0,0,8"/><TextBox x:Name="Backfill" AutomationProperties.Name="{DynamicResource Desktop.BackfillSeconds}"/><TextBlock Text="{DynamicResource Desktop.BackfillHint}" Style="{StaticResource Hint}" Margin="0,6,0,0"/></StackPanel></Grid>
      <Grid Margin="0,16,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="20"/><ColumnDefinition/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="{DynamicResource Desktop.PrePause}" Margin="0,0,0,8"/><TextBox x:Name="BeforeSeconds" AutomationProperties.Name="{DynamicResource Desktop.PrePauseSeconds}"/></StackPanel><StackPanel Grid.Column="2"><TextBlock Text="{DynamicResource Desktop.PostPause}" Margin="0,0,0,8"/><TextBox x:Name="AfterSeconds" AutomationProperties.Name="{DynamicResource Desktop.PostPauseSeconds}"/></StackPanel></Grid><TextBlock Text="{DynamicResource Desktop.BoundaryHint}" Style="{StaticResource Hint}" Margin="0,10,0,0"/>
-    </StackPanel></Border>
-    <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="{DynamicResource Desktop.Diagnostics}" Style="{StaticResource Section}"/><CheckBox x:Name="Diagnostics" Content="{DynamicResource Desktop.DiagnosticsToggle}" Margin="0,8,0,10"/><TextBlock Text="{DynamicResource Desktop.DiagnosticsHint}" Style="{StaticResource Hint}"/><Button Content="{DynamicResource Desktop.OpenLogs}" Click="OpenLogs" HorizontalAlignment="Left" Margin="0,18,0,0"/></StackPanel></Border>
-    <Border x:Name="UpdateCard" Style="{StaticResource Card}" Visibility="Collapsed"><StackPanel>
-     <TextBlock x:Name="UpdateTitle" Style="{StaticResource Section}"/>
-     <TextBlock x:Name="InstalledVersion" Style="{StaticResource Hint}"/>
-     <CheckBox x:Name="AutomaticUpdates" Click="SetAutomaticUpdates" Margin="0,10,0,8"/>
-     <WrapPanel>
-      <Button x:Name="CheckUpdateButton" Click="CheckForUpdate"/>
-      <Button x:Name="ReleaseNotesButton" Click="OpenUpdateNotes" Visibility="Collapsed"/>
-      <Button x:Name="GetUpdateButton" Click="GetUpdate" Visibility="Collapsed"/>
-      <Button x:Name="CancelUpdateButton" Click="CancelUpdate" Visibility="Collapsed"/>
-     </WrapPanel>
-     <TextBlock x:Name="UpdateStatus" Style="{StaticResource Hint}" AutomationProperties.LiveSetting="Polite" Margin="0,8,0,0"/>
     </StackPanel></Border>
    </StackPanel></ScrollViewer></TabItem>
    <TabItem x:Name="AutomationTab"><ScrollViewer Style="{StaticResource PageScroll}"><StackPanel>
@@ -366,6 +351,26 @@
    <TabItem Header="{DynamicResource Status.Title}" x:Name="StatusTab">
     <local:StatusPage x:Name="StatusDashboard"/>
    </TabItem>
+   <TabItem Header="{DynamicResource Desktop.AppSettings}" x:Name="AppSettingsTab"><ScrollViewer Style="{StaticResource PageScroll}"><StackPanel>
+    <TextBlock Text="{DynamicResource Desktop.AppSettings}" Style="{StaticResource PageTitle}"/>
+    <Border Style="{StaticResource Card}"><StackPanel>
+     <Label Target="{Binding ElementName=InterfaceLanguage}" Content="{DynamicResource Desktop.InterfaceLanguage}" FontSize="16" FontWeight="SemiBold" Padding="0" Margin="0,0,0,8"/>
+     <ComboBox x:Name="InterfaceLanguage" SelectedValuePath="Tag" AutomationProperties.Name="{DynamicResource Desktop.InterfaceLanguage}"/>
+    </StackPanel></Border>
+    <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="{DynamicResource Desktop.Diagnostics}" Style="{StaticResource Section}"/><CheckBox x:Name="Diagnostics" Content="{DynamicResource Desktop.DiagnosticsToggle}" Margin="0,8,0,10"/><TextBlock Text="{DynamicResource Desktop.DiagnosticsHint}" Style="{StaticResource Hint}"/><Button Content="{DynamicResource Desktop.OpenLogs}" Click="OpenLogs" HorizontalAlignment="Left" Margin="0,18,0,0"/></StackPanel></Border>
+    <Border x:Name="UpdateCard" Style="{StaticResource Card}" Visibility="Collapsed"><StackPanel>
+     <TextBlock x:Name="UpdateTitle" Style="{StaticResource Section}"/>
+     <TextBlock x:Name="InstalledVersion" Style="{StaticResource Hint}"/>
+     <CheckBox x:Name="AutomaticUpdates" Click="SetAutomaticUpdates" Margin="0,10,0,8"/>
+     <WrapPanel>
+      <Button x:Name="CheckUpdateButton" Click="CheckForUpdate"/>
+      <Button x:Name="ReleaseNotesButton" Click="OpenUpdateNotes" Visibility="Collapsed"/>
+      <Button x:Name="GetUpdateButton" Click="GetUpdate" Visibility="Collapsed"/>
+      <Button x:Name="CancelUpdateButton" Click="CancelUpdate" Visibility="Collapsed"/>
+     </WrapPanel>
+     <TextBlock x:Name="UpdateStatus" Style="{StaticResource Hint}" AutomationProperties.LiveSetting="Polite" Margin="0,8,0,0"/>
+    </StackPanel></Border>
+   </StackPanel></ScrollViewer></TabItem>
   </TabControl>
   <Border Grid.Row="2" Background="White" BorderBrush="#E3E7ED" BorderThickness="0,1,0,0" Padding="28,14"><StackPanel>
    <TextBlock x:Name="ActionStatus" TextWrapping="Wrap" Margin="192,0,0,8" Visibility="Collapsed" AutomationProperties.LiveSetting="Assertive"/><ProgressBar x:Name="Progress" Height="3" IsIndeterminate="True" Visibility="Collapsed" Margin="192,0,0,10"/>

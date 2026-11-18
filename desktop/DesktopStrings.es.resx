@@ -72,7 +72,8 @@
   <data name="CustomMtModel" xml:space="preserve"><value>Nombre del modelo de traducción personalizado</value></data>
   <data name="MtKey" xml:space="preserve"><value>Clave API de traducción</value></data>
   <data name="ChooseMt" xml:space="preserve"><value>Usar este servicio de traducción</value></data>
-  <data name="Advanced" xml:space="preserve"><value>Configuración avanzada</value></data>
+  <data name="AppSettings" xml:space="preserve"><value>Configuración de la aplicación</value></data>
+  <data name="VadAndLookAhead" xml:space="preserve"><value>VAD y lectura anticipada</value></data>
   <data name="Vad" xml:space="preserve"><value>Detección de actividad de voz (VAD)</value></data>
   <data name="VadHint" xml:space="preserve"><value>Detecta los segmentos con voz antes de enviarlos al modelo de reconocimiento.</value></data>
   <data name="VadModel" xml:space="preserve"><value>Modelo de detección de voz</value></data>
@@ -204,7 +205,7 @@
   <data name="ExitTitle" xml:space="preserve"><value>Salir de la traducción de subtítulos</value></data>
   <data name="MissingRuntime" xml:space="preserve"><value>No se encuentra el entorno de ejecución incluido. Extrae el paquete completo y conserva la carpeta UI en su ubicación.</value></data>
   <data name="LaunchFailed" xml:space="preserve"><value>No se pudo iniciar el servicio de subtítulos.</value></data>
-  <data name="InvalidResponse" xml:space="preserve"><value>Respuesta del servicio no válida. Activa los registros de diagnóstico en la configuración avanzada y vuelve a intentarlo.</value></data>
+  <data name="InvalidResponse" xml:space="preserve"><value>Respuesta del servicio no válida. Activa los registros de diagnóstico en la configuración de la aplicación y vuelve a intentarlo.</value></data>
   <data name="BackendFailed" xml:space="preserve"><value>Falló la operación. Consulta los registros de diagnóstico.</value></data>
   <data name="ReplaceKey" xml:space="preserve"><value>Clave cifrada guardada. Introduce una nueva para sustituirla.</value></data>
   <data name="EncryptedKey" xml:space="preserve"><value>Se guarda cifrada para tu cuenta de Windows.</value></data>
@@ -243,6 +244,6 @@
   <data name="Error_auth-models" xml:space="preserve"><value>No se pudo leer la lista de modelos de ChatGPT. Actualízala.</value></data>
   <data name="Error_service-owned" xml:space="preserve"><value>Otro programa inició este servicio. Detenlo primero desde ese programa.</value></data>
   <data name="Error_service-busy" xml:space="preserve"><value>La operación anterior del servicio aún no ha terminado. Inténtalo en un momento.</value></data>
-  <data name="Error_service-start" xml:space="preserve"><value>El servicio no pudo iniciarse. Activa los registros en la configuración avanzada e inténtalo de nuevo.</value></data>
+  <data name="Error_service-start" xml:space="preserve"><value>El servicio no pudo iniciarse. Activa los registros en la configuración de la aplicación e inténtalo de nuevo.</value></data>
   <data name="Chinese" xml:space="preserve"><value>Chino</value></data>
 </root>

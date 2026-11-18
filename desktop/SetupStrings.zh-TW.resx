@@ -42,7 +42,7 @@
   <data name="model-asr" xml:space="preserve"><value>語音辨識</value></data>
   <data name="model-mt" xml:space="preserve"><value>字幕翻譯</value></data>
   <data name="model-vad" xml:space="preserve"><value>語音檢測</value></data>
-  <data name="managed-vad" xml:space="preserve"><value>Silero 隨執行環境提供，FSMN 在高階設定中選用後準備。</value></data>
+  <data name="managed-vad" xml:space="preserve"><value>Silero 隨執行環境提供，FSMN 在「語音偵測與預讀」中選用後準備。</value></data>
   <data name="installed-model" xml:space="preserve"><value>已下載</value></data>
   <data name="active-model" xml:space="preserve"><value>已下載 · 使用中</value></data>
   <data name="download-model" xml:space="preserve"><value>下載</value></data>

@@ -72,7 +72,8 @@
   <data name="CustomMtModel" xml:space="preserve"><value>自定義翻譯模型名稱</value></data>
   <data name="MtKey" xml:space="preserve"><value>翻譯 API Key</value></data>
   <data name="ChooseMt" xml:space="preserve"><value>選用此翻譯服務</value></data>
-  <data name="Advanced" xml:space="preserve"><value>高階設定</value></data>
+  <data name="AppSettings" xml:space="preserve"><value>應用程式設定</value></data>
+  <data name="VadAndLookAhead" xml:space="preserve"><value>語音偵測與預讀</value></data>
   <data name="Vad" xml:space="preserve"><value>語音檢測（VAD）</value></data>
   <data name="VadHint" xml:space="preserve"><value>先判斷哪裡有人說話，再把這些音訊交給識別模型。</value></data>
   <data name="VadModel" xml:space="preserve"><value>語音活動檢測模型</value></data>
@@ -204,7 +205,7 @@
   <data name="ExitTitle" xml:space="preserve"><value>退出字幕翻譯</value></data>
   <data name="MissingRuntime" xml:space="preserve"><value>找不到隨軟體提供的執行環境。請重新解壓完整安裝包，不要單獨移動 UI 資料夾。</value></data>
   <data name="LaunchFailed" xml:space="preserve"><value>無法啟動字幕服務。</value></data>
-  <data name="InvalidResponse" xml:space="preserve"><value>後臺沒有返回有效結果。請在高階設定中開啟診斷日誌後重試。</value></data>
+  <data name="InvalidResponse" xml:space="preserve"><value>後臺沒有返回有效結果。請在應用程式設定中開啟診斷日誌後重試。</value></data>
   <data name="BackendFailed" xml:space="preserve"><value>後臺操作失敗，請檢視診斷日誌。</value></data>
   <data name="ReplaceKey" xml:space="preserve"><value>已加密儲存。輸入新金鑰可替換。</value></data>
   <data name="EncryptedKey" xml:space="preserve"><value>儲存在當前 Windows 使用者下，加密儲存。</value></data>
@@ -243,6 +244,6 @@
   <data name="Error_auth-models" xml:space="preserve"><value>無法讀取 ChatGPT 模型列表，請重試。</value></data>
   <data name="Error_service-owned" xml:space="preserve"><value>字幕服務由其他程式啟動，請從原來的啟動方式關閉。</value></data>
   <data name="Error_service-busy" xml:space="preserve"><value>上一項服務操作尚未完成，請稍後重試。</value></data>
-  <data name="Error_service-start" xml:space="preserve"><value>字幕服務啟動失敗。請開啟高階設定中的診斷日誌後重試。</value></data>
+  <data name="Error_service-start" xml:space="preserve"><value>字幕服務啟動失敗。請開啟應用程式設定中的診斷日誌後重試。</value></data>
   <data name="Chinese" xml:space="preserve"><value>中文</value></data>
 </root>

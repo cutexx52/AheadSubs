@@ -42,7 +42,7 @@
   <data name="model-asr" xml:space="preserve"><value>음성 인식</value></data>
   <data name="model-mt" xml:space="preserve"><value>번역</value></data>
   <data name="model-vad" xml:space="preserve"><value>음성 구간 감지</value></data>
-  <data name="managed-vad" xml:space="preserve"><value>Silero는 기본으로 제공됩니다. FSMN은 고급 설정에서 선택하면 준비됩니다.</value></data>
+  <data name="managed-vad" xml:space="preserve"><value>Silero는 기본으로 제공됩니다. FSMN은 ‘음성 감지 및 미리 읽기’에서 선택하면 준비됩니다.</value></data>
   <data name="installed-model" xml:space="preserve"><value>설치됨</value></data>
   <data name="active-model" xml:space="preserve"><value>설치됨 · 사용 중</value></data>
   <data name="download-model" xml:space="preserve"><value>다운로드</value></data>
