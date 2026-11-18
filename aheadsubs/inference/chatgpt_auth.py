@@ -12,11 +12,11 @@ import uuid
 import webbrowser
 from contextlib import closing, contextmanager
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, urlencode
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
+from ..paths import user_data_directory
 from .errors import ProviderError, provider_error
 
 
@@ -203,7 +203,7 @@ class ChatGPTAccounts:
         if directory is None:
             if os.name != "nt":
                 raise ValueError("ChatGPT 登录目前支持 Windows。")
-            directory = Path(os.environ["LOCALAPPDATA"]) / "Subtitle Relay"
+            directory = user_data_directory()
         self.path = directory / "chatgpt.sqlite3"
 
     @contextmanager

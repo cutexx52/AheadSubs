@@ -6,9 +6,9 @@ using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Threading;
-using static LocalVideoSubtitleTranslator.InspectionText;
+using static AheadSubs.InspectionText;
 
-namespace LocalVideoSubtitleTranslator;
+namespace AheadSubs;
 
 public partial class MainWindow
 {

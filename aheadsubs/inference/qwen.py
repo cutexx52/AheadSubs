@@ -1,6 +1,5 @@
 """Managed local Qwen3-ASR using the Windows CrispASR runtime."""
 import hashlib
-import os
 import socket
 import subprocess
 import time
@@ -8,6 +7,8 @@ import zipfile
 from contextlib import contextmanager
 from pathlib import Path
 from urllib.request import ProxyHandler, build_opener
+
+from ..paths import user_data_directory
 
 
 RUNTIME = "crispasr-windows-x86_64-vulkan"
@@ -27,7 +28,7 @@ ALIGNER_FILE = (529001216, "a7bb4cbeacc6414f11a5d23dc7661a51a941a71e6d559dc7b408
 
 
 def paths(root, size):
-    root = Path(root) if root is not None else Path(os.environ["LOCALAPPDATA"]) / "Subtitle Relay" / "qwen"
+    root = Path(root) if root is not None else user_data_directory() / "qwen"
     return (root / RUNTIME / "crispasr.exe", root / f"qwen3-asr-{size}-q4_k.gguf", root / ALIGNER)
 
 
@@ -70,7 +71,7 @@ def install(root, size):
 def run(root, size):
     executable, model, aligner = paths(root, size)
     if not installed(root, size):
-        raise RuntimeError("Install the selected Qwen3-ASR model in the Relay app first")
+        raise RuntimeError("Install the selected Qwen3-ASR model in AheadSubs first")
     with socket.socket() as reserved:
         reserved.bind(("127.0.0.1", 0))
         port = reserved.getsockname()[1]

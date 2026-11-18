@@ -11,7 +11,7 @@ using System.Windows.Threading;
 using Microsoft.Win32;
 using Forms = System.Windows.Forms;
 
-namespace LocalVideoSubtitleTranslator;
+namespace AheadSubs;
 
 public partial class MainWindow
 {
@@ -19,7 +19,7 @@ public partial class MainWindow
     private const string UninstallRegistration =
         @"Software\Microsoft\Windows\CurrentVersion\Uninstall\LocalVideoSubtitleTranslator_is1";
     private static readonly ResourceManager UpdateResources = new(
-        "LocalVideoSubtitleTranslator.UpdateStrings", typeof(MainWindow).Assembly);
+        "AheadSubs.UpdateStrings", typeof(MainWindow).Assembly);
     private static readonly HttpClient UpdateHttp = new()
     {
         Timeout = Timeout.InfiniteTimeSpan,

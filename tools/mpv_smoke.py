@@ -7,7 +7,7 @@ from contextlib import ExitStack
 from pathlib import Path
 from uuid import uuid4
 
-from subtitle_relay.adapters.players import Mpv
+from aheadsubs.adapters.players import Mpv
 
 
 def wait_for(check, seconds=25):
@@ -31,7 +31,7 @@ def main():
     media = [path.resolve(strict=True) for path in args.media]
     if len(set(media)) != len(media):
         parser.error("use different files for each window")
-    script = Path(__file__).resolve().parents[1] / "integrations/mpv/subtitle_relay.lua"
+    script = Path(__file__).resolve().parents[1] / "integrations/mpv/aheadsubs.lua"
     with ExitStack() as stack:
         players = []
         processes = []
@@ -42,7 +42,7 @@ def main():
                     str(args.mpv.resolve()), "--no-config", "--pause", "--mute=yes",
                     f"--geometry=320x180+{(index % 2) * 340}+{(index // 2) * 220}",
                     f"--input-ipc-server={pipe}", f"--scripts={script}",
-                    f"--script-opts=subtitle_relay-port={args.port}", str(movie),
+                    f"--script-opts=aheadsubs-port={args.port}", str(movie),
                 ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 processes.append(process)
 
@@ -53,11 +53,11 @@ def main():
                         return None
 
                 player = wait_for(connect)
-                wait_for(lambda: any(item.get("title") == "Subtitle Relay"
+                wait_for(lambda: any(item.get("title") == "AheadSubs"
                                      for item in player.command("get_property", "menu-data") or []))
-                player.command("script-message-to", "subtitle_relay", "relay-source", args.source,
+                player.command("script-message-to", "aheadsubs", "relay-source", args.source,
                                required=True)
-                player.command("script-message-to", "subtitle_relay", "relay-toggle", required=True)
+                player.command("script-message-to", "aheadsubs", "relay-toggle", required=True)
                 players.append(player)
 
             def lead(player):

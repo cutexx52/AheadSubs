@@ -44,8 +44,8 @@ CPU can run faster-whisper and NLLB. Qwen3-ASR depends on hardware and drivers s
 
 ## Source fallback and upgrades
 
-For source use, install Python 3.11+, FFmpeg and ffprobe, then run `Subtitle Relay.pyw`. See [contributing](contributing.md) for commands.
+For source use, install Python 3.11+, FFmpeg and ffprobe, then run `AheadSubs.pyw`. See [contributing](contributing.md) for commands.
 
-Both installer and portable editions store settings, models and subtitle caches under `%LOCALAPPDATA%\Subtitle Relay`. Exit the resident helper from the tray before replacing application files. Existing settings and caches survive upgrades.
+Both installer and portable editions store settings, models and subtitle caches under `%LOCALAPPDATA%\AheadSubs` on a clean profile. Existing installations keep using `%LOCALAPPDATA%\Subtitle Relay` when the AheadSubs data folder does not exist. Exit the resident helper from the tray before replacing application files.
 
 Both variants include `cli/aheadsubs.exe`. Use the desktop Integrations page to install CLI access or copy MCP configuration. See [Agent integrations](automation.md).

@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>AheadSubs</AssemblyName>
-    <RootNamespace>LocalVideoSubtitleTranslator</RootNamespace>
+    <RootNamespace>AheadSubs</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>..\assets\aheadsubs.ico</ApplicationIcon>
   </PropertyGroup>

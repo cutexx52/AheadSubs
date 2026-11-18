@@ -63,13 +63,13 @@ Start playback in a supported player to populate the live view. When the service
 
 ## Diagnostics
 
-Logs are off by default. Under Advanced settings (高级设置), enable diagnostics (启用诊断日志), apply and reproduce. Restart look-ahead to capture a whole session. Use Open logs directory (打开日志目录), or `python -m subtitle_relay serve --diagnostics`.
+Logs are off by default. Under Advanced settings (高级设置), enable diagnostics (启用诊断日志), apply and reproduce. Restart look-ahead to capture a whole session. Use Open logs directory (打开日志目录), or `python -m aheadsubs serve --diagnostics`.
 
-Logs live under `%LOCALAPPDATA%\Subtitle Relay`. Inspect paths, hostnames and URLs before sharing. Disable diagnostics afterwards.
+Logs live in the [Windows user data directory](windows.md). Inspect paths, hostnames and URLs before sharing. Disable diagnostics afterwards.
 
 ## Control bridge
 
-The launcher starts `UI/AheadSubs.exe`. WPF uses `python -m subtitle_relay.desktop.bridge`, separate from the player's [HTTP API](server.md).
+The launcher starts `UI/AheadSubs.exe`. WPF uses `python -m aheadsubs.desktop.bridge`, separate from the player's [HTTP API](server.md).
 
 | Command | Behavior |
 | --- | --- |
@@ -98,6 +98,6 @@ The launcher starts `UI/AheadSubs.exe`. WPF uses `python -m subtitle_relay.deskt
 
 Each invocation writes one JSON object with `ok` to stdout. Failure adds `error` and a nonzero exit code. External adapters should use HTTP v1 rather than this internal desktop interface.
 
-Settings use `%LOCALAPPDATA%\Subtitle Relay\settings.json`; models, caches and control tokens remain in user data. Independent services with separate control tokens belong to their launcher. `Subtitle Relay.pyw` remains the source and compatibility entry for callbacks and feedback tools.
+The [Windows user data directory](windows.md) holds `settings.json`, models, caches and control tokens. Independent services with separate control tokens belong to their launcher. `AheadSubs.pyw` launches the app from source. `Subtitle Relay.pyw` continues to handle callbacks from existing player extensions.
 
 ChatGPT credentials use current-user DPAPI in `chatgpt.sqlite3`. The bridge returns summaries, authorization and catalogs, never tokens. Settings retain selected account/model IDs.

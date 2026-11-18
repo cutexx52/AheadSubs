@@ -1,7 +1,7 @@
 using System.Net;
 using System.Security.Cryptography;
 using System.Text.Json;
-using LocalVideoSubtitleTranslator;
+using AheadSubs;
 
 byte[] bytes = [1, 2, 3, 4];
 string digest = "sha256:" + Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();

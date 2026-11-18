@@ -18,7 +18,7 @@ def pot_event(event, detail, hwnd=None):
 
 
 def native_potplayer(encoded=None, foreground=None, disable=False):
-    from subtitle_relay.adapters.potplayer import (MediaPathUnavailable, caller_potplayer, current_media,
+    from aheadsubs.adapters.potplayer import (MediaPathUnavailable, caller_potplayer, current_media,
                                           list_windows, media_from_folder)
 
     value = base64.b64decode(encoded) if encoded else b""
@@ -41,7 +41,7 @@ def native_potplayer(encoded=None, foreground=None, disable=False):
         raise RuntimeError("PotPlayer did not supply a filename.")
     pid = caller_potplayer() if not foreground else None
     if pid is None and not foreground:
-        raise RuntimeError("Subtitle Relay could not identify the PotPlayer process that opened it.")
+        raise RuntimeError("AheadSubs could not identify the PotPlayer process that opened it.")
     windows = [(foreground, match)] if foreground else list_windows(pid)
     matching = [window for window in windows if Path(filename).stem.casefold() in window[1].casefold()]
     if matching:
@@ -62,7 +62,7 @@ def native_potplayer(encoded=None, foreground=None, disable=False):
     user.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.DWORD)]
     user.GetWindowThreadProcessId(hwnd, ctypes.byref(owner))
     pid = owner.value
-    from subtitle_relay.desktop.feedback import PotFeedback
+    from aheadsubs.desktop.feedback import PotFeedback
 
     feedback = PotFeedback(hwnd)
     previous_state = None
@@ -121,7 +121,7 @@ def native_potplayer(encoded=None, foreground=None, disable=False):
                         report("choose-media", f"{exc} 请选择当前视频，同一目录里的后续视频会自动接续。")
                         selected = filedialog.askopenfilename(
                             parent=feedback.root, initialdir=str(folder) if folder else "",
-                            initialfile=Path(name).name, title="Subtitle Relay — 选择 PotPlayer 中正在播放的视频")
+                            initialfile=Path(name).name, title="AheadSubs — 选择 PotPlayer 中正在播放的视频")
                         if not selected or stop.exists():
                             report("cancelled", "已取消选择，预读已停止。")
                             return None
@@ -148,9 +148,9 @@ def native_potplayer(encoded=None, foreground=None, disable=False):
 
 def run_native_adapter(hwnd, media, stop, report, resolve_media):
     from contextlib import redirect_stdout
-    from subtitle_relay.adapters.players import run_adapter
-    from subtitle_relay.adapters.potplayer import PotPlayer, find_reload_command
-    from subtitle_relay.client import RelayClient
+    from aheadsubs.adapters.players import run_adapter
+    from aheadsubs.adapters.potplayer import PotPlayer, find_reload_command
+    from aheadsubs.client import RelayClient
 
     def starting():
         report("starting", "正在启动字幕服务与识别模型…")

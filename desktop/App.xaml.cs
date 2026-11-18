@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Threading;
 
-namespace LocalVideoSubtitleTranslator;
+namespace AheadSubs;
 
 public partial class App : System.Windows.Application
 {

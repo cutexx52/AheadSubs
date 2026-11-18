@@ -7,7 +7,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Forms = System.Windows.Forms;
 
-namespace LocalVideoSubtitleTranslator;
+namespace AheadSubs;
 
 public partial class MainWindow : Window
 {
@@ -86,7 +86,7 @@ public partial class MainWindow : Window
             UpdateAutomation(JsonNode.Parse("""
                 {"mcp_enabled":true,"cli_available":true,"cli_installed":false,
                  "mcp_config":{"mcpServers":{"aheadsubs":{"command":"C:\\AheadSubs\\runtime\\python.exe",
-                 "args":["-m","subtitle_relay.cli","mcp","--desktop"]}}}}
+                 "args":["-m","aheadsubs.cli","mcp","--desktop"]}}}}
                 """)!.AsObject());
             PreviewFolderTasks();
             StatusDashboard.Preview(JsonNode.Parse("""

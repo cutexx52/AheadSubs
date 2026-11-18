@@ -8,10 +8,12 @@ Start with Python 3.11+, FFmpeg/ffprobe and the [Windows build prerequisites](..
 python -m venv .venv
 .venv\Scripts\python -m pip install -e ".[local,cloud,desktop,fsmn-vad]"
 .venv\Scripts\python -m unittest discover -s tests -v
-.venv\Scripts\python -m subtitle_relay --help
+.venv\Scripts\python -m aheadsubs --help
 ```
 
 NVIDIA runtime details are in [Windows setup](windows.md). Use `--device cpu` when diagnosing CPU behavior. For issue reports include Windows/player versions, models, reproduction steps and cache-hit state. Diagnostics are opt-in; remove keys, private media paths and personal data before sharing.
+
+The Python distribution and import package are both named `aheadsubs`. Recreate a development virtual environment after updating an editable install of `subtitle-relay`, or uninstall the old distribution before installing this checkout. Update Python imports to `aheadsubs`. Existing `python -m subtitle_relay` commands, saved MCP configurations and desktop bridge module commands still work.
 
 ## Documentation and languages
 
@@ -28,7 +30,7 @@ NVIDIA runtime details are in [Windows setup](windows.md). Use `--device cpu` wh
 | Change | Required verification |
 | --- | --- |
 | Python service/provider | `python -m unittest discover -s tests`; observable new behavior and bug regressions |
-| WPF/bridge | `dotnet build desktop/LocalVideoSubtitleTranslator.csproj -c Release`; bridge regressions and affected UI smoke |
+| WPF/bridge | `dotnet build desktop/AheadSubs.csproj -c Release`; bridge regressions and affected UI smoke |
 | Timeline/scheduler/cache | Seeks, media/session isolation, time boundaries, cancellation/failure without corrupt cache, concurrency limits |
 | Provider | Success, timeouts/error mapping, output count/timestamp contract; no online model dependency in unit tests |
 | Runtime/install/distributed dependencies | Standard and CUDA Windows builds with `--verify-install`; separate real player/GPU evidence |

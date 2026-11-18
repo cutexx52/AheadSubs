@@ -69,9 +69,9 @@ AheadSubs 提前读取即将播放的音频，识别语音、翻译对白，再�
 在安装好[开发环境](docs/contributing.zh-CN.md)的源码目录：
 
 ```powershell
-python -m subtitle_relay --help
-python -m subtitle_relay serve --asr local --whisper-model small --mt local --device cpu
-python -m subtitle_relay clock D:\video\clip.mkv --source ja --target en --ahead 20
+python -m aheadsubs --help
+python -m aheadsubs serve --asr local --whisper-model small --mt local --device cpu
+python -m aheadsubs clock D:\video\clip.mkv --source ja --target en --ahead 20
 ```
 
 服务和模拟播放头分别在两个终端运行。云端 CLI 配置见[后端示例](docs/providers.zh-CN.md)。Agent 接入：打开 **接入 → 开启 MCP 接入 → 复制 MCP 配置**，添加到受信任的本机客户端。点击 **安装 CLI** 后重开终端即可使用 `aheadsubs`。MCP 与 CLI 共用参数模型和错误码，配置、工具与示例见 [Agent 与命令行接入](docs/automation.zh-CN.md)。

@@ -84,7 +84,7 @@ class Mpv:
         if existing:
             self.command("sub-reload", existing["id"], required=True)
         elif Path(path).stat().st_size > 1:
-            self.command("sub-add", path, "select", "Subtitle Relay", required=True)
+            self.command("sub-add", path, "select", "AheadSubs", required=True)
         self.subtitle, self.revision = path, revision
 
     def clear(self):

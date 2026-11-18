@@ -1,4 +1,4 @@
-namespace LocalVideoSubtitleTranslator;
+namespace AheadSubs;
 
 internal sealed record TranslationPreset(string Id, string Speech, string Translation, string Device,
     string[] Models, bool UsesVulkan = false, bool NeedsDashScope = false)

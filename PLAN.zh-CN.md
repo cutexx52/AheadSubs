@@ -1,4 +1,4 @@
-# Subtitle Relay 初始开发与验收计划
+# AheadSubs 初始开发与验收计划
 
 [English](PLAN.md) | [简体中文](PLAN.zh-CN.md)
 

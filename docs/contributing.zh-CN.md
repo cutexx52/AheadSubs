@@ -8,7 +8,7 @@
 python -m venv .venv
 .venv\Scripts\python -m pip install -e ".[local,cloud,desktop,fsmn-vad]"
 .venv\Scripts\python -m unittest discover -s tests -v
-.venv\Scripts\python -m subtitle_relay --help
+.venv\Scripts\python -m aheadsubs --help
 ```
 
 NVIDIA 本地后端的额外运行库及 Windows 支持情况见[安装指南](windows.zh-CN.md)。使用 CPU 排查时，启动后台用 `--device cpu`。
@@ -23,6 +23,8 @@ NVIDIA 本地后端的额外运行库及 Windows 支持情况见[安装指南](w
 - 改打包时，使用全新的用户环境检查启动、模型准备、播放、托盘退出和卸载。
 
 问题报告建议提供 Windows 版本、播放器版本、模型、复现操作及是否为缓存命中。复现时可临时开启诊断，分享之前请删除密钥、可定位私有媒体的路径和其他个人信息。
+
+Python 发行包和导入包均使用 `aheadsubs`。如果开发环境以前以可编辑方式安装了 `subtitle-relay`，更新后可重建虚拟环境，或卸载旧发行包后重新安装当前源码。Python 导入路径请改为 `aheadsubs`。已有的 `python -m subtitle_relay` 命令、已保存的 MCP 配置和桌面桥接模块命令仍可使用。
 
 ## 文档与多语言
 
@@ -41,7 +43,7 @@ NVIDIA 本地后端的额外运行库及 Windows 支持情况见[安装指南](w
 | 改动 | 必需验证 |
 | --- | --- |
 | Python 服务/后端 | `python -m unittest discover -s tests`；新增行为与缺陷回归用例 |
-| WPF/bridge | `dotnet build desktop/LocalVideoSubtitleTranslator.csproj -c Release`；桥接契约回归及受影响 UI 冒烟 |
+| WPF/bridge | `dotnet build desktop/AheadSubs.csproj -c Release`；桥接契约回归及受影响 UI 冒烟 |
 | 时间轴/调度/缓存 | 跳转、文件/会话隔离、边界时间、取消/失败不写入坏缓存、并发上限 |
 | Provider | 成功、超时/错误映射、输出数量/时间契约；不得依赖在线模型才能跑单测 |
 | 运行时/安装/依赖分发 | Windows standard、CUDA 两种构建加 `--verify-install`；播放器与 GPU 实测单独记录 |

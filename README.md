@@ -69,9 +69,9 @@ Wait for initial buffering before expecting captions; processing speed, network 
 For a source checkout with the [development environment](docs/contributing.md) installed:
 
 ```powershell
-python -m subtitle_relay --help
-python -m subtitle_relay serve --asr local --whisper-model small --mt local --device cpu
-python -m subtitle_relay clock D:\video\clip.mkv --source ja --target en --ahead 20
+python -m aheadsubs --help
+python -m aheadsubs serve --asr local --whisper-model small --mt local --device cpu
+python -m aheadsubs clock D:\video\clip.mkv --source ja --target en --ahead 20
 ```
 
 Run the service and the simulated playhead in separate terminals. For cloud CLI configurations, see the [provider examples](docs/providers.md). For Agent access, open **Integrations (接入) → Enable MCP access (开启 MCP 接入) → Copy MCP configuration (复制 MCP 配置)** and add it to a trusted local client. **Install CLI (安装 CLI)** exposes `aheadsubs` after reopening your terminal. MCP and CLI share operation schemas and errors. See [Agent and CLI integrations](docs/automation.md) for configuration, tools and examples.
