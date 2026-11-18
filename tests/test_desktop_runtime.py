@@ -44,14 +44,15 @@ class DiagnosticsTest(unittest.TestCase):
 
     def test_qwen_model_uninstall_protects_running_route_and_shared_assets(self):
         from aheadsubs.desktop import assets, bridge
-        from aheadsubs.inference.qwen import paths
+        from aheadsubs.inference.qwen import LANGUAGE_MODEL, paths
 
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             executable, model, aligner = paths(root, "1.7b")
             executable.parent.mkdir()
             smaller = paths(root, "0.6b")[1]
-            for path in (executable, model, aligner, smaller):
+            language_model = root / LANGUAGE_MODEL
+            for path in (executable, model, aligner, smaller, language_model):
                 path.touch()
             with patch.object(assets, "DATA", root), patch.object(assets, "QWEN", root), \
                     patch.object(assets, "service_health", side_effect=[{}, {"local_models": ["qwen-1.7b"]},
@@ -63,7 +64,47 @@ class DiagnosticsTest(unittest.TestCase):
                 self.assertTrue(model.exists())
                 assets.uninstall_model("qwen-1.7b", bridge.MODELS["qwen-1.7b"])
             self.assertFalse(model.exists())
-            self.assertTrue(all(path.exists() for path in (executable, aligner, smaller)))
+            self.assertTrue(all(path.exists() for path in (executable, aligner, smaller, language_model)))
+
+    def test_qwen_setup_repairs_an_existing_install_missing_language_detection(self):
+        from aheadsubs.inference import qwen
+
+        with tempfile.TemporaryDirectory() as directory, \
+                patch.object(qwen, "MODEL_FILES", dict.fromkeys(("1.7b", "0.6b"), (1, "asr"))), \
+                patch.object(qwen, "ALIGNER_FILE", (1, "aligner")), \
+                patch.object(qwen, "LANGUAGE_MODEL_FILE", (1, "language detection")):
+            root = Path(directory) / "模型目录 with spaces"
+            executable, model, aligner = qwen.paths(root, "1.7b")
+            smaller = qwen.paths(root, "0.6b")[1]
+            language_model = root / qwen.LANGUAGE_MODEL
+            executable.parent.mkdir(parents=True)
+            executable.touch()
+            for asset in (model, aligner, smaller):
+                asset.write_bytes(b"x")
+
+            self.assertFalse(qwen.installed(root, "0.6b"))
+            self.assertFalse(qwen.installed(root, "1.7b"))
+            with patch.object(qwen, "download", side_effect=OSError("network unavailable")):
+                with self.assertRaises(OSError):
+                    qwen.install(root, "1.7b")
+            self.assertFalse(qwen.installed(root, "1.7b"))
+
+            def download_asset(url, path, digest):
+                path.write_bytes(b"d")
+
+            with patch.object(qwen, "download", side_effect=download_asset) as download:
+                qwen.install(root, "1.7b")
+                qwen.install(root, "0.6b")
+
+            download.assert_called_once_with(qwen.LANGUAGE_MODEL_URL, language_model, "language detection")
+            self.assertTrue(qwen.installed(root, "1.7b"))
+            self.assertTrue(qwen.installed(root, "0.6b"))
+            self.assertEqual([asset.read_bytes() for asset in (model, aligner, smaller)], [b"x"] * 3)
+            with patch.object(qwen.subprocess, "Popen") as launch, patch.object(qwen, "build_opener"):
+                launch.return_value.poll.return_value = None
+                with qwen.run(root, "1.7b"):
+                    command = launch.call_args.args[0]
+                    self.assertEqual(command[command.index("--lid-model") + 1], str(language_model.resolve()))
 
     def test_uninstall_targets_only_the_selected_hugging_face_repository(self):
         from huggingface_hub.utils import DeleteCacheStrategy

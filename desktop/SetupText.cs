@@ -54,7 +54,7 @@ internal static class SetupText
         ["uninstalling"] = ("Uninstalling {0}…", "正在卸载 {0}…"),
         ["uninstalled"] = ("Model uninstalled.", "已卸载模型。"),
         ["model-info"] = ("{0} · about {1:0.00} GB", "{0} · 约 {1:0.00} GB"),
-        ["shared-info"] = ("Both Qwen3-ASR models share about 0.63 GB of alignment data and runtime files.", "两款 Qwen3-ASR 共用约 0.63 GB 的对齐模型和运行库。"),
+        ["shared-info"] = ("Both Qwen3-ASR models share about 0.71 GB for alignment, automatic language detection, and the runtime.", "两款 Qwen3-ASR 共用约 0.71 GB 的对齐模型、自动语言检测模型和运行库。"),
         ["whisper-device"] = ("Whisper Small device", "Whisper Small 运算设备"),
         ["nllb-device"] = ("NLLB device", "NLLB 运算设备"),
         ["cpu-device"] = ("CPU", "CPU"),
