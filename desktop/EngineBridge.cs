@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text.Json.Nodes;
 
-namespace LocalVideoSubtitleTranslator;
+namespace AheadSubs;
 
 internal sealed class InspectionBridgeException(string message) : InvalidOperationException(message);
 
@@ -15,7 +15,7 @@ internal sealed class EngineBridge
     {
         foreach (var start in new[] { AppContext.BaseDirectory, Environment.CurrentDirectory })
             for (DirectoryInfo? dir = new(start); dir is not null; dir = dir.Parent)
-                if (Directory.Exists(Path.Combine(dir.FullName, "subtitle_relay"))) return dir.FullName;
+                if (Directory.Exists(Path.Combine(dir.FullName, "aheadsubs"))) return dir.FullName;
         return AppContext.BaseDirectory;
     }
 
@@ -34,7 +34,7 @@ internal sealed class EngineBridge
         };
         info.Environment["PYTHONUTF8"] = "1";
         info.ArgumentList.Add("-m");
-        info.ArgumentList.Add("subtitle_relay.desktop.bridge");
+        info.ArgumentList.Add("aheadsubs.desktop.bridge");
         info.ArgumentList.Add(command);
         if (argument is not null) info.ArgumentList.Add(argument);
         if (folder is not null)

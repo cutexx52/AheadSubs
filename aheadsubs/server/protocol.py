@@ -177,5 +177,5 @@ def create_server(relay, port, control_token=None, playback_defaults=None, *, lo
 
 def serve(relay, port, control_token=None, playback_defaults=None, *, local_models=None):
     with create_server(relay, port, control_token, playback_defaults, local_models=local_models) as server:
-        print(f"Subtitle Relay listening on 127.0.0.1:{server.server_port}", flush=True)
+        print(f"AheadSubs listening on 127.0.0.1:{server.server_port}", flush=True)
         server.serve_forever()

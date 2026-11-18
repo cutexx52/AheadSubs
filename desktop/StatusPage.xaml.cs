@@ -9,7 +9,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using Color = System.Windows.Media.Color;
 
-namespace LocalVideoSubtitleTranslator;
+namespace AheadSubs;
 
 public partial class StatusPage : System.Windows.Controls.UserControl
 {

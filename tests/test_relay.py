@@ -13,15 +13,15 @@ from pathlib import Path
 from struct import iter_unpack
 from unittest.mock import Mock, patch
 
-from subtitle_relay.inference.audio import Segmentation, Segmenter, make_wav
-from subtitle_relay.inference.errors import provider_error
-from subtitle_relay.server.engine import (
+from aheadsubs.inference.audio import Segmentation, Segmenter, make_wav
+from aheadsubs.inference.errors import provider_error
+from aheadsubs.server.engine import (
     Playback, Relay, TranslationFailure, _translate_cues, clear_dialogue, display_cues, extract_audio, merge_cues,
 )
-from subtitle_relay.server.history import inspect_cache
-from subtitle_relay.adapters.players import run_adapter
-from subtitle_relay.server.protocol import playback_from_json
-from subtitle_relay.inference.providers import Cue, OpenAIWhisper
+from aheadsubs.server.history import inspect_cache
+from aheadsubs.adapters.players import run_adapter
+from aheadsubs.server.protocol import playback_from_json
+from aheadsubs.inference.providers import Cue, OpenAIWhisper
 
 
 class RelayTest(unittest.TestCase):
@@ -35,7 +35,7 @@ class RelayTest(unittest.TestCase):
         self.assertEqual(provider_error(SimpleNamespace(status_code=429)).kind, "rate_limited")
 
     def test_inspector_marks_blocked_original_and_publishes_other_cues(self):
-        from subtitle_relay.inference.providers import QwenMtTranslation
+        from aheadsubs.inference.providers import QwenMtTranslation
 
         denied = ValueError("private upstream details")
         denied.body = {"error": {"code": "data_inspection_failed"}}
@@ -160,8 +160,8 @@ class RelayTest(unittest.TestCase):
             nonlocal now
             now += seconds + 1e-9
 
-        with patch("subtitle_relay.adapters.players.time.monotonic", side_effect=lambda: now), \
-             patch("subtitle_relay.adapters.players.time.sleep", side_effect=sleep), self.assertRaises(EOFError):
+        with patch("aheadsubs.adapters.players.time.monotonic", side_effect=lambda: now), \
+             patch("aheadsubs.adapters.players.time.sleep", side_effect=sleep), self.assertRaises(EOFError):
             run_adapter(Mock(state=read_state), Mock(send=send), "ja", "zh", 20, 0.6, seek_interval=0.15)
 
         after_seek = [time for time, position in sent if position >= 60]
@@ -171,7 +171,7 @@ class RelayTest(unittest.TestCase):
 
     @unittest.skipUnless(os.name == "nt", "PotPlayer requires Windows")
     def test_potplayer_playback_status_does_not_open_an_overlay(self):
-        from subtitle_relay.desktop.feedback import PotFeedback
+        from aheadsubs.desktop.feedback import PotFeedback
 
         feedback = PotFeedback.__new__(PotFeedback)
         feedback.root = Mock()
@@ -183,7 +183,7 @@ class RelayTest(unittest.TestCase):
 
     @unittest.skipUnless(os.name == "nt", "PotPlayer requires Windows")
     def test_potplayer_first_load_waits_for_a_real_subtitle_cue(self):
-        from subtitle_relay.adapters.potplayer import PotPlayer
+        from aheadsubs.adapters.potplayer import PotPlayer
 
         player = PotPlayer.__new__(PotPlayer)
         player.subtitle = player.track = None
@@ -210,7 +210,7 @@ class RelayTest(unittest.TestCase):
     @unittest.skipUnless(os.name == "nt", "PotPlayer requires Windows")
     def test_potplayer_path_access_denied_offers_manual_resolution(self):
         import psutil
-        from subtitle_relay.adapters.potplayer import MediaPathUnavailable, current_media
+        from aheadsubs.adapters.potplayer import MediaPathUnavailable, current_media
 
         with patch.object(psutil.Process, "open_files", side_effect=psutil.AccessDenied()):
             with self.assertRaises(MediaPathUnavailable):
@@ -218,7 +218,7 @@ class RelayTest(unittest.TestCase):
 
     @unittest.skipUnless(os.name == "nt", "PotPlayer requires Windows")
     def test_potplayer_folder_hint_checks_only_the_current_basename(self):
-        from subtitle_relay.adapters.potplayer import media_from_folder
+        from aheadsubs.adapters.potplayer import media_from_folder
 
         with tempfile.TemporaryDirectory() as directory:
             folder = Path(directory)
@@ -240,7 +240,7 @@ class RelayTest(unittest.TestCase):
         ]
         source = Mock(side_effect=["en", "ja", "ja"])
         report = Mock()
-        with patch("subtitle_relay.adapters.players.time.sleep"), self.assertRaises(EOFError):
+        with patch("aheadsubs.adapters.players.time.sleep"), self.assertRaises(EOFError):
             run_adapter(player, client, source, "zh", 20, 0.4, report=report)
         requests = [call.args[1] for call in client.send.call_args_list if call.args[0] == "playback"]
         self.assertEqual(len({request["session"] for request in requests}), 1)
@@ -258,7 +258,7 @@ class RelayTest(unittest.TestCase):
             {**status, "subtitle_generation": "new", "subtitle": None},
             {**status, "subtitle_generation": "new", "subtitle": "new.srt", "revision": 1}, {},
         ]
-        with patch("subtitle_relay.adapters.players.time.sleep"), self.assertRaises(EOFError):
+        with patch("aheadsubs.adapters.players.time.sleep"), self.assertRaises(EOFError):
             run_adapter(player, client, "ja", "zh", 20, .4)
         player.clear.assert_called_once_with()
         self.assertEqual([call.args for call in player.publish.call_args_list], [("old.srt", 1), ("new.srt", 1)])
@@ -345,7 +345,7 @@ class RelayTest(unittest.TestCase):
             path = root / "clip.mkv"
             path.touch()
             playback = Playback(path=path, position=8, ahead=1, duration=20)
-            with patch("subtitle_relay.server.engine.translate_chunk", return_value=[Cue(8.25, 9.5, "你好")]) as job:
+            with patch("aheadsubs.server.engine.translate_chunk", return_value=[Cue(8.25, 9.5, "你好")]) as job:
                 relay = Relay(root, None, None, "test", workers=4)
                 try:
                     relay.update("first", playback)

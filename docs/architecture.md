@@ -20,15 +20,15 @@ PotPlayer / mpv                 Windows desktop helper
 
 | Package / directory | Responsibility | Extension point |
 | --- | --- | --- |
-| `subtitle_relay/adapters/` | Playback state and subtitle loading; separate Win32 / mpv IPC adapters | `state()` / `publish(path, revision)`, or HTTP v1 |
-| `subtitle_relay/server/` | HTTP, sessions, scheduling, cache and SRT | `Playback`, `Relay.update()` / `drop()` and [HTTP v1](server.md) |
-| `subtitle_relay/inference/` | Segmentation, recognition and translation | [Provider interfaces](providers.md#provider-interfaces) |
-| `subtitle_relay/desktop/` | Control bridge, service lifecycle, PotPlayer callbacks and source fallback UI | [Desktop guide](desktop.md) |
+| `aheadsubs/adapters/` | Playback state and subtitle loading; separate Win32 / mpv IPC adapters | `state()` / `publish(path, revision)`, or HTTP v1 |
+| `aheadsubs/server/` | HTTP, sessions, scheduling, cache and SRT | `Playback`, `Relay.update()` / `drop()` and [HTTP v1](server.md) |
+| `aheadsubs/inference/` | Segmentation, recognition and translation | [Provider interfaces](providers.md#provider-interfaces) |
+| `aheadsubs/desktop/` | Control bridge, service lifecycle, PotPlayer callbacks and source fallback UI | [Desktop guide](desktop.md) |
 | `desktop/` | WPF settings UI and Windows tray | Python runtime through the desktop bridge |
-| `subtitle_relay/automation.py` | Shared MCP/CLI operations and argument models | [Automation](automation.md) |
-| `subtitle_relay/client.py` | Shared desktop/player/automation loopback client | `RelayClient(port).send(route, data)` |
+| `aheadsubs/automation.py` | Shared MCP/CLI operations and argument models | [Automation](automation.md) |
+| `aheadsubs/client.py` | Shared desktop/player/automation loopback client | `RelayClient(port).send(route, data)` |
 | `integrations/` | Player-hosted Lua / AngelScript | [Player integrations](adapters.md) |
-| `subtitle_relay/__main__.py` | CLI commands and runtime assembly | `python -m subtitle_relay --help` |
+| `aheadsubs/__main__.py` | CLI commands and runtime assembly | `python -m aheadsubs --help` |
 
 Players supply media position and audio track. The service reads the file as needed and emits SRT on the original timeline. Adapters and service can run independently from the CLI, and tests can use a simulated playhead.
 

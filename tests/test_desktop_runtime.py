@@ -9,8 +9,25 @@ from unittest.mock import patch
 
 @unittest.skipUnless(os.name == "nt", "Desktop runtime requires Windows")
 class DiagnosticsTest(unittest.TestCase):
+    def test_user_data_is_shared_by_models_credentials_and_desktop(self):
+        from aheadsubs.inference.chatgpt_auth import ChatGPTAccounts
+        from aheadsubs.inference.qwen import paths
+        from aheadsubs.paths import user_data_directory
+
+        with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, {"LOCALAPPDATA": folder}):
+            current = Path(folder) / "AheadSubs"
+            legacy = Path(folder) / "Subtitle Relay"
+
+            self.assertEqual(user_data_directory(), current)
+            legacy.mkdir()
+            self.assertEqual(user_data_directory(), legacy)
+            self.assertEqual(ChatGPTAccounts().path.parent, legacy)
+            self.assertEqual(paths(None, "1.7b")[1].parent, legacy / "qwen")
+            current.mkdir()
+            self.assertEqual(user_data_directory(), current)
+
     def test_preset_preflight_reports_only_requested_missing_requirements(self):
-        from subtitle_relay.desktop import bridge, runtime
+        from aheadsubs.desktop import bridge, runtime
 
         with patch.object(bridge.shutil, "which", return_value="ffmpeg"), \
                 patch.object(bridge.hardware, "vulkan_available", return_value=True) as vulkan, \
@@ -26,8 +43,8 @@ class DiagnosticsTest(unittest.TestCase):
                 self.assertEqual(bridge.check_requirements("dashscope", "https://example.org"), {"missing": ["dashscope"]})
 
     def test_qwen_model_uninstall_protects_running_route_and_shared_assets(self):
-        from subtitle_relay.desktop import assets, bridge
-        from subtitle_relay.inference.qwen import paths
+        from aheadsubs.desktop import assets, bridge
+        from aheadsubs.inference.qwen import paths
 
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -50,7 +67,7 @@ class DiagnosticsTest(unittest.TestCase):
 
     def test_uninstall_targets_only_the_selected_hugging_face_repository(self):
         from huggingface_hub.utils import DeleteCacheStrategy
-        from subtitle_relay.desktop import assets, bridge
+        from aheadsubs.desktop import assets, bridge
 
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()
@@ -69,8 +86,8 @@ class DiagnosticsTest(unittest.TestCase):
             self.assertTrue((hub / "models--Adom4600--nllb-200-distilled-600M-ct2-int8").exists())
 
     def test_apply_minimax_with_protected_key_and_context_limit(self):
-        from subtitle_relay.desktop import bridge, credentials, runtime
-        from subtitle_relay.inference.providers import MINIMAX_MODEL
+        from aheadsubs.desktop import bridge, credentials, runtime
+        from aheadsubs.inference.providers import MINIMAX_MODEL
 
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -94,7 +111,7 @@ class DiagnosticsTest(unittest.TestCase):
                 self.assertNotIn(test_key, runtime.CONFIG.read_text(encoding="utf-8"))
 
     def test_typed_credentials_are_encrypted_and_redacted_by_the_bridge(self):
-        from subtitle_relay.desktop import bridge, credentials, runtime
+        from aheadsubs.desktop import bridge, credentials, runtime
 
         test_key = "sk-test-desktop-credential"
         with tempfile.TemporaryDirectory() as directory:
@@ -124,7 +141,7 @@ class DiagnosticsTest(unittest.TestCase):
                 self.assertTrue(key_file.is_file())
 
     def test_compatible_credentials_require_https_away_from_loopback(self):
-        from subtitle_relay.desktop import credentials
+        from aheadsubs.desktop import credentials
 
         settings = {}
         credentials.update(settings, {"compatible-asr": {"mode": "direct", "value": "test-asr-key"}})
@@ -134,7 +151,7 @@ class DiagnosticsTest(unittest.TestCase):
             credentials.resolve(settings, "compatible-asr", "http://example.com/v1")
 
     def test_manual_player_folder_is_remembered_and_uninstall_removes_only_integration(self):
-        from subtitle_relay.desktop import assets, runtime
+        from aheadsubs.desktop import assets, runtime
 
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -145,14 +162,16 @@ class DiagnosticsTest(unittest.TestCase):
                 assets.configure_player("potplayer", str(player))
                 self.assertEqual(assets.potplayer_directory(), player.resolve())
                 self.assertTrue(assets.integration_status("potplayer")["configured"])
-                keep = player / "Extension" / "Subtitle" / "Translate" / "Other extension.as"
+                extensions = player / "Extension" / "Subtitle" / "Translate"
+                self.assertTrue((extensions / "SubtitleTranslate - AheadSubs.as").is_file())
+                keep = extensions / "Other extension.as"
                 keep.touch()
                 assets.unconfigure_player("potplayer")
                 self.assertTrue(keep.is_file())
                 self.assertFalse(assets.integration_status("potplayer")["installed"])
 
     def test_mpv_manual_portable_configuration_leaves_user_files(self):
-        from subtitle_relay.desktop import assets, runtime
+        from aheadsubs.desktop import assets, runtime
 
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -163,12 +182,34 @@ class DiagnosticsTest(unittest.TestCase):
                 assets.configure_player("mpv", str(root))
                 self.assertEqual(assets.mpv_directory(), portable.resolve())
                 self.assertTrue(assets.integration_status("mpv")["configured"])
+                self.assertTrue((portable / "scripts/aheadsubs.lua").is_file())
+                self.assertTrue((portable / "script-opts/aheadsubs.conf").is_file())
                 assets.unconfigure_player("mpv")
                 self.assertTrue((portable / "mpv.conf").is_file())
                 self.assertFalse(assets.integration_status("mpv")["installed"])
 
+    def test_player_setup_reuses_installed_script_names(self):
+        from aheadsubs.desktop import assets
+
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            old_mpv = root / "scripts/subtitle_relay.lua"
+            old_mpv.parent.mkdir()
+            old_mpv.touch()
+            old_potplayer = root / "SubtitleTranslate - Subtitle Relay Audio.as"
+            old_potplayer.touch()
+
+            assets.install_mpv(root)
+            assets.install_potplayer(root)
+
+            self.assertIn("AheadSubs", old_mpv.read_text(encoding="utf-8"))
+            self.assertTrue((root / "script-opts/subtitle_relay.conf").is_file())
+            self.assertFalse((old_mpv.parent / "aheadsubs.lua").exists())
+            self.assertIn("AheadSubs.pyw", old_potplayer.read_text(encoding="utf-8"))
+            self.assertFalse((root / "SubtitleTranslate - AheadSubs Audio.as").exists())
+
     def test_legacy_translation_settings_move_into_active_model_only(self):
-        from subtitle_relay.desktop import runtime
+        from aheadsubs.desktop import runtime
 
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "settings.json"
@@ -184,7 +225,7 @@ class DiagnosticsTest(unittest.TestCase):
             self.assertEqual(runtime.enhancement_key({**settings, "mt": "qwen-mt"}), "qwen-mt:qwen-mt-flash")
 
     def test_logs_are_created_only_when_diagnostics_are_enabled(self):
-        from subtitle_relay.desktop import runtime
+        from aheadsubs.desktop import runtime
 
         with tempfile.TemporaryDirectory() as directory:
             log = Path(directory) / "relay.log"

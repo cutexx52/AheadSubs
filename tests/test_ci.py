@@ -14,7 +14,7 @@ class DocumentationCITests(unittest.TestCase):
         self.addCleanup(directory.cleanup)
         self.repo = Path(directory.name)
         self.git("init", "--initial-branch=main")
-        self.write("subtitle_relay/service.py", "service")
+        self.write("aheadsubs/service.py", "service")
         self.write("README.md", "docs")
         self.commit()
 
@@ -42,7 +42,7 @@ class DocumentationCITests(unittest.TestCase):
         self.commit()
 
         self.git("switch", "main")
-        self.write("subtitle_relay/service.py", "already on main")
+        self.write("aheadsubs/service.py", "already on main")
         self.commit()
         self.git("merge", "--no-ff", "--no-edit", "--no-gpg-sign", "docs")
 
@@ -57,7 +57,7 @@ class DocumentationCITests(unittest.TestCase):
 
     def test_moving_runtime_file_to_docs_runs_full_ci(self):
         (self.repo / "docs").mkdir()
-        self.git("mv", "subtitle_relay/service.py", "docs/service.md")
+        self.git("mv", "aheadsubs/service.py", "docs/service.md")
         self.commit()
 
         self.assertFalse(docs_only(self.repo))

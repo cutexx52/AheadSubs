@@ -57,6 +57,6 @@ MCP 客户端通过工具列表获得参数 schema。调用结果包含与 CLI �
 
 ## 源码安装和扩展
 
-在项目目录运行 `python -m pip install .` 安装 `aheadsubs`。也可运行 `python -m subtitle_relay.cli --help`。独立启动 MCP 的客户端配置使用 `aheadsubs` 作为 `command`，`["mcp"]` 作为 `args`。如果客户端找不到 CLI，请填写已安装命令的绝对路径。部署使用桌面控制开关时，可给 MCP 加 `--desktop`。
+在项目目录运行 `python -m pip install .` 安装 `aheadsubs`。也可运行 `python -m aheadsubs.cli --help`。独立启动 MCP 的客户端配置使用 `aheadsubs` 作为 `command`，`["mcp"]` 作为 `args`。如果客户端找不到 CLI，请填写已安装命令的绝对路径。部署使用桌面控制开关时，可给 MCP 加 `--desktop`。
 
-新增操作时，在 `subtitle_relay/automation.py` 定义参数模型和处理函数，注册到 `OPERATIONS`，并在 `automation_text.py` 中补齐两种语言。CLI 帮助、命令参数和 MCP 工具 schema 从同一个参数模型生成。需要直接接入播放器或自定义客户端时，可使用 [HTTP v1](server.zh-CN.md)。
+新增操作时，在 `aheadsubs/automation.py` 定义参数模型和处理函数，注册到 `OPERATIONS`，并在 `automation_text.py` 中补齐两种语言。CLI 帮助、命令参数和 MCP 工具 schema 从同一个参数模型生成。需要直接接入播放器或自定义客户端时，可使用 [HTTP v1](server.zh-CN.md)。

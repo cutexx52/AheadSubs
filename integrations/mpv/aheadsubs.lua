@@ -4,7 +4,7 @@ local options = require "mp.options"
 local msg = require "mp.msg"
 
 local config = { launcher = "", pythonw = "", port = 8769 }
-options.read_options(config, "subtitle_relay")
+options.read_options(config, mp.get_script_name())
 local title = "AheadSubs"
 local session = "mpv-" .. tostring(utils.getpid()) .. "-" .. tostring(os.time())
 local enabled, pending = false, false
@@ -80,7 +80,7 @@ local function poll()
         if not success or result.status ~= 0 then
             last_status = "Waiting for AheadSubs service"
             if result then
-                msg.verbose("Relay request failed: " .. tostring(result.error_string) .. " " ..
+                msg.verbose("AheadSubs request failed: " .. tostring(result.error_string) .. " " ..
                             tostring(result.stderr) .. " " .. tostring(result.stdout))
             end
             if mp.get_time() >= next_launch then

@@ -2,7 +2,7 @@ import sys
 import unittest
 from unittest.mock import patch
 
-from subtitle_relay import __main__ as cli
+from aheadsubs import __main__ as cli
 
 
 class LocalDevicesTest(unittest.TestCase):

@@ -43,5 +43,5 @@ class RelayClient:
             finally:
                 exc.close()
             detail = detail if isinstance(detail, dict) else {}
-            raise RelayHTTPError(exc.code, detail.get("error") or f"Subtitle Relay HTTP {exc.code}",
+            raise RelayHTTPError(exc.code, detail.get("error") or f"AheadSubs HTTP {exc.code}",
                                  detail.get("error_code")) from exc

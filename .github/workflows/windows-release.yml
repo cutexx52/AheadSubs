@@ -110,7 +110,7 @@ jobs:
       - name: Build and verify installation
         env:
           AHEADSUBS_MSYS2: ${{ steps.msys2.outputs.msys2-location }}
-          SUBTITLE_RELAY_RELEASE_VERSION: ${{ needs.plan.outputs.tag }}
+          AHEADSUBS_RELEASE_VERSION: ${{ needs.plan.outputs.tag }}
           RELEASE_FLAGS: ${{ matrix.flags }}
         run: |
           $buildArgs = @('--native', '--verify-install')

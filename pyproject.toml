@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "subtitle-relay"
+name = "aheadsubs"
 version = "0.1.0"
 description = "Local video subtitle generation and translation with playback look-ahead"
 readme = "README.md"
@@ -12,7 +12,7 @@ requires-python = ">=3.11"
 dependencies = ["mcp>=2.3,<3", "pydantic>=2.12,<3", "python-multipart>=0.0.34,<1", "regex>=2025.11.3", "psutil>=6,<9; platform_system == 'Windows'"]
 
 [project.scripts]
-aheadsubs = "subtitle_relay.cli:main"
+aheadsubs = "aheadsubs.cli:main"
 
 [project.optional-dependencies]
 desktop = ["pystray>=0.19.5,<0.20; platform_system == 'Windows'"]
@@ -22,4 +22,4 @@ fsmn-vad = ["kaldi-native-fbank>=1.20,<2", "numpy", "onnxruntime>=1.16", "huggin
 cuda12 = ["nvidia-cublas-cu12; platform_system == 'Windows'", "nvidia-cudnn-cu12>=9,<10; platform_system == 'Windows'"]
 
 [tool.setuptools.packages.find]
-include = ["subtitle_relay*"]
+include = ["aheadsubs*", "subtitle_relay*"]

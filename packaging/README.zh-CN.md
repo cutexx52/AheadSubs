@@ -25,6 +25,6 @@ python packaging\windows\build.py --native --cuda --version 0.1.0
 
 - Windows bundles 每日检查预览版资格，包括 72 小时间隔、有效程序改动及当前 head CI。手工 `mode=verify` 仅验证两版，不发布或保留产物。`mode=preview` 检查默认分支资格。推送 `v*` 标签显式发布。四个二进制、两个校验清单与对应的 FFmpeg 源码 ZIP 齐全才公开。含 `-` 的标签标记预发布。详见[发布与预算](../docs/releases.zh-CN.md)。
 - Windows 11 x64 是主要验证目标。Windows 10 22H2 x64 是安装最低版本，各受支持版本仍需独立验证。已结束支持的 Windows 10 版本不在微软支持周期。ARM、32 位、Windows 7/8.1、S 模式不在已验证路径。[.NET 10 支持矩阵](https://learn.microsoft.com/en-us/dotnet/core/install/windows#supported-versions)。
-- 按用户安装；设置/模型仍在 `%LOCALAPPDATA%\Subtitle Relay`。标准和 CUDA 更新同一应用安装。模型与凭据独立获取。
+- 按用户安装，设置和模型保存在 [Windows 用户数据目录](../docs/windows.zh-CN.md)。标准与 CUDA 安装器更新同一份应用安装。模型与凭据独立获取。
 - 原生推理依赖可能需要 [Visual C++ Redistributable x64](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist)，缺失时启动器提供链接。
 - 当前包未签名。`notices/ffmpeg` 记录随包分发的 LGPL 构建、准确源码版本及替换说明。请在同一 Release 提供二进制、FFmpeg 源码 ZIP 和校验清单。其他组件义务见[许可证与再分发](../docs/licenses.zh-CN.md)。

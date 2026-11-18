@@ -1,7 +1,7 @@
 import unittest
 
-from subtitle_relay.inference.dashscope import DashScopeAudio
-from subtitle_relay.inference.providers import Cue
+from aheadsubs.inference.dashscope import DashScopeAudio
+from aheadsubs.inference.providers import Cue
 
 
 class DashScopeAudioTest(unittest.TestCase):

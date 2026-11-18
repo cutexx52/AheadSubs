@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace LocalVideoSubtitleTranslator;
+namespace AheadSubs;
 
 internal static class SetupText
 {

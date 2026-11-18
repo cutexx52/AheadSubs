@@ -8,12 +8,12 @@ from contextlib import ExitStack
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from subtitle_relay.inference.audio import SAMPLE_RATE, Segmentation, Segmenter, make_wav
-from subtitle_relay.inference.providers import Cue
-from subtitle_relay.inference.segmentation import plan_spans
-from subtitle_relay.server.engine import Playback, Relay
-from subtitle_relay.server.history import inspect_cache
-from subtitle_relay.server.transcription import RETENTION_SECONDS, TranscriptionError
+from aheadsubs.inference.audio import SAMPLE_RATE, Segmentation, Segmenter, make_wav
+from aheadsubs.inference.providers import Cue
+from aheadsubs.inference.segmentation import plan_spans
+from aheadsubs.server.engine import Playback, Relay
+from aheadsubs.server.history import inspect_cache
+from aheadsubs.server.transcription import RETENTION_SECONDS, TranscriptionError
 
 
 def samples(seconds, value=1):
@@ -171,7 +171,7 @@ class FileTranscriptionTest(unittest.TestCase):
             return source, [Cue(0.2, 0.3, "spoken")]
 
         recognizer.recognize.side_effect = recognize
-        self.resources.enter_context(patch("subtitle_relay.server.engine.extract_audio", return_value=samples(1)))
+        self.resources.enter_context(patch("aheadsubs.server.engine.extract_audio", return_value=samples(1)))
         relay = self.relay(recognizer)
         store = relay.transcriptions
         identifier = self.submit(relay, 1.5, "ja")

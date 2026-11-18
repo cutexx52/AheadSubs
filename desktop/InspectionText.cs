@@ -1,12 +1,12 @@
 using System.Globalization;
 using System.Resources;
 
-namespace LocalVideoSubtitleTranslator;
+namespace AheadSubs;
 
 internal static class InspectionText
 {
     private static readonly ResourceManager Resources = new(
-        "LocalVideoSubtitleTranslator.InspectionText", typeof(InspectionText).Assembly);
+        "AheadSubs.InspectionText", typeof(InspectionText).Assembly);
 
     public static CultureInfo Culture => AutomationText.Culture;
 

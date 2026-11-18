@@ -22,10 +22,10 @@
 凭据通过环境变量或安装目录之外的本地文件提供。OpenAI 使用 `OPENAI_API_KEY`，Qwen-MT 使用 `DASHSCOPE_API_KEY`，兼容端点可分别使用 `RELAY_ASR_API_KEY` 和 `RELAY_LLM_API_KEY`。先在界面安装所需的模型。命令行示例。
 
 ```cmd
-python -m subtitle_relay serve --asr local --whisper-model small --mt local --device cpu
-python -m subtitle_relay serve --asr qwen --qwen-size 1.7b --mt local --device cuda
-python -m subtitle_relay serve --asr qwen --qwen-size 0.6b --mt qwen-mt --qwen-mt-model qwen-mt-flash --qwen-mt-url https://dashscope.aliyuncs.com/compatible-mode/v1
-python -m subtitle_relay serve --asr dashscope --dashscope-asr-model qwen-audio-3.1-asr-flash --mt qwen-mt --default-source ja
+python -m aheadsubs serve --asr local --whisper-model small --mt local --device cpu
+python -m aheadsubs serve --asr qwen --qwen-size 1.7b --mt local --device cuda
+python -m aheadsubs serve --asr qwen --qwen-size 0.6b --mt qwen-mt --qwen-mt-model qwen-mt-flash --qwen-mt-url https://dashscope.aliyuncs.com/compatible-mode/v1
+python -m aheadsubs serve --asr dashscope --dashscope-asr-model qwen-audio-3.1-asr-flash --mt qwen-mt --default-source ja
 ```
 
 上面第三条命令为混合路线，第四条为云端识别及翻译，使用 `DASHSCOPE_API_KEY`。区域端点应匹配密钥，不把密钥写进命令或 Git。
@@ -69,7 +69,7 @@ VAD 使用 CPU。默认 Silero，可选阿里开源 FunASR FSMN-VAD。第一次�
 
 ## 后端接口
 
-接口定义在 `subtitle_relay/inference/providers.py`。音频输入是 16 kHz 单声道 WAV。
+接口定义在 `aheadsubs/inference/providers.py`。音频输入是 16 kHz 单声道 WAV。
 
 | 接口 | 契约 |
 | --- | --- |

@@ -4,11 +4,11 @@
 
 The service binds to `127.0.0.1:8769` for local clients by default. Service and player must share media access. All times are seconds on the original media timeline.
 
-Start with `python -m subtitle_relay serve --asr local --mt local --device cpu`. Clients must match any custom `--port`.
+Start with `python -m aheadsubs serve --asr local --mt local --device cpu`. Clients must match any custom `--port`.
 
 ## File transcription API
 
-Use `python -m subtitle_relay serve --asr local --mt none --device cpu` for a recognition-only service. File transcription never invokes either translation backend, including when a combined profile supplies the recognizer. The `--ast` speech-translation profile has no recognizer for these routes. With `--mt none`, playback captions contain source text.
+Use `python -m aheadsubs serve --asr local --mt none --device cpu` for a recognition-only service. File transcription never invokes either translation backend, including when a combined profile supplies the recognizer. The `--ast` speech-translation profile has no recognizer for these routes. With `--mt none`, playback captions contain source text.
 
 The file routes accept multipart uploads and recognize the first audio stream. Omit `language` for automatic recognition of the source speech, including mixed-language speech. An explicit language is a recognition hint. Recognition quality and language coverage depend on the configured model. Choosing a cloud recognizer sends audio segments to that provider. The file routes use the shared worker pool and yield between chunks to playback and folder subtitle work.
 
@@ -151,4 +151,4 @@ Cloud usage starts with this version. The model request boundary counts attempts
 
 `Relay.update(identifier, Playback)` accepts state and returns subtitle metadata. `Relay.drop(identifier)` releases a session; `Relay.close()` closes scheduling/persistence. Tasks read the selected track and retain its offset, mapping ASR-relative times back to video time. Overlapping adjacent cues preserve the next cue's start and end the preceding cue there.
 
-SQLite stores completed chunks. Identity includes media and modification time, track, languages and processing settings. Matching windows share completed chunks. SRT uses batched atomic replacement. CLI cache defaults to `.relay`; desktop uses `%LOCALAPPDATA%\Subtitle Relay\cache`.
+SQLite stores completed chunks. Identity includes media and modification time, track, languages and processing settings. Matching windows share completed chunks. SRT uses batched atomic replacement. CLI cache defaults to `.relay`. The desktop service uses the `cache` subdirectory of the [Windows user data directory](windows.md).

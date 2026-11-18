@@ -1,4 +1,4 @@
-# Original Subtitle Relay design and acceptance plan
+# Original AheadSubs design and acceptance plan
 
 [English](PLAN.md) | [简体中文](PLAN.zh-CN.md)
 

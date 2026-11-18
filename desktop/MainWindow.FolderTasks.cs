@@ -5,7 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Markup;
 using System.Windows.Threading;
 
-namespace LocalVideoSubtitleTranslator;
+namespace AheadSubs;
 
 public sealed class TaskTextExtension(string key) : MarkupExtension
 {

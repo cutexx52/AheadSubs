@@ -19,7 +19,7 @@ internal static class CliLauncher
         string python = Path.Combine(root, "runtime", "python.exe");
         try
         {
-            var start = new ProcessStartInfo(python, "-I -X utf8 -m subtitle_relay.cli " + string.Join(" ", args.Select(Quote)))
+            var start = new ProcessStartInfo(python, "-I -X utf8 -m aheadsubs.cli " + string.Join(" ", args.Select(Quote)))
             {
                 UseShellExecute = false
             };

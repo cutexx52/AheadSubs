@@ -16,10 +16,10 @@ from tempfile import TemporaryDirectory
 from threading import Barrier, Event, Thread, current_thread
 from unittest.mock import Mock, patch
 
-from subtitle_relay.inference.providers import Cue
-from subtitle_relay.server import transcription_http
-from subtitle_relay.server.engine import Playback, Relay
-from subtitle_relay.server.protocol import create_server
+from aheadsubs.inference.providers import Cue
+from aheadsubs.server import transcription_http
+from aheadsubs.server.engine import Playback, Relay
+from aheadsubs.server.protocol import create_server
 
 
 JOBS = "/v1/transcription/jobs"

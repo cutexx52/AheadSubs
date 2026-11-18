@@ -14,15 +14,15 @@ from unittest.mock import Mock, patch
 from urllib.error import HTTPError
 from urllib.request import Request
 
-from subtitle_relay.__main__ import monitor_pipeline
-from subtitle_relay.client import RelayClient
-from subtitle_relay.inference.audio import make_wav
-from subtitle_relay.inference.providers import Cue, QwenMtTranslation
-from subtitle_relay.inference.usage import CloudMeter, CloudUsage, read_usage
-from subtitle_relay.server.engine import Playback, Relay
-from subtitle_relay.server.metrics import SAMPLE_LIMIT, WINDOW, Samples
-from subtitle_relay.server.protocol import serve
-from subtitle_relay.server.resources import gpu_totals
+from aheadsubs.__main__ import monitor_pipeline
+from aheadsubs.client import RelayClient
+from aheadsubs.inference.audio import make_wav
+from aheadsubs.inference.providers import Cue, QwenMtTranslation
+from aheadsubs.inference.usage import CloudMeter, CloudUsage, read_usage
+from aheadsubs.server.engine import Playback, Relay
+from aheadsubs.server.metrics import SAMPLE_LIMIT, WINDOW, Samples
+from aheadsubs.server.protocol import serve
+from aheadsubs.server.resources import gpu_totals
 
 
 class CloudUsageTest(unittest.TestCase):
@@ -122,7 +122,7 @@ class StatusTest(unittest.TestCase):
                                vad_model="silero")
         backend = SimpleNamespace(model="test-model")
         read = monitor_pipeline(args, backend, backend, None, "", None)
-        with patch("subtitle_relay.__main__.qwen_ready", side_effect=[True, False]):
+        with patch("aheadsubs.__main__.qwen_ready", side_effect=[True, False]):
             self.assertEqual([row["state"] for row in read()], ["loaded", "unverified", "loaded"])
             self.assertEqual(read()[0]["state"], "unavailable")
         self.assertFalse(hasattr(backend, "usage_meter"))
@@ -155,8 +155,8 @@ class StatusTest(unittest.TestCase):
 
             relay = Relay(directory, SimpleNamespace(recognize=recognize), None, "test")
             try:
-                with relay.lock, patch("subtitle_relay.server.engine.time.monotonic", side_effect=lambda: now), \
-                        patch("subtitle_relay.server.engine.extract_audio", return_value=make_wav(bytes(32000 * 4))):
+                with relay.lock, patch("aheadsubs.server.engine.time.monotonic", side_effect=lambda: now), \
+                        patch("aheadsubs.server.engine.extract_audio", return_value=make_wav(bytes(32000 * 4))):
                     playback = Playback(media, 0, target="ja", duration=4)
                     self.assertFalse(relay.update("first", playback, "potplayer")["nearby_cues"])
                     work = (relay._identity(playback), 0)
@@ -196,7 +196,7 @@ class StatusTest(unittest.TestCase):
             media = Path(directory) / "private movie.mkv"
             media.touch()
             relay = Relay(directory, None, Translator(), "test")
-            with patch("subtitle_relay.server.protocol.ThreadingHTTPServer", side_effect=bind):
+            with patch("aheadsubs.server.protocol.ThreadingHTTPServer", side_effect=bind):
                 thread = Thread(target=serve, args=(relay, 0, "test-token"), daemon=True)
                 thread.start()
                 port = events.get(timeout=5)

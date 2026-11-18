@@ -16,10 +16,10 @@ class SettingsTray:
         for bounds in ((17, 24, 32, 28), (36, 24, 47, 28), (17, 35, 26, 39), (30, 35, 47, 39)):
             draw.rounded_rectangle(bounds, radius=2, fill="#17506b")
         self.icon = pystray.Icon(
-            "Subtitle Relay", image, "Subtitle Relay",
+            "AheadSubs", image, "AheadSubs",
             menu=pystray.Menu(
                 pystray.MenuItem("打开设置", lambda: self.actions.put("open"), default=True),
-                pystray.MenuItem("退出 Subtitle Relay", lambda: self.actions.put("quit")),
+                pystray.MenuItem("退出 AheadSubs", lambda: self.actions.put("quit")),
             ),
         )
         self.icon.run_detached(self._show)

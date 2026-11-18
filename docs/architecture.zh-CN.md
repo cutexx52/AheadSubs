@@ -20,15 +20,15 @@ PotPlayer / mpv                    Windows 桌面助手
 
 | 包或目录 | 职责 | 扩展入口 |
 | --- | --- | --- |
-| `subtitle_relay/adapters/` | 播放状态和字幕加载。Win32 消息和 mpv IPC 在各自适配层 | `state()` / `publish(path, revision)`，或直接使用 HTTP v1 |
-| `subtitle_relay/server/` | HTTP、会话调度、缓存和 SRT 输出 | `Playback`、`Relay.update()` / `drop()` 与 [HTTP v1](server.zh-CN.md) |
-| `subtitle_relay/inference/` | 音频分段、识别与翻译 | [Recognizer、Translator、SpeechTranslator](providers.zh-CN.md#后端接口) |
-| `subtitle_relay/desktop/` | 控制桥、服务生命周期、PotPlayer 回调和源码备用界面 | [桌面助手](desktop.zh-CN.md) |
+| `aheadsubs/adapters/` | 播放状态和字幕加载。Win32 消息和 mpv IPC 在各自适配层 | `state()` / `publish(path, revision)`，或直接使用 HTTP v1 |
+| `aheadsubs/server/` | HTTP、会话调度、缓存和 SRT 输出 | `Playback`、`Relay.update()` / `drop()` 与 [HTTP v1](server.zh-CN.md) |
+| `aheadsubs/inference/` | 音频分段、识别与翻译 | [Recognizer、Translator、SpeechTranslator](providers.zh-CN.md#后端接口) |
+| `aheadsubs/desktop/` | 控制桥、服务生命周期、PotPlayer 回调和源码备用界面 | [桌面助手](desktop.zh-CN.md) |
 | `desktop/` | WPF 设置界面和 Windows 托盘 | 通过桌面控制桥调用 Python 运行时 |
-| `subtitle_relay/automation.py` | MCP/CLI 共用操作及参数模型 | [自动化](automation.zh-CN.md) |
-| `subtitle_relay/client.py` | 桌面和播放器共用的 loopback HTTP 客户端 | `RelayClient(port).send(route, data)` |
+| `aheadsubs/automation.py` | MCP/CLI 共用操作及参数模型 | [自动化](automation.zh-CN.md) |
+| `aheadsubs/client.py` | 桌面和播放器共用的 loopback HTTP 客户端 | `RelayClient(port).send(route, data)` |
 | `integrations/` | 由播放器宿主装载的 Lua / AngelScript 脚本 | [播放器适配](adapters.zh-CN.md) |
-| `subtitle_relay/__main__.py` | CLI 命令和运行时组装 | `python -m subtitle_relay --help` |
+| `aheadsubs/__main__.py` | CLI 命令和运行时组装 | `python -m aheadsubs --help` |
 
 播放器提供媒体位置和音轨。服务按需读文件，以原媒体时间输出 SRT。适配器与服务可由命令行独立启动，测试可以用模拟播放头代替真实播放器。
 
