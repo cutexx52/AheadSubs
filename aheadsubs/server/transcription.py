@@ -24,6 +24,7 @@ MAX_INPUTS = 8
 MAX_INPUT_BYTES = 512_000_000
 MAX_TERMINAL_JOBS = 100
 RETENTION_SECONDS = 24 * 60 * 60
+STORAGE_RETRY_SECONDS = 5
 MODEL = "aheadsubs"
 READY_STATES = {"queued", "running"}
 RESUMABLE_STATES = {"failed", "cancelled"}
@@ -140,6 +141,8 @@ class Transcriptions:
         self.upload_directory = relay.root / "transcription-staging"
         self.inputs = relay.root / "transcription-inputs"
         self.inflight = None
+        self.pending_finish = None
+        self.storage_retry_at = 0
         self.next_maintenance = 0
         self.purge_inputs = set()
         self.lease = acquire_queue_lock(relay.root / "transcription.lock")
@@ -234,10 +237,10 @@ class Transcriptions:
         size = info.st_size
         with self.relay.lock:
             self.require_backend()
-            count, used = self.db.execute(
-                "SELECT COUNT(*), COALESCE(SUM(input_bytes), 0) FROM transcription_jobs WHERE input_bytes > 0"
-            ).fetchone()
-            if count >= MAX_INPUTS or used + size > MAX_INPUT_BYTES:
+            # A completed or discarded input still occupies space if deletion was blocked.
+            retained = [entry.lstat().st_size for entry in self.inputs.glob("*.wav")
+                        if re.fullmatch(r"[0-9a-f]{32}", entry.stem)]
+            if len(retained) >= MAX_INPUTS or sum(retained) + size > MAX_INPUT_BYTES:
                 raise TranscriptionError("queue_full")
             identifier = uuid4().hex
             destination = self._input(identifier)
@@ -324,12 +327,25 @@ class Transcriptions:
             self.purge_inputs.discard(identifier)
 
     def maintain(self):
-        if self.lease is None:
+        if self.lease is None or time.monotonic() < self.storage_retry_at:
             return
+        if self.pending_finish is not None:
+            self.finish(*self.pending_finish)
+            if self.pending_finish is not None:
+                return
+        try:
+            self._prune_expired()
+        except sqlite3.Error as exc:
+            self._delay_storage(exc)
+
+    def _delay_storage(self, exc):
+        self.storage_retry_at = time.monotonic() + STORAGE_RETRY_SECONDS
+        logging.getLogger(__name__).warning("Transcription storage retry scheduled (%s)", type(exc).__name__)
+
+    def _prune_expired(self):
         now = time.time()
         if now < self.next_maintenance:
             return
-        self.next_maintenance = now + 60
         for identifier in tuple(self.purge_inputs):
             self._purge_input(identifier)
         expired = list(self.db.execute("""
@@ -341,10 +357,19 @@ class Transcriptions:
         for (identifier,) in expired:
             if identifier != self.inflight:
                 self._delete(identifier)
+        self.next_maintenance = now + 60
 
     def next_chunk(self):
-        if self.lease is None or self.relay.recognizer is None or self.inflight is not None:
+        if (self.lease is None or self.relay.recognizer is None or self.inflight is not None
+                or time.monotonic() < self.storage_retry_at):
             return None
+        try:
+            return self._claim_chunk()
+        except sqlite3.Error as exc:
+            self._delay_storage(exc)
+            return None
+
+    def _claim_chunk(self):
         job = self.db.execute("""
             SELECT id, next_index, language, profile FROM transcription_jobs
             WHERE state IN ('running', 'queued') ORDER BY state='running' DESC, updated, id LIMIT 1
@@ -371,43 +396,55 @@ class Transcriptions:
         return transcribe_chunk(self._input(task.id), task.index, self.relay.chunk, recognize, self.relay.segmenter)
 
     def finish(self, task, future):
-        identifier = task.id
         try:
-            state, total_chunks = self.db.execute(
-                "SELECT state, total_chunks FROM transcription_jobs WHERE id=?", (identifier,)).fetchone()
-            if state == "discarded":
-                self._delete(identifier)
-                return
-            if state != "running":
-                return
-            try:
-                segments = future.result()
-            except Exception as exc:
-                code = exc.code if isinstance(exc, TranscriptionError) else provider_error(exc).kind
-                with self.db:
-                    self._set_state(identifier, "failed", code)
-                logging.getLogger(__name__).warning("Transcription chunk failed chunk=%d error=%s type=%s",
-                                                    task.index, code, type(exc).__name__)
-                return
-            next_index = task.index + 1
-            complete = next_index == total_chunks
-            with self.db:
-                self.db.execute("INSERT OR REPLACE INTO chunks VALUES (?, ?, ?)",
-                                (task.key, task.index, json.dumps(segments, ensure_ascii=False)))
-                self.db.execute("UPDATE transcription_jobs SET next_index=? WHERE id=?", (next_index, identifier))
-                if complete:
-                    self._set_state(identifier, "completed")
-                    self.db.execute("UPDATE transcription_jobs SET input_bytes=0 WHERE id=?", (identifier,))
-            if complete:
-                self._purge_input(identifier)
-        finally:
+            self._persist_result(task, future)
+        except sqlite3.Error as exc:
+            # Retry the same completed chunk when SQLite is writable again.
+            self.pending_finish = task, future
+            self._delay_storage(exc)
+        else:
+            self.pending_finish = None
             self.inflight = None
+
+    def _persist_result(self, task, future):
+        identifier = task.id
+        state, total_chunks = self.db.execute(
+            "SELECT state, total_chunks FROM transcription_jobs WHERE id=?", (identifier,)).fetchone()
+        if state == "discarded":
+            self._delete(identifier)
+            return
+        if state != "running":
+            return
+        try:
+            segments = future.result()
+        except Exception as exc:
+            code = exc.code if isinstance(exc, TranscriptionError) else provider_error(exc).kind
+            with self.db:
+                self._set_state(identifier, "failed", code)
+            logging.getLogger(__name__).warning("Transcription chunk failed chunk=%d error=%s type=%s",
+                                                task.index, code, type(exc).__name__)
+            return
+        next_index = task.index + 1
+        complete = next_index == total_chunks
+        with self.db:
+            self.db.execute("INSERT OR REPLACE INTO chunks VALUES (?, ?, ?)",
+                            (task.key, task.index, json.dumps(segments, ensure_ascii=False)))
+            self.db.execute("UPDATE transcription_jobs SET next_index=? WHERE id=?", (next_index, identifier))
+            if complete:
+                self._set_state(identifier, "completed")
+                self.db.execute("UPDATE transcription_jobs SET input_bytes=0 WHERE id=?", (identifier,))
+        if complete:
+            self._purge_input(identifier)
 
     def close(self):
         if self.lease is not None:
             try:
+                if self.pending_finish is not None:
+                    self.finish(*self.pending_finish)
                 for (identifier,) in list(self.db.execute(
                         "SELECT id FROM transcription_jobs WHERE ephemeral OR state='discarded'")):
                     self._delete(identifier)
+            except sqlite3.Error as exc:
+                self._delay_storage(exc)
             finally:
                 self.lease.close()

@@ -34,7 +34,11 @@ class FileTranscriptionTest(unittest.TestCase):
         with tempfile.NamedTemporaryFile(dir=relay.transcriptions.upload_directory, suffix=".wav",
                                          delete=False) as upload:
             upload.write(samples(duration, value))
-        return relay.transcriptions.submit(Path(upload.name), duration, language)["id"]
+        path = Path(upload.name)
+        try:
+            return relay.transcriptions.submit(path, duration, language)["id"]
+        finally:
+            path.unlink(missing_ok=True)
 
     def wait_for(self, get_status, ready):
         deadline = time.monotonic() + 5
@@ -130,6 +134,62 @@ class FileTranscriptionTest(unittest.TestCase):
         self.assertEqual(second.transcriptions.result(identifier)["text"], "first second")
         self.assertEqual(recognizer.recognize.call_count, 1)
         self.assertEqual(recognizer.recognize.call_args.args[1], "en")
+
+    def test_sqlite_write_failures_preserve_playback_and_retry_the_completed_chunk(self):
+        recognizer = Mock()
+        recognizer.recognize.side_effect = lambda wav, source: (source, [Cue(0.1, 0.3, source)])
+        self.resources.enter_context(patch("aheadsubs.server.transcription.STORAGE_RETRY_SECONDS", 0.2))
+        self.resources.enter_context(patch("aheadsubs.server.engine.extract_audio", return_value=samples(0.5)))
+        relay = self.relay(recognizer)
+        store = relay.transcriptions
+        with relay.lock, relay.db:
+            relay.db.execute("""CREATE TEMP TRIGGER block_claim BEFORE UPDATE OF state ON transcription_jobs
+                WHEN NEW.state='running' BEGIN SELECT RAISE(ABORT, 'claim temporarily unavailable'); END""")
+        identifier = self.submit(relay, 0.5, "ja")
+        self.wait_for(lambda: store.storage_retry_at, bool)
+        self.assertEqual(store.status(identifier)["state"], "queued")
+        recognizer.recognize.assert_not_called()
+        with relay.lock, relay.db:
+            relay.db.execute("DROP TRIGGER block_claim")
+            relay.db.execute("""CREATE TEMP TRIGGER block_result BEFORE INSERT ON chunks
+                WHEN NEW.key LIKE 'transcription:%' BEGIN SELECT RAISE(ABORT, 'result temporarily unavailable'); END""")
+        self.wait_for(lambda: store.pending_finish, bool)
+        self.assertEqual(store.status(identifier)["completed_chunks"], 0)
+        media = self.root / "playback.wav"
+        media.write_bytes(samples(0.5))
+        playback = Playback(media, 0, duration=0.5, source="en")
+        self.wait_for(lambda: relay.update("player", playback), lambda status: status["revision"] == 1)
+        with relay.lock, relay.db:
+            relay.db.execute("DROP TRIGGER block_result")
+        self.job_state(store, identifier, "completed")
+        self.assertEqual(store.result(identifier)["text"], "ja")
+        self.assertEqual([call.args[1] for call in recognizer.recognize.call_args_list], ["ja", "en"])
+
+    def test_pending_unlink_still_counts_against_the_storage_limit(self):
+        relay = self.relay(Mock())
+        store = relay.transcriptions
+        duration = 0.1
+        unlink = Path.unlink
+
+        def locked_input(path, *args, **kwargs):
+            if path.parent == store.inputs:
+                raise PermissionError("input is open")
+            return unlink(path, *args, **kwargs)
+
+        with patch("aheadsubs.server.transcription.MAX_INPUT_BYTES", len(samples(duration))), patch.object(
+                Path, "unlink", locked_input):
+            identifier = self.submit(relay, duration, value=0)
+            self.job_state(store, identifier, "completed")
+            store.discard(identifier)
+            self.assertEqual(len(list(store.inputs.iterdir())), 1)
+            with self.assertRaises(TranscriptionError) as error:
+                self.submit(relay, duration, value=0)
+            self.assertEqual(error.exception.code, "queue_full")
+        with relay.lock:
+            store.next_maintenance = 0
+            store.maintain()
+        self.assertEqual(list(store.inputs.iterdir()), [])
+        self.job_state(store, self.submit(relay, duration, value=0), "completed")
 
     def test_inflight_cancelled_chunk_does_not_commit(self):
         entered, release = threading.Event(), threading.Event()
