@@ -358,6 +358,7 @@ class Relay:
         self.root.mkdir(parents=True, exist_ok=True)
         self.recognizer, self.translator = recognizer, translator
         self.speech_translator = speech_translator
+        self.source_only = recognizer is not None and translator is None and speech_translator is None
         self.segmenter = segmenter
         self.translation_settings = translation_settings.for_translator(None if speech_translator else translator)
         self.recognition_cache = RecognitionCache(recognizer) if recognizer and self.translation_settings.previous_cues else None
@@ -440,7 +441,7 @@ class Relay:
             task.playback = replace(playback, duration=duration)
             task.count = math.ceil(duration / self.chunk)
             remember_media(self.db, task.key, task.playback, self.speech_translator is None,
-                           info, self.chunk, state="queued")
+                           info, self.chunk, state="queued", translation_available=not self.source_only)
             self.regeneration = task
             if self.background_session is not None:
                 self.drop(self.background_session)
@@ -484,7 +485,8 @@ class Relay:
             previous = self.sessions.get(identifier)
             if (previous is None or previous.key != key
                     or playback.duration is not None and playback.duration != previous.playback.duration):
-                remember_media(self.db, key, playback, self.speech_translator is None, info, self.chunk)
+                remember_media(self.db, key, playback, self.speech_translator is None, info, self.chunk,
+                               translation_available=not self.source_only)
             session = Session(playback, key, now, source if source in SOURCES else "http")
             self.sessions[identifier] = session
             path, revision = self._render(key, playback)

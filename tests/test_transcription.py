@@ -1,14 +1,18 @@
+import io
 import tempfile
 import threading
 import time
 import unittest
+import wave
 from contextlib import ExitStack
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from subtitle_relay.inference.audio import SAMPLE_RATE, make_wav
+from subtitle_relay.inference.audio import SAMPLE_RATE, Segmentation, Segmenter, make_wav
 from subtitle_relay.inference.providers import Cue
+from subtitle_relay.inference.segmentation import plan_spans
 from subtitle_relay.server.engine import Playback, Relay
+from subtitle_relay.server.history import inspect_cache
 from subtitle_relay.server.transcription import RETENTION_SECONDS, TranscriptionError
 
 
@@ -21,8 +25,8 @@ class FileTranscriptionTest(unittest.TestCase):
         self.resources = self.enterContext(ExitStack())
         self.root = Path(self.resources.enter_context(tempfile.TemporaryDirectory()))
 
-    def relay(self, recognizer, translator=None, **options):
-        relay = Relay(self.root, recognizer, translator, "playback", workers=1, chunk=1, **options)
+    def relay(self, recognizer, translator=None, *, chunk=1, **options):
+        relay = Relay(self.root, recognizer, translator, "playback", workers=1, chunk=chunk, **options)
         self.resources.callback(relay.close)
         return relay
 
@@ -79,6 +83,30 @@ class FileTranscriptionTest(unittest.TestCase):
         self.job_state(store, identifier, "completed")
         self.assertEqual(store.result(identifier), {"duration": 0.1, "text": "", "segments": []})
         recognizer.recognize.assert_not_called()
+
+    def test_continuous_speech_has_no_duplicate_or_missing_input_at_chunk_edges(self):
+        segmenter = Segmenter(Segmentation(enabled=False))
+        segmenter.settings = Segmentation()
+
+        def plan(pcm):
+            frames = len(pcm) // 2
+            return plan_spans(pcm, [(0, frames)], minimum=3 * SAMPLE_RATE, maximum=12 * SAMPLE_RATE,
+                              preferred_pause=7200, padding=1280)
+
+        segmenter._plan = plan
+        recognizer = Mock()
+
+        def recognize(wav, _):
+            with wave.open(io.BytesIO(wav)) as audio:
+                return "en", [Cue(0, audio.getnframes() / SAMPLE_RATE, "speech")]
+
+        recognizer.recognize.side_effect = recognize
+        relay = self.relay(recognizer, chunk=8, segmenter=segmenter)
+        identifier = self.submit(relay, 48, value=1200)
+        self.job_state(relay.transcriptions, identifier, "completed")
+        segments = relay.transcriptions.result(identifier)["segments"]
+        self.assertEqual([(segment["start"], segment["end"]) for segment in segments],
+                         [(start, start + 8) for start in range(0, 48, 8)])
 
     def test_failed_job_can_resume_from_a_committed_chunk_after_service_restart(self):
         recognizer = Mock()
@@ -161,6 +189,10 @@ class FileTranscriptionTest(unittest.TestCase):
         self.assertEqual(store.status(identifier)["completed_chunks"], 1)
         srt = Path(visible["subtitle"]).read_text(encoding="utf-8")
         self.assertIn("00:00:00,000 --> 00:00:01,000", srt)
+        inspection = inspect_cache(self.root / "cache.sqlite3")
+        self.assertEqual(inspection["files"][0]["target_languages"], [])
+        self.assertEqual(inspection["rows"][0]["original"], "spoken")
+        self.assertIsNone(inspection["rows"][0]["translation"])
         self.assertEqual(relay.update("another-player", playback)["subtitle"], visible["subtitle"])
         relay.drop("player")
         relay.drop("another-player")
@@ -190,3 +222,35 @@ class FileTranscriptionTest(unittest.TestCase):
             self.submit(relay, 0.1)
         self.assertEqual(error.exception.code, "transcription_unavailable")
         speech_translator.speech_translate.assert_not_called()
+
+    def test_second_service_cannot_recover_the_first_services_live_job(self):
+        entered, release = threading.Event(), threading.Event()
+        first_recognizer, second_recognizer = Mock(), Mock()
+
+        def run_first(*_):
+            entered.set()
+            release.wait(5)
+            return "en", [Cue(0.1, 0.3, "owner")]
+
+        first_recognizer.recognize.side_effect = run_first
+        first = Relay(self.root, first_recognizer, None, "playback", workers=1, chunk=1)
+        try:
+            identifier = self.submit(first, 0.5)
+            self.assertTrue(entered.wait(5))
+            second = self.relay(second_recognizer)
+            self.assertFalse(second.transcriptions.capabilities()["available"])
+            with self.assertRaises(TranscriptionError) as error:
+                second.transcriptions.status(identifier)
+            self.assertEqual(error.exception.code, "transcription_cache_in_use")
+            media = self.root / "playback.wav"
+            media.write_bytes(samples(0.5))
+            second.update("second-player", Playback(media, 0, duration=0.5))
+            second.drop("second-player")
+            release.set()
+            self.job_state(first.transcriptions, identifier, "completed")
+            self.assertEqual(first.transcriptions.result(identifier)["text"], "owner")
+        finally:
+            release.set()
+            first.close()
+        restarted = self.relay(Mock())
+        self.assertEqual(restarted.transcriptions.result(identifier)["text"], "owner")

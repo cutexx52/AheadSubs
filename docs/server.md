@@ -12,6 +12,8 @@ Use `python -m subtitle_relay serve --asr local --mt none --device cpu` for a re
 
 The file routes accept multipart uploads and recognize the first audio stream. Omit `language` for automatic recognition of the source speech, including mixed-language speech. An explicit language is a recognition hint. Recognition quality and language coverage depend on the configured model. Choosing a cloud recognizer sends audio segments to that provider. The file routes use the shared worker pool and yield between chunks to playback and folder subtitle work.
 
+Only one service instance manages transcription jobs per cache directory. Use a distinct `--cache` for each simultaneous transcription service.
+
 Use `127.0.0.1` or `localhost` with the service port. The file routes reject browser requests and never accept a server-side path or URL. The playback routes below have a separate local-path contract. Transcription trusts native processes on the same machine. Keep job IDs private because they grant access to job state, controls and results.
 
 ### Durable jobs

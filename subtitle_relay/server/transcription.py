@@ -1,9 +1,11 @@
 """Durable file transcription on the relay's scheduler and chunk store."""
 
+import errno
 import hashlib
 import json
 import logging
 import math
+import os
 import re
 import sqlite3
 import stat
@@ -13,8 +15,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
 
-from ..inference.audio import SAMPLE_RATE, Segmentation, make_wav
+from ..inference.audio import SAMPLE_RATE, make_wav
 from ..inference.errors import provider_error
+from ..inference.segmentation import quiet_boundary
 
 
 MAX_INPUTS = 8
@@ -26,6 +29,8 @@ READY_STATES = {"queued", "running"}
 RESUMABLE_STATES = {"failed", "cancelled"}
 ERRORS = {
     "transcription_unavailable": (409, "This service profile has no transcription backend"),
+    "transcription_cache_in_use": (503, "Another service owns transcription for this cache"),
+    "transcription_stopping": (503, "The transcription service is stopping"),
     "job_not_found": (404, "Transcription job not found"),
     "job_not_ready": (409, "Transcription has not completed"),
     "job_not_active": (409, "Transcription job is no longer active"),
@@ -47,39 +52,67 @@ class TranscriptionError(ValueError):
         super().__init__(default_message if message is None else message)
 
 
+def acquire_queue_lock(path):
+    # Keep the lock file in place. Closing the handle releases the lock even after a crash.
+    handle = path.open("a+b")
+    try:
+        if os.name == "nt":
+            import msvcrt
+
+            handle.seek(0)
+            msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+        else:
+            import fcntl
+
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError as exc:
+        handle.close()
+        if exc.errno not in {errno.EACCES, errno.EAGAIN, errno.EDEADLK}:
+            raise
+        return None
+    return handle
+
+
 def transcribe_chunk(path, index, chunk, recognizer, segmenter):
     """Return source text and recognizer times on the normalized input timeline."""
-    start = index * chunk
-    stop = start + chunk
-    settings = segmenter.settings if segmenter else Segmentation(enabled=False)
-    margin = getattr(segmenter, "planning_margin", 0)
-    read_start = max(0, start - settings.before - margin) if settings.enabled else start
-    read_end = stop + settings.after + margin if settings.enabled else stop
+    size = round(chunk * SAMPLE_RATE)
+    start = index * size
+    radius = min(SAMPLE_RATE * 3 // 4, size // 4) if segmenter and segmenter.settings.enabled else 0
+    context = radius + SAMPLE_RATE // 100 if radius else 0
     with wave.open(str(path), "rb") as audio:
         if (audio.getnchannels(), audio.getsampwidth(), audio.getframerate()) != (1, 2, SAMPLE_RATE):
             raise TranscriptionError("input_unavailable")
-        sample_start = round(read_start * SAMPLE_RATE)
-        audio.setpos(sample_start)
-        pcm = audio.readframes(round(read_end * SAMPLE_RATE) - sample_start)
+        total = audio.getnframes()
+        if start >= total:
+            return []
+        stop = min(start + size, total)
+        read_start = max(0, start - context)
+        audio.setpos(read_start)
+        pcm = audio.readframes(min(total, stop + context) - read_start)
+    first, last = start - read_start, stop - read_start
+    if radius:
+        # Adjacent work windows share a quiet cut computed around the same sample.
+        # Plan VAD spans only inside the owned window, so retries cannot shift ownership.
+        def cut(nominal):
+            return quiet_boundary(pcm, max(0, nominal - radius), min(len(pcm) // 2, nominal + radius),
+                                  preferred=nominal)
+
+        first = cut(first) if start else first
+        last = cut(last) if stop < total else last
+    pcm = pcm[first * 2:last * 2]
     if not pcm or not pcm.strip(b"\x00"):
         return []
-    read_start = sample_start / SAMPLE_RATE
+    base_start = (read_start + first) / SAMPLE_RATE
     wav = make_wav(pcm)
     segments = []
     spans = segmenter.iter_spans(wav) if segmenter else ((0, wav),)
     for offset, speech in spans:
-        base = read_start + offset
-        span_midpoint = base + (len(speech) - 44) / (4 * SAMPLE_RATE)
-        if margin and not start <= span_midpoint < stop:
-            continue
+        base = base_start + offset
         for cue in recognizer(speech):
             if not cue.text.strip():
                 continue
             if not math.isfinite(cue.start) or not math.isfinite(cue.end) or not 0 <= cue.start < cue.end:
                 raise TranscriptionError("processing_failed")
-            midpoint = base + (cue.start + cue.end) / 2
-            if settings.enabled and not margin and not start <= midpoint < stop:
-                continue
             segment = {"start": base + cue.start, "end": base + cue.end, "text": cue.text}
             if cue.source_language and cue.source_language.lower() not in {"auto", "und", "unknown"}:
                 segment["language"] = cue.source_language
@@ -102,13 +135,22 @@ class Transcriptions:
     def __init__(self, relay, profile):
         self.relay = relay
         self.db = relay.db
-        self.profile = hashlib.sha256(json.dumps(["transcription-v1", profile, relay.chunk],
+        self.profile = hashlib.sha256(json.dumps(["transcription-v2", profile, relay.chunk],
                                                  sort_keys=True).encode()).hexdigest()
         self.upload_directory = relay.root / "transcription-staging"
         self.inputs = relay.root / "transcription-inputs"
         self.inflight = None
         self.next_maintenance = 0
         self.purge_inputs = set()
+        self.lease = acquire_queue_lock(relay.root / "transcription.lock")
+        if self.lease is not None:
+            try:
+                self._initialize()
+            except BaseException:
+                self.lease.close()
+                raise
+
+    def _initialize(self):
         for directory in (self.upload_directory, self.inputs):
             directory.mkdir(mode=0o700, exist_ok=True)
         self.db.executescript("""
@@ -139,7 +181,8 @@ class Transcriptions:
         self.maintain()
 
     def capabilities(self):
-        available = self.relay.recognizer is not None
+        available = (self.lease is not None and not self.lease.closed
+                     and self.relay.recognizer is not None and not self.relay.stopping.is_set())
         return {"available": available, "model": MODEL if available else None,
                 "task": "transcribe", "segment_timestamps": available,
                 "response_formats": ["json", "text"] if available else [],
@@ -150,6 +193,7 @@ class Transcriptions:
         return self.inputs / f"{identifier}.wav"
 
     def _row(self, identifier):
+        self._require_queue()
         cursor = self.db.execute("SELECT * FROM transcription_jobs WHERE id=? AND state!='discarded'", (identifier,))
         cursor.row_factory = sqlite3.Row
         row = cursor.fetchone()
@@ -162,8 +206,15 @@ class Transcriptions:
                 "language": row["language"], "completed_chunks": row["next_index"],
                 "total_chunks": row["total_chunks"], "error_code": row["error_code"]}
 
-    def _require_backend(self):
-        if self.relay.recognizer is None or self.relay.stopping.is_set():
+    def _require_queue(self):
+        if self.relay.stopping.is_set():
+            raise TranscriptionError("transcription_stopping")
+        if self.lease is None:
+            raise TranscriptionError("transcription_cache_in_use")
+
+    def require_backend(self):
+        self._require_queue()
+        if self.relay.recognizer is None:
             raise TranscriptionError("transcription_unavailable")
 
     def submit(self, path: Path, duration: float, language: str | None, *, ephemeral=False):
@@ -182,7 +233,7 @@ class Transcriptions:
             raise TranscriptionError("input_unavailable")
         size = info.st_size
         with self.relay.lock:
-            self._require_backend()
+            self.require_backend()
             count, used = self.db.execute(
                 "SELECT COUNT(*), COALESCE(SUM(input_bytes), 0) FROM transcription_jobs WHERE input_bytes > 0"
             ).fetchone()
@@ -234,7 +285,7 @@ class Transcriptions:
 
     def resume(self, identifier):
         with self.relay.lock, self.db:
-            self._require_backend()
+            self.require_backend()
             row = self._row(identifier)
             if row["state"] not in RESUMABLE_STATES:
                 raise TranscriptionError("job_not_resumable")
@@ -273,6 +324,8 @@ class Transcriptions:
             self.purge_inputs.discard(identifier)
 
     def maintain(self):
+        if self.lease is None:
+            return
         now = time.time()
         if now < self.next_maintenance:
             return
@@ -290,7 +343,7 @@ class Transcriptions:
                 self._delete(identifier)
 
     def next_chunk(self):
-        if self.relay.recognizer is None or self.inflight is not None:
+        if self.lease is None or self.relay.recognizer is None or self.inflight is not None:
             return None
         job = self.db.execute("""
             SELECT id, next_index, language, profile FROM transcription_jobs
@@ -351,5 +404,10 @@ class Transcriptions:
             self.inflight = None
 
     def close(self):
-        for (identifier,) in list(self.db.execute("SELECT id FROM transcription_jobs WHERE ephemeral OR state='discarded'")):
-            self._delete(identifier)
+        if self.lease is not None:
+            try:
+                for (identifier,) in list(self.db.execute(
+                        "SELECT id FROM transcription_jobs WHERE ephemeral OR state='discarded'")):
+                    self._delete(identifier)
+            finally:
+                self.lease.close()

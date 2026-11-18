@@ -239,8 +239,7 @@ class TranscriptionHTTP:
             if compatible or route == JOBS_ROUTE:
                 if handler.command != "POST":
                     raise RequestError(405, "method_not_allowed", "Use POST to upload audio")
-                if not store.capabilities()["available"]:
-                    raise TranscriptionError("transcription_unavailable")
+                store.require_backend()
                 self.submit(handler, store, compatible=compatible)
             elif route == CAPABILITIES_ROUTE and handler.command == "GET":
                 capabilities = store.capabilities()
