@@ -71,7 +71,7 @@ def install(root, size):
 def run(root, size):
     executable, model, aligner = paths(root, size)
     if not installed(root, size):
-        raise RuntimeError("Install the selected Qwen3-ASR model in the Relay app first")
+        raise RuntimeError("Install the selected Qwen3-ASR model in AheadSubs first")
     with socket.socket() as reserved:
         reserved.bind(("127.0.0.1", 0))
         port = reserved.getsockname()[1]

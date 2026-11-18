@@ -1,4 +1,4 @@
-"""JSON desktop control interface. Model inference stays in the Relay service."""
+"""JSON desktop control interface for the AheadSubs service."""
 import argparse
 import json
 import shutil

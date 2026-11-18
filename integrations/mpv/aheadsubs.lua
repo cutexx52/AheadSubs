@@ -80,7 +80,7 @@ local function poll()
         if not success or result.status ~= 0 then
             last_status = "Waiting for AheadSubs service"
             if result then
-                msg.verbose("Relay request failed: " .. tostring(result.error_string) .. " " ..
+                msg.verbose("AheadSubs request failed: " .. tostring(result.error_string) .. " " ..
                             tostring(result.stderr) .. " " .. tostring(result.stdout))
             end
             if mp.get_time() >= next_launch then

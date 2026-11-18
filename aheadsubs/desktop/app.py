@@ -346,7 +346,7 @@ def gui(initial_media=None, show_request=None):
             arguments.extend(["--reload-command", str(reload_command)])
         pot_jobs.append(spawn(arguments, pot_log))
         instruction = "The track will refresh automatically." if reload_command else "Use Ctrl+Alt+Y to refresh."
-        pot_status.set(f"Attached. Relay will load the first translated subtitles. {instruction}")
+        pot_status.set(f"Attached. AheadSubs will load the first translated subtitles. {instruction}")
 
     ttk.Button(pot, text="Select media and start pre-reading…", command=attach).pack(anchor="w", pady=8)
     ttk.Label(pot, textvariable=pot_status, wraplength=550).pack(anchor="w")
