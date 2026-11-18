@@ -181,6 +181,8 @@ def subtitle_profile(args, settings, translator):
         profile.append("pause-planner-v1")
     if args.asr in {"compatible", "qwen"} and not args.ast:
         profile.extend([args.asr_url if args.asr == "compatible" else args.qwen_size, args.asr_model])
+    if args.asr == "qwen" and not args.ast:
+        profile.append("whisper-tiny-language-detection")
     if args.mt == "qwen-mt" and not args.ast:
         profile.extend([args.qwen_mt_model, dashscope_url])
     if args.mt in {"chatgpt", "minimax"} and not args.ast:

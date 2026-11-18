@@ -6,6 +6,7 @@ import time
 import zipfile
 from contextlib import contextmanager
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from urllib.request import ProxyHandler, build_opener
 
 from ..paths import user_data_directory
@@ -25,6 +26,10 @@ MODEL_FILES = {
     "1.7b": (1334415232, "1f1d26ee044f0f041b0a7bfcf6d560996103c951acbde6eb48ccb24e7edfc69c"),
 }
 ALIGNER_FILE = (529001216, "a7bb4cbeacc6414f11a5d23dc7661a51a941a71e6d559dc7b408b52473f2ae84")
+LANGUAGE_MODEL = "ggml-tiny.bin"
+LANGUAGE_MODEL_URL = ("https://huggingface.co/ggerganov/whisper.cpp/resolve/"
+                      "5359861c739e955e79d9a303bcbc70fb988958b1/" + LANGUAGE_MODEL)
+LANGUAGE_MODEL_FILE = (77691713, "be07e048e1e599ad46341c8d2a135645097a538221678b7acdd1b1919c6e1b21")
 
 
 def paths(root, size):
@@ -34,7 +39,8 @@ def paths(root, size):
 
 def installed(root, size):
     executable, model, aligner = paths(root, size)
-    return executable.is_file() and complete(model, MODEL_FILES[size]) and complete(aligner, ALIGNER_FILE)
+    return (executable.is_file() and complete(model, MODEL_FILES[size]) and complete(aligner, ALIGNER_FILE)
+            and complete(model.with_name(LANGUAGE_MODEL), LANGUAGE_MODEL_FILE))
 
 
 def complete(path, spec):
@@ -42,13 +48,14 @@ def complete(path, spec):
 
 
 def download(url, path, digest):
-    temporary = path.with_suffix(".part")
-    subprocess.run(["curl.exe", "-fL", "--retry", "2", "--output", str(temporary), url],
-                   creationflags=subprocess.CREATE_NO_WINDOW, check=True, timeout=900)
-    with temporary.open("rb") as file:
-        if hashlib.file_digest(file, "sha256").hexdigest() != digest:
-            raise ValueError(f"Download checksum did not match for {path.name}")
-    temporary.replace(path)
+    with TemporaryDirectory(dir=path.parent) as directory:
+        temporary = Path(directory) / path.name
+        subprocess.run(["curl.exe", "-fL", "--retry", "2", "--output", str(temporary), url],
+                       creationflags=subprocess.CREATE_NO_WINDOW, check=True, timeout=900)
+        with temporary.open("rb") as file:
+            if hashlib.file_digest(file, "sha256").hexdigest() != digest:
+                raise ValueError(f"Download checksum did not match for {path.name}")
+        temporary.replace(path)
 
 
 def install(root, size):
@@ -65,6 +72,9 @@ def install(root, size):
         download(MODELS[size] + model.name, model, MODEL_FILES[size][1])
     if not complete(aligner, ALIGNER_FILE):
         download(ALIGNER_URL, aligner, ALIGNER_FILE[1])
+    language_model = root / LANGUAGE_MODEL
+    if not complete(language_model, LANGUAGE_MODEL_FILE):
+        download(LANGUAGE_MODEL_URL, language_model, LANGUAGE_MODEL_FILE[1])
 
 
 @contextmanager
@@ -78,6 +88,8 @@ def run(root, size):
     server = subprocess.Popen([
         str(executable), "--server", "--host", "127.0.0.1", "--port", str(port),
         "--backend", "qwen3", "-m", str(model), "-am", str(aligner), "--force-aligner",
+        # Without its LID model, CrispASR labels auto-language requests as English.
+        "--lid-model", str(model.with_name(LANGUAGE_MODEL).resolve()),
     ], cwd=executable.parent, creationflags=subprocess.CREATE_NO_WINDOW)
     url = f"http://127.0.0.1:{port}"
     deadline = time.monotonic() + 60
