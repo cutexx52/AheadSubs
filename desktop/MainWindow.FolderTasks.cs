@@ -8,11 +8,6 @@ using System.Windows.Threading;
 
 namespace AheadSubs;
 
-public sealed class TaskTextExtension(string key) : MarkupExtension
-{
-    public override object ProvideValue(IServiceProvider serviceProvider) => AutomationText.Get(key);
-}
-
 public partial class MainWindow
 {
     private const long MiB = 1024 * 1024;
@@ -32,20 +27,23 @@ public partial class MainWindow
 
     private void InitializeFolderTasks()
     {
-        FolderTasksTab.Language = XmlLanguage.GetLanguage(AutomationText.Culture.Name);
+        LocalizeFolderChoices();
+        NewFolderRuleButton.IsEnabled = false;
+        FolderQueueStatus.Text = FolderText("Loading");
+        if (!previewMode)
+            folderTimer.Tick += async (_, _) => { if (IsVisible) await UpdateFolderTasks(); };
+    }
+
+    private void LocalizeFolderChoices()
+    {
         var preferred = new Choice(FolderText("Default"), "");
-        Choice[] languages = [.. new[] { "zh", "zh-TW", "ja", "en", "ko", "fr", "de", "es" }
-            .Select(code => new Choice(FolderText("Lang_" + code), code))];
+        Choice[] languages = [.. InterfaceLocale.Languages.Select(item => new Choice(FolderText("Lang_" + item.Target), item.Target))];
         Choice[] sources = [preferred, new(FolderText("Auto"), "auto"), .. languages];
         Choice[] targets = [preferred, .. languages];
         FolderRuleSource.ItemsSource = sources;
         FolderRuleTarget.ItemsSource = targets;
         FolderRuleStyle.ItemsSource = new Choice[] { preferred, new(FolderText("Translated"), "translated"),
             new(FolderText("Bilingual"), "bilingual") };
-        NewFolderRuleButton.IsEnabled = false;
-        FolderQueueStatus.Text = FolderText("Loading");
-        if (!previewMode)
-            folderTimer.Tick += async (_, _) => { if (IsVisible) await UpdateFolderTasks(); };
     }
 
     private void PreviewFolderTasks()
@@ -64,11 +62,10 @@ public partial class MainWindow
             || Selected(FolderRuleSpeechModel) != "" || Selected(FolderRuleTranslationModel) != "nllb"
             || FolderQueueStatus.Text != FolderFormat("Counts", 3, 1, 12, 0, 0))
             throw new InvalidOperationException("Folder task desktop preview failed to load the rule and queue.");
-        bool chinese = AutomationText.Culture.Name == "zh-CN";
-        if (!Equals(TranslationTab.Header, chinese ? "字幕" : "Subtitles")
-            || TranslationTitle.Text != (chinese ? "字幕设置" : "Subtitle settings")
-            || !Equals(InspectTab.Header, chinese ? "字幕库" : "Subtitle library")
-            || InspectTitle.Text != (chinese ? "字幕库" : "Subtitle library"))
+        if (!Equals(TranslationTab.Header, AutomationText.Get("SubtitleTab"))
+            || TranslationTitle.Text != AutomationText.Get("SubtitleSettings")
+            || !Equals(InspectTab.Header, InspectionText.Get("Tab"))
+            || InspectTitle.Text != InspectionText.Get("Title"))
             throw new InvalidOperationException("Subtitle page labels failed to load for the preview locale.");
     }
 

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="SubtitleTab" xml:space="preserve"><value>字幕</value></data>
+  <data name="SubtitleSettings" xml:space="preserve"><value>字幕設定</value></data>
+  <data name="CredentialsSaved" xml:space="preserve"><value>金鑰設定已儲存。在「字幕」頁應用後生效。</value></data>
+  <data name="Title" xml:space="preserve"><value>接入</value></data>
+  <data name="Intro" xml:space="preserve"><value>讓本機 Agent 和指令碼使用 AheadSubs 翻譯文字、生成 SRT 或控制字幕預讀。請先在「字幕」頁啟動字幕服務。</value></data>
+  <data name="Loading" xml:space="preserve"><value>正在讀取</value></data>
+  <data name="Enabled" xml:space="preserve"><value>已開啟</value></data>
+  <data name="Disabled" xml:space="preserve"><value>已關閉</value></data>
+  <data name="McpHint" xml:space="preserve"><value>將配置新增到支援 stdio 的本機客戶端。客戶端連線時會啟動 MCP。使用雲端模型時，任務會呼叫已配置的服務商。</value></data>
+  <data name="Enable" xml:space="preserve"><value>開啟 MCP 接入</value></data>
+  <data name="Disable" xml:space="preserve"><value>關閉 MCP 接入</value></data>
+  <data name="Copy" xml:space="preserve"><value>複製 MCP 配置</value></data>
+  <data name="Configuration" xml:space="preserve"><value>MCP 客戶端配置</value></data>
+  <data name="CliTitle" xml:space="preserve"><value>命令列 CLI</value></data>
+  <data name="CliHint" xml:space="preserve"><value>安裝後，重新開啟終端並執行 aheadsubs status。用 aheadsubs --help 檢視命令。</value></data>
+  <data name="SourceHint" xml:space="preserve"><value>原始碼執行時，在專案目錄執行 python -m pip install . 安裝 CLI。</value></data>
+  <data name="Install" xml:space="preserve"><value>安裝 CLI</value></data>
+  <data name="Remove" xml:space="preserve"><value>從 PATH 移除</value></data>
+  <data name="Installed" xml:space="preserve"><value>已新增到 PATH</value></data>
+  <data name="NotInstalled" xml:space="preserve"><value>未安裝</value></data>
+  <data name="DisabledNotice" xml:space="preserve"><value>已關閉 MCP 接入。</value></data>
+  <data name="EnabledNotice" xml:space="preserve"><value>已開啟。複製配置後重新連線客戶端。</value></data>
+  <data name="RemovedNotice" xml:space="preserve"><value>已從使用者 PATH 移除。</value></data>
+  <data name="InstalledNotice" xml:space="preserve"><value>已新增到使用者 PATH。請重新開啟終端。</value></data>
+  <data name="Copied" xml:space="preserve"><value>已複製 MCP 配置。</value></data>
+  <data name="ClipboardUnavailable" xml:space="preserve"><value>暫時無法訪問剪貼簿，可以選擇配置文字手動複製。</value></data>
+  <data name="Failed" xml:space="preserve"><value>無法更新接入設定。請檢查應用後重試。</value></data>
+  <data name="FolderTitle" xml:space="preserve"><value>自動任務</value></data>
+  <data name="FolderIntro" xml:space="preserve"><value>監控目錄中的新增媒體，在播放空閒時生成字幕。</value></data>
+  <data name="FolderNew" xml:space="preserve"><value>新增規則</value></data>
+  <data name="FolderRules" xml:space="preserve"><value>目錄規則</value></data>
+  <data name="FolderRetry" xml:space="preserve"><value>重試失敗檔案</value></data>
+  <data name="FolderRuleName" xml:space="preserve"><value>規則名稱（可選）</value></data>
+  <data name="FolderPath" xml:space="preserve"><value>監控目錄</value></data>
+  <data name="FolderBrowse" xml:space="preserve"><value>瀏覽…</value></data>
+  <data name="FolderEnabled" xml:space="preserve"><value>啟用此規則</value></data>
+  <data name="FolderRecursive" xml:space="preserve"><value>包含子目錄</value></data>
+  <data name="FolderExisting" xml:space="preserve"><value>處理現有檔案</value></data>
+  <data name="FolderFilters" xml:space="preserve"><value>檔案過濾</value></data>
+  <data name="FolderRegex" xml:space="preserve"><value>檔名正規表示式（可選）</value></data>
+  <data name="FolderTypes" xml:space="preserve"><value>副檔名（用逗號分隔）</value></data>
+  <data name="FolderMin" xml:space="preserve"><value>最小檔案大小（MiB）</value></data>
+  <data name="FolderMax" xml:space="preserve"><value>最大檔案大小（MiB）</value></data>
+  <data name="FolderSubtitle" xml:space="preserve"><value>字幕配置</value></data>
+  <data name="FolderModels" xml:space="preserve"><value>可分別指定識別和翻譯模型，也可沿用全域性設定。請在「本地模型」安裝模型，在「雲端模型」配置憑據。</value></data>
+  <data name="FolderSpeechModel" xml:space="preserve"><value>語音識別模型</value></data>
+  <data name="FolderTranslationModel" xml:space="preserve"><value>字幕翻譯模型</value></data>
+  <data name="FolderModelNotInstalled" xml:space="preserve"><value>{0}（未安裝）</value></data>
+  <data name="FolderChatGptModel" xml:space="preserve"><value>ChatGPT 訂閱</value></data>
+  <data name="FolderCustomModel" xml:space="preserve"><value>已配置的自定義 API</value></data>
+  <data name="FolderSource" xml:space="preserve"><value>源語言</value></data>
+  <data name="FolderTarget" xml:space="preserve"><value>字幕語言</value></data>
+  <data name="FolderAudio" xml:space="preserve"><value>音軌（1–256）</value></data>
+  <data name="FolderStyle" xml:space="preserve"><value>SRT 內容</value></data>
+  <data name="FolderDestination" xml:space="preserve"><value>輸出目錄（留空寫入媒體同目錄）</value></data>
+  <data name="FolderSuffix" xml:space="preserve"><value>檔名字尾（可選），例如 .zh</value></data>
+  <data name="FolderIdle" xml:space="preserve"><value>Windows 輸入空閒分鐘數（0–120，0 表示僅檢查 AheadSubs）</value></data>
+  <data name="FolderSave" xml:space="preserve"><value>儲存規則</value></data>
+  <data name="FolderDelete" xml:space="preserve"><value>刪除規則</value></data>
+  <data name="FolderDefault" xml:space="preserve"><value>沿用全域性設定</value></data>
+  <data name="FolderAuto" xml:space="preserve"><value>自動識別</value></data>
+  <data name="FolderTranslated" xml:space="preserve"><value>僅譯文</value></data>
+  <data name="FolderBilingual" xml:space="preserve"><value>雙語</value></data>
+  <data name="FolderLang_zh" xml:space="preserve"><value>簡體中文</value></data>
+  <data name="FolderLang_zh-TW" xml:space="preserve"><value>繁體中文</value></data>
+  <data name="FolderLang_en" xml:space="preserve"><value>英語</value></data>
+  <data name="FolderLang_ja" xml:space="preserve"><value>日語</value></data>
+  <data name="FolderLang_ko" xml:space="preserve"><value>韓語</value></data>
+  <data name="FolderLang_fr" xml:space="preserve"><value>法語</value></data>
+  <data name="FolderLang_de" xml:space="preserve"><value>德語</value></data>
+  <data name="FolderLang_es" xml:space="preserve"><value>西班牙語</value></data>
+  <data name="FolderLoading" xml:space="preserve"><value>正在讀取目錄規則…</value></data>
+  <data name="FolderSaved" xml:space="preserve"><value>已儲存目錄規則。</value></data>
+  <data name="FolderRetried" xml:space="preserve"><value>已重新排隊失敗檔案。</value></data>
+  <data name="FolderUnavailable" xml:space="preserve"><value>讀取自動任務失敗，請稍後重試。</value></data>
+  <data name="FolderStopped" xml:space="preserve"><value>請啟動字幕服務以掃描目錄並生成字幕。</value></data>
+  <data name="FolderSelect" xml:space="preserve"><value>新增或選擇規則以檢視佇列。</value></data>
+  <data name="FolderPaused" xml:space="preserve"><value>此規則已暫停。</value></data>
+  <data name="FolderCounts" xml:space="preserve"><value>等待 {0:N0} · 進行中 {1:N0} · 已完成 {2:N0} · 失敗 {3:N0} · 跳過 {4:N0}</value></data>
+  <data name="FolderRunning" xml:space="preserve"><value>正在生成字幕…</value></data>
+  <data name="FolderFailureCode" xml:space="preserve"><value>字幕生成失敗（{0}）。</value></data>
+  <data name="FolderInvalid" xml:space="preserve"><value>請檢查「{0}」的值。</value></data>
+  <data name="FolderInvalidSize" xml:space="preserve"><value>最大檔案大小必須大於零，並且不小於最小檔案大小。</value></data>
+  <data name="FolderIssue_regex_timeout" xml:space="preserve"><value>檔名正則匹配超時，請簡化表示式後儲存。</value></data>
+  <data name="FolderIssue_folder_unavailable" xml:space="preserve"><value>無法掃描此目錄，請檢查路徑和許可權。</value></data>
+  <data name="FolderIssue_output_exists" xml:space="preserve"><value>已有同名 SRT，已跳過。</value></data>
+  <data name="FolderIssue_invalid_media" xml:space="preserve"><value>FFprobe 無法讀取媒體時長或音軌。</value></data>
+  <data name="FolderIssue_invalid_audio" xml:space="preserve"><value>媒體中沒有所選的音軌。</value></data>
+  <data name="FolderIssue_invalid_output" xml:space="preserve"><value>輸出目錄或檔名無效。</value></data>
+  <data name="FolderIssue_ffprobe_not_found" xml:space="preserve"><value>找不到 FFprobe。</value></data>
+  <data name="FolderIssue_operation_failed" xml:space="preserve"><value>請檢查媒體、輸出目錄和檔案許可權。</value></data>
+  <data name="FolderIssue_generation_changed" xml:space="preserve"><value>生成字幕時媒體檔案發生變化。</value></data>
+  <data name="FolderIssue_generation_timeout" xml:space="preserve"><value>字幕生成超過 24 小時。</value></data>
+  <data name="FolderIssue_request_timeout" xml:space="preserve"><value>讀取媒體超時。</value></data>
+  <data name="FolderIssue_content_blocked" xml:space="preserve"><value>服務提供商返回了內容稽核錯誤。</value></data>
+  <data name="FolderIssue_folder_model_not_installed" xml:space="preserve"><value>請在「本地模型」安裝所選模型後重試。</value></data>
+  <data name="FolderIssue_folder_model_unavailable" xml:space="preserve"><value>無法啟動所選模型。請檢查模型安裝、執行庫或雲端設定後重試。</value></data>
+</root>

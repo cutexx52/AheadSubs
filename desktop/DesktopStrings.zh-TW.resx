@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="Tagline" xml:space="preserve"><value>實時字幕與翻譯</value></data>
+  <data name="Connecting" xml:space="preserve"><value>正在連線</value></data>
+  <data name="RefreshStatus" xml:space="preserve"><value>重新整理狀態</value></data>
+  <data name="LanguageDisplay" xml:space="preserve"><value>語言與顯示</value></data>
+  <data name="VideoLanguage" xml:space="preserve"><value>影片語言</value></data>
+  <data name="TranslateTo" xml:space="preserve"><value>翻譯為</value></data>
+  <data name="TargetLanguage" xml:space="preserve"><value>目標字幕語言</value></data>
+  <data name="Bilingual" xml:space="preserve"><value>雙語字幕 · 原文在上，譯文在下</value></data>
+  <data name="Models" xml:space="preserve"><value>使用的模型</value></data>
+  <data name="Speech" xml:space="preserve"><value>語音識別</value></data>
+  <data name="SpeechModel" xml:space="preserve"><value>語音識別模型</value></data>
+  <data name="Translation" xml:space="preserve"><value>字幕翻譯</value></data>
+  <data name="TranslationModel" xml:space="preserve"><value>字幕翻譯模型</value></data>
+  <data name="CloudSettings" xml:space="preserve"><value>雲端配置</value></data>
+  <data name="Context" xml:space="preserve"><value>上下文增強</value></data>
+  <data name="EnableContext" xml:space="preserve"><value>啟用上下文增強</value></data>
+  <data name="PreviousCues" xml:space="preserve"><value>最多前文片段數（0–8）</value></data>
+  <data name="MaxCues" xml:space="preserve"><value>最多前文片段數</value></data>
+  <data name="Characters" xml:space="preserve"><value>每段最多字元（20–1000）</value></data>
+  <data name="MaxCharacters" xml:space="preserve"><value>每段前文最多字元</value></data>
+  <data name="Prompt" xml:space="preserve"><value>翻譯提示詞</value></data>
+  <data name="ReadingStatus" xml:space="preserve"><value>正在讀取服務狀態。</value></data>
+  <data name="Players" xml:space="preserve"><value>播放器</value></data>
+  <data name="Configure" xml:space="preserve"><value>一鍵配置</value></data>
+  <data name="Remove" xml:space="preserve"><value>一鍵解除安裝</value></data>
+  <data name="ChooseLocation" xml:space="preserve"><value>選擇位置…</value></data>
+  <data name="TrayHint" xml:space="preserve"><value>托盤右鍵 → PotPlayer 預讀。快捷鍵 Ctrl+Alt+J 開啟，Ctrl+Alt+K 關閉。</value></data>
+  <data name="PotHint" xml:space="preserve"><value>PotPlayer 的「實時字幕翻譯」設為「不使用」。</value></data>
+  <data name="MpvHint" xml:space="preserve"><value>mpv 右鍵選單 → AheadSubs。</value></data>
+  <data name="LocalModels" xml:space="preserve"><value>本地模型</value></data>
+  <data name="CloudModels" xml:space="preserve"><value>雲端模型</value></data>
+  <data name="Provider" xml:space="preserve"><value>供應商與授權方式</value></data>
+  <data name="SaveKey" xml:space="preserve"><value>儲存金鑰</value></data>
+  <data name="BailianKey" xml:space="preserve"><value>百鍊 API Key</value></data>
+  <data name="BailianHint" xml:space="preserve"><value>識別和翻譯共用百鍊 API Key。留空的地址使用北京公共入口。</value></data>
+  <data name="BailianUrl" xml:space="preserve"><value>百鍊 Base URL</value></data>
+  <data name="BailianEndpoint" xml:space="preserve"><value>百鍊服務地址</value></data>
+  <data name="Asr" xml:space="preserve"><value>語音識別（ASR）</value></data>
+  <data name="UseSpeech" xml:space="preserve"><value>用於識別</value></data>
+  <data name="BailianSpeech" xml:space="preserve"><value>百鍊識別模型</value></data>
+  <data name="UploadSpeech" xml:space="preserve"><value>上傳待識別音訊片段，並使用服務返回的句子時間戳。</value></data>
+  <data name="Nmt" xml:space="preserve"><value>專用機器翻譯（NMT）</value></data>
+  <data name="UseTranslation" xml:space="preserve"><value>用於翻譯</value></data>
+  <data name="BailianTranslation" xml:space="preserve"><value>百鍊翻譯模型</value></data>
+  <data name="OpenAiKey" xml:space="preserve"><value>OpenAI API Key</value></data>
+  <data name="Llm" xml:space="preserve"><value>文字翻譯（LLM）</value></data>
+  <data name="UseChatGpt" xml:space="preserve"><value>使用 ChatGPT 訂閱</value></data>
+  <data name="SubscriptionHint" xml:space="preserve"><value>授權後將待翻譯的字幕文字傳送給 OpenAI。合資格的請求使用 ChatGPT 訂閱額度或積分。</value></data>
+  <data name="SignIn" xml:space="preserve"><value>使用 ChatGPT 繼續</value></data>
+  <data name="Account" xml:space="preserve"><value>ChatGPT 賬號</value></data>
+  <data name="Reauthorize" xml:space="preserve"><value>重新授權</value></data>
+  <data name="SignOut" xml:space="preserve"><value>退出登入</value></data>
+  <data name="Usage" xml:space="preserve"><value>管理 ChatGPT 用量</value></data>
+  <data name="ChatGptModel" xml:space="preserve"><value>ChatGPT 字幕翻譯模型</value></data>
+  <data name="RefreshModels" xml:space="preserve"><value>重新整理模型</value></data>
+  <data name="MinimaxKey" xml:space="preserve"><value>MiniMax API Key</value></data>
+  <data name="MinimaxHint" xml:space="preserve"><value>使用 MiniMax M Plan 專用 Key 消耗套餐額度，或用通用 API Key 按量計費。也可設定 MINIMAX_API_KEY 環境變數。</value></data>
+  <data name="Compatible" xml:space="preserve"><value>OpenAI 相容介面</value></data>
+  <data name="AsrEndpoint" xml:space="preserve"><value>語音識別 · 地址和模型</value></data>
+  <data name="CustomAsrUrl" xml:space="preserve"><value>自定義識別 API 地址</value></data>
+  <data name="CustomAsrModel" xml:space="preserve"><value>自定義識別模型名稱</value></data>
+  <data name="AsrKey" xml:space="preserve"><value>識別 API Key</value></data>
+  <data name="ChooseAsr" xml:space="preserve"><value>選用此識別服務</value></data>
+  <data name="TranslationEndpoint" xml:space="preserve"><value>文字翻譯 · 地址和模型</value></data>
+  <data name="CustomMtUrl" xml:space="preserve"><value>自定義翻譯 API 地址</value></data>
+  <data name="CustomMtModel" xml:space="preserve"><value>自定義翻譯模型名稱</value></data>
+  <data name="MtKey" xml:space="preserve"><value>翻譯 API Key</value></data>
+  <data name="ChooseMt" xml:space="preserve"><value>選用此翻譯服務</value></data>
+  <data name="Advanced" xml:space="preserve"><value>高階設定</value></data>
+  <data name="Vad" xml:space="preserve"><value>語音檢測（VAD）</value></data>
+  <data name="VadHint" xml:space="preserve"><value>先判斷哪裡有人說話，再把這些音訊交給識別模型。</value></data>
+  <data name="VadModel" xml:space="preserve"><value>語音活動檢測模型</value></data>
+  <data name="Threshold" xml:space="preserve"><value>語音門檻（0–1）</value></data>
+  <data name="VadThreshold" xml:space="preserve"><value>語音檢測門檻</value></data>
+  <data name="ThresholdHint" xml:space="preserve"><value>越高越嚴格，可能漏掉輕聲。</value></data>
+  <data name="MinimumSegment" xml:space="preserve"><value>最短片段（秒）</value></data>
+  <data name="MinimumSpeech" xml:space="preserve"><value>最短語音片段秒數</value></data>
+  <data name="MinimumHint" xml:space="preserve"><value>優先避免過碎的短段，仍會考慮實際停頓。</value></data>
+  <data name="MaximumSegment" xml:space="preserve"><value>單段最長（2–20 秒）</value></data>
+  <data name="MaximumSpeech" xml:space="preserve"><value>最長語音段秒數</value></data>
+  <data name="MaximumHint" xml:space="preserve"><value>連續講話過長時分段，限制單次識別。</value></data>
+  <data name="VadDefaults" xml:space="preserve"><value>Silero 預設 0.50，FSMN 預設 0.80；不同模型的數值不可直接比較。</value></data>
+  <data name="Pause" xml:space="preserve"><value>斷句停頓（毫秒）</value></data>
+  <data name="PauseMs" xml:space="preserve"><value>斷句停頓毫秒數</value></data>
+  <data name="PauseHint" xml:space="preserve"><value>越長越不容易把短暫停頓切開。</value></data>
+  <data name="Padding" xml:space="preserve"><value>句邊留白（毫秒）</value></data>
+  <data name="PaddingMs" xml:space="preserve"><value>句邊留白毫秒數</value></data>
+  <data name="PaddingHint" xml:space="preserve"><value>保留句子兩端的音訊，減少截斷。</value></data>
+  <data name="LookAhead" xml:space="preserve"><value>預讀與跳轉</value></data>
+  <data name="LookAheadHint" xml:space="preserve"><value>決定從影片的什麼位置取音訊，不等同於翻譯模型的文字上下文。</value></data>
+  <data name="Chunk" xml:space="preserve"><value>快取任務塊（4–20 秒）</value></data>
+  <data name="ChunkSeconds" xml:space="preserve"><value>快取任務塊秒數</value></data>
+  <data name="ChunkHint" xml:space="preserve"><value>只控制後臺任務排程，不規定字幕句長。</value></data>
+  <data name="Backfill" xml:space="preserve"><value>跳轉最少回補（0–30 秒）</value></data>
+  <data name="BackfillSeconds" xml:space="preserve"><value>跳轉最少回補秒數</value></data>
+  <data name="BackfillHint" xml:space="preserve"><value>補找跳轉前的句首；長句時會自動增加。</value></data>
+  <data name="PrePause" xml:space="preserve"><value>向前額外找停頓（0–5 秒）</value></data>
+  <data name="PrePauseSeconds" xml:space="preserve"><value>向前額外找停頓秒數</value></data>
+  <data name="PostPause" xml:space="preserve"><value>向後額外找停頓（0–5 秒）</value></data>
+  <data name="PostPauseSeconds" xml:space="preserve"><value>向後額外找停頓秒數</value></data>
+  <data name="BoundaryHint" xml:space="preserve"><value>在候選音訊範圍之外額外搜尋停頓，優先沿自然邊界切分。</value></data>
+  <data name="Diagnostics" xml:space="preserve"><value>診斷</value></data>
+  <data name="DiagnosticsToggle" xml:space="preserve"><value>記錄詳細診斷日誌</value></data>
+  <data name="DiagnosticsHint" xml:space="preserve"><value>僅排查問題時開啟。關閉診斷不會隱藏必要的錯誤提示。</value></data>
+  <data name="OpenLogs" xml:space="preserve"><value>開啟日誌目錄</value></data>
+  <data name="Exit" xml:space="preserve"><value>退出</value></data>
+  <data name="SaveStart" xml:space="preserve"><value>儲存並啟動</value></data>
+  <data name="StopService" xml:space="preserve"><value>停止服務</value></data>
+  <data name="TrayClose" xml:space="preserve"><value>關閉視窗後留在托盤</value></data>
+  <data name="KeySource" xml:space="preserve"><value>API Key 來源</value></data>
+  <data name="KeyEnv" xml:space="preserve"><value>預設（環境變數）</value></data>
+  <data name="KeyFile" xml:space="preserve"><value>金鑰檔案</value></data>
+  <data name="KeyDirect" xml:space="preserve"><value>直接填寫</value></data>
+  <data name="ChooseFile" xml:space="preserve"><value>選擇檔案</value></data>
+  <data name="KeyPath" xml:space="preserve"><value>API Key 檔案路徑</value></data>
+  <data name="Silero" xml:space="preserve"><value>Silero · 預設</value></data>
+  <data name="Fsmn" xml:space="preserve"><value>阿里 FSMN · 可選</value></data>
+  <data name="BailianProvider" xml:space="preserve"><value>阿里雲百鍊 · API Key</value></data>
+  <data name="ChatGptProvider" xml:space="preserve"><value>ChatGPT 訂閱 · OAuth</value></data>
+  <data name="CompatibleProvider" xml:space="preserve"><value>自定義相容介面 · API Key</value></data>
+  <data name="TrayConnecting" xml:space="preserve"><value>AheadSubs · 正在連線</value></data>
+  <data name="ServiceReady" xml:space="preserve"><value>服務已就緒</value></data>
+  <data name="PreviewPlayerHint" xml:space="preserve"><value>在 PotPlayer 播放視窗按 Ctrl+Alt+J 開啟，Ctrl+Alt+K 關閉。</value></data>
+  <data name="TwoWindows" xml:space="preserve"><value>已連線 2 個播放視窗。</value></data>
+  <data name="SaveApply" xml:space="preserve"><value>儲存並應用</value></data>
+  <data name="OpenSettings" xml:space="preserve"><value>開啟設定</value></data>
+  <data name="PotMenu" xml:space="preserve"><value>PotPlayer 預讀</value></data>
+  <data name="LoadingWindows" xml:space="preserve"><value>讀取播放視窗…</value></data>
+  <data name="StopSubtitles" xml:space="preserve"><value>停止字幕服務</value></data>
+  <data name="StopExit" xml:space="preserve"><value>停止並退出</value></data>
+  <data name="NoWindows" xml:space="preserve"><value>沒有開啟的 PotPlayer 視窗</value></data>
+  <data name="StartLookAhead" xml:space="preserve"><value>開啟預讀</value></data>
+  <data name="StopLookAhead" xml:space="preserve"><value>關閉預讀</value></data>
+  <data name="WindowsFailed" xml:space="preserve"><value>無法讀取視窗，請重新開啟此選單</value></data>
+  <data name="SubtitlesReady" xml:space="preserve"><value>字幕服務已就緒</value></data>
+  <data name="SubtitlesStopped" xml:space="preserve"><value>字幕服務已停止</value></data>
+  <data name="HotkeyHint" xml:space="preserve"><value>在 PotPlayer 播放視窗按 Ctrl+Alt+J，開始為該視窗翻譯。</value></data>
+  <data name="StartHint" xml:space="preserve"><value>選擇模型後啟動服務。已開啟的播放視窗會在應用設定後自動接續。</value></data>
+  <data name="TrayReady" xml:space="preserve"><value>AheadSubs · 服務就緒</value></data>
+  <data name="TrayStopped" xml:space="preserve"><value>AheadSubs · 已停止</value></data>
+  <data name="Sessions" xml:space="preserve"><value>已連線 {0:N0} 個播放會話。</value></data>
+  <data name="NoSessions" xml:space="preserve"><value>尚未連線播放視窗。</value></data>
+  <data name="ConnectionFailed" xml:space="preserve"><value>無法連線後臺</value></data>
+  <data name="LocalModel" xml:space="preserve"><value>[本地] {0}</value></data>
+  <data name="CloudWhisper" xml:space="preserve"><value>[雲端] OpenAI Whisper</value></data>
+  <data name="ConfiguredSpeech" xml:space="preserve"><value>[自定義] 已配置的語音識別 API</value></data>
+  <data name="LocalNllb" xml:space="preserve"><value>[本地] NLLB-200 600M INT8 · CPU / CUDA</value></data>
+  <data name="CloudGpt" xml:space="preserve"><value>[雲端] OpenAI GPT-4.1 mini</value></data>
+  <data name="CloudChatGpt" xml:space="preserve"><value>[雲端] ChatGPT 訂閱</value></data>
+  <data name="CloudModel" xml:space="preserve"><value>[雲端] {0}</value></data>
+  <data name="CloudOpenAi" xml:space="preserve"><value>[雲端] OpenAI {0}</value></data>
+  <data name="ConfiguredTranslation" xml:space="preserve"><value>[自定義] 已配置的翻譯 API</value></data>
+  <data name="ContextHint" xml:space="preserve"><value>參考前文有助於譯準指代和術語，也可能增加 token 用量和延遲。片段數填 0 時只用提示詞。</value></data>
+  <data name="PromptHint" xml:space="preserve"><value>用英文提示詞指定領域或字幕風格。</value></data>
+  <data name="SubscriptionUsage" xml:space="preserve"><value>使用 ChatGPT 訂閱額度 · {0}</value></data>
+  <data name="ChooseModel" xml:space="preserve"><value>請先登入並選擇模型</value></data>
+  <data name="MinimaxUsage" xml:space="preserve"><value>用量由 MiniMax Key 型別決定。</value></data>
+  <data name="RunsLocally" xml:space="preserve"><value>本地執行</value></data>
+  <data name="MissingModels" xml:space="preserve"><value>請選擇已安裝的本地模型，或使用自己的雲端 API 賬戶。</value></data>
+  <data name="InvalidCues" xml:space="preserve"><value>前文片段數請填寫 0 到 8 的整數。</value></data>
+  <data name="InvalidChars" xml:space="preserve"><value>前文每段最多字元請填寫 20 到 1000 的整數。</value></data>
+  <data name="SelectModels" xml:space="preserve"><value>請選擇語音識別和字幕翻譯模型；本地模型需先在模型管理中安裝。</value></data>
+  <data name="InvalidChunk" xml:space="preserve"><value>每次處理時長請填寫 4 到 20 之間的整數秒數。</value></data>
+  <data name="InvalidMaximum" xml:space="preserve"><value>最長語音段請填寫 2 到 20 之間的秒數。</value></data>
+  <data name="TimedOut" xml:space="preserve"><value>後臺響應超時。請稍後重試；若持續發生，可開啟診斷日誌排查。</value></data>
+  <data name="Applying" xml:space="preserve"><value>正在應用設定，已開啟的視窗會自動接續…</value></data>
+  <data name="Applied" xml:space="preserve"><value>設定已應用。到播放器按 Ctrl+Alt+J 開啟翻譯。</value></data>
+  <data name="Stopping" xml:space="preserve"><value>正在停止後臺並釋放資源…</value></data>
+  <data name="Stopped" xml:space="preserve"><value>服務已停止，後臺資源已釋放。</value></data>
+  <data name="Configured" xml:space="preserve"><value>已配置</value></data>
+  <data name="PartiallyConfigured" xml:space="preserve"><value>部分配置</value></data>
+  <data name="NotConfigured" xml:space="preserve"><value>未配置</value></data>
+  <data name="MissingLocation" xml:space="preserve"><value>未找到位置</value></data>
+  <data name="ChoosePot" xml:space="preserve"><value>選擇 PotPlayer 安裝資料夾</value></data>
+  <data name="ChooseMpv" xml:space="preserve"><value>選擇 mpv 配置資料夾</value></data>
+  <data name="Configuring" xml:space="preserve"><value>正在配置…</value></data>
+  <data name="PlayerConfigured" xml:space="preserve"><value>已配置。重開播放器後生效。</value></data>
+  <data name="Uninstalling" xml:space="preserve"><value>正在解除安裝…</value></data>
+  <data name="PlayerRemoved" xml:space="preserve"><value>已解除安裝。重開播放器後生效。</value></data>
+  <data name="SavingKey" xml:space="preserve"><value>正在儲存金鑰…</value></data>
+  <data name="CustomSpeech" xml:space="preserve"><value>[自定義] 語音識別 API</value></data>
+  <data name="CustomTranslation" xml:space="preserve"><value>[自定義] 翻譯 API</value></data>
+  <data name="Authorized" xml:space="preserve"><value>ChatGPT 訂閱已授權。</value></data>
+  <data name="AuthorizedRefresh" xml:space="preserve"><value>ChatGPT 訂閱已授權，請重新整理模型。</value></data>
+  <data name="AuthorizeAgain" xml:space="preserve"><value>請重新授權使用 ChatGPT 訂閱。</value></data>
+  <data name="BrowserSignIn" xml:space="preserve"><value>請在瀏覽器中登入並授權使用訂閱。</value></data>
+  <data name="SignedOut" xml:space="preserve"><value>已退出 ChatGPT。</value></data>
+  <data name="SignedOutLocal" xml:space="preserve"><value>已在本機退出。請在 ChatGPT 設定中確認已撤銷授權。</value></data>
+  <data name="SigningIn" xml:space="preserve"><value>請在瀏覽器中完成 ChatGPT 登入和授權…</value></data>
+  <data name="SigningOut" xml:space="preserve"><value>正在退出 ChatGPT…</value></data>
+  <data name="LoadingModels" xml:space="preserve"><value>正在讀取 ChatGPT 模型…</value></data>
+  <data name="OpeningLogs" xml:space="preserve"><value>正在開啟日誌目錄…</value></data>
+  <data name="NoLogs" xml:space="preserve"><value>尚未建立日誌目錄。</value></data>
+  <data name="LogsOpened" xml:space="preserve"><value>日誌目錄已開啟。</value></data>
+  <data name="TrayTitle" xml:space="preserve"><value>字幕翻譯仍在後臺</value></data>
+  <data name="TrayBody" xml:space="preserve"><value>雙擊托盤圖示開啟設定；右鍵選擇“停止並退出”釋放資源。</value></data>
+  <data name="WaitExit" xml:space="preserve"><value>請等待當前操作結束後退出。</value></data>
+  <data name="Exiting" xml:space="preserve"><value>正在停止服務並退出…</value></data>
+  <data name="ExitFailed" xml:space="preserve"><value>尚未退出：{0}</value></data>
+  <data name="ConfirmExit" xml:space="preserve"><value>無法確認後臺已經停止。只退出設定介面？後臺程序可能仍在執行。</value></data>
+  <data name="ExitTitle" xml:space="preserve"><value>退出字幕翻譯</value></data>
+  <data name="MissingRuntime" xml:space="preserve"><value>找不到隨軟體提供的執行環境。請重新解壓完整安裝包，不要單獨移動 UI 資料夾。</value></data>
+  <data name="LaunchFailed" xml:space="preserve"><value>無法啟動字幕服務。</value></data>
+  <data name="InvalidResponse" xml:space="preserve"><value>後臺沒有返回有效結果。請在高階設定中開啟診斷日誌後重試。</value></data>
+  <data name="BackendFailed" xml:space="preserve"><value>後臺操作失敗，請檢視診斷日誌。</value></data>
+  <data name="ReplaceKey" xml:space="preserve"><value>已加密儲存。輸入新金鑰可替換。</value></data>
+  <data name="EncryptedKey" xml:space="preserve"><value>儲存在當前 Windows 使用者下，加密儲存。</value></data>
+  <data name="ChooseKey" xml:space="preserve"><value>選擇 API Key 檔案</value></data>
+  <data name="InterfaceLanguage" xml:space="preserve"><value>介面語言</value></data>
+  <data name="FollowSystem" xml:space="preserve"><value>跟隨 Windows</value></data>
+  <data name="PreferenceFailed" xml:space="preserve"><value>無法儲存介面語言。</value></data>
+  <data name="HourlyUsd" xml:space="preserve"><value>約 US${0:F2}–{1:F2}/小時</value></data>
+  <data name="HourlyCny" xml:space="preserve"><value>約 ¥{0:F2}–{1:F2}/小時</value></data>
+</root>

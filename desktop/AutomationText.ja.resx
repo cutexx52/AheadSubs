@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="SubtitleTab" xml:space="preserve"><value>字幕</value></data>
+  <data name="SubtitleSettings" xml:space="preserve"><value>字幕設定</value></data>
+  <data name="CredentialsSaved" xml:space="preserve"><value>認証情報を保存しました。「字幕」で設定を適用してください。</value></data>
+  <data name="Title" xml:space="preserve"><value>連携</value></data>
+  <data name="Intro" xml:space="preserve"><value>ローカルのエージェントやスクリプトからテキスト翻訳、SRT 生成、字幕の先読みを操作できます。まず「字幕」でサービスを起動してください。</value></data>
+  <data name="Loading" xml:space="preserve"><value>読み込み中</value></data>
+  <data name="Enabled" xml:space="preserve"><value>有効</value></data>
+  <data name="Disabled" xml:space="preserve"><value>無効</value></data>
+  <data name="McpHint" xml:space="preserve"><value>設定をローカルの stdio クライアントに追加してください。接続時にクライアントが MCP を起動します。クラウドモデルへのリクエストは設定済みのプロバイダーに送られます。</value></data>
+  <data name="Enable" xml:space="preserve"><value>MCP アクセスを有効にする</value></data>
+  <data name="Disable" xml:space="preserve"><value>MCP アクセスを無効にする</value></data>
+  <data name="Copy" xml:space="preserve"><value>MCP 設定をコピー</value></data>
+  <data name="Configuration" xml:space="preserve"><value>MCP クライアント設定</value></data>
+  <data name="CliTitle" xml:space="preserve"><value>コマンドライン</value></data>
+  <data name="CliHint" xml:space="preserve"><value>インストール後、端末を開き直して aheadsubs status を実行してください。コマンド一覧は aheadsubs --help で確認できます。</value></data>
+  <data name="SourceHint" xml:space="preserve"><value>ソースから使う場合は、プロジェクトのディレクトリで python -m pip install . を実行して CLI をインストールしてください。</value></data>
+  <data name="Install" xml:space="preserve"><value>CLI をインストール</value></data>
+  <data name="Remove" xml:space="preserve"><value>PATH から削除</value></data>
+  <data name="Installed" xml:space="preserve"><value>PATH に登録済み</value></data>
+  <data name="NotInstalled" xml:space="preserve"><value>未インストール</value></data>
+  <data name="DisabledNotice" xml:space="preserve"><value>MCP アクセスを無効にしました。</value></data>
+  <data name="EnabledNotice" xml:space="preserve"><value>MCP アクセスを有効にしました。設定をコピーし、クライアントを再接続してください。</value></data>
+  <data name="RemovedNotice" xml:space="preserve"><value>ユーザーの PATH から削除しました。</value></data>
+  <data name="InstalledNotice" xml:space="preserve"><value>ユーザーの PATH に追加しました。端末を開き直してください。</value></data>
+  <data name="Copied" xml:space="preserve"><value>MCP 設定をコピーしました。</value></data>
+  <data name="ClipboardUnavailable" xml:space="preserve"><value>クリップボードを使用できません。設定テキストを選択して手動でコピーしてください。</value></data>
+  <data name="Failed" xml:space="preserve"><value>連携設定を更新できません。アプリを確認してやり直してください。</value></data>
+  <data name="FolderTitle" xml:space="preserve"><value>自動タスク</value></data>
+  <data name="FolderIntro" xml:space="preserve"><value>フォルダー内の新しいメディアを監視し、再生していないときに字幕を生成します。</value></data>
+  <data name="FolderNew" xml:space="preserve"><value>ルールを追加</value></data>
+  <data name="FolderRules" xml:space="preserve"><value>フォルダールール</value></data>
+  <data name="FolderRetry" xml:space="preserve"><value>失敗したファイルを再試行</value></data>
+  <data name="FolderRuleName" xml:space="preserve"><value>ルール名（任意）</value></data>
+  <data name="FolderPath" xml:space="preserve"><value>監視フォルダー</value></data>
+  <data name="FolderBrowse" xml:space="preserve"><value>参照…</value></data>
+  <data name="FolderEnabled" xml:space="preserve"><value>このルールを有効にする</value></data>
+  <data name="FolderRecursive" xml:space="preserve"><value>サブフォルダーを含める</value></data>
+  <data name="FolderExisting" xml:space="preserve"><value>既存のファイルも含める</value></data>
+  <data name="FolderFilters" xml:space="preserve"><value>ファイルフィルター</value></data>
+  <data name="FolderRegex" xml:space="preserve"><value>ファイル名の正規表現（任意）</value></data>
+  <data name="FolderTypes" xml:space="preserve"><value>拡張子（カンマ区切り）</value></data>
+  <data name="FolderMin" xml:space="preserve"><value>最小サイズ（MiB）</value></data>
+  <data name="FolderMax" xml:space="preserve"><value>最大サイズ（MiB）</value></data>
+  <data name="FolderSubtitle" xml:space="preserve"><value>字幕設定</value></data>
+  <data name="FolderModels" xml:space="preserve"><value>段階ごとにモデルを選ぶか、全体設定を使用します。ローカルモデルは「ローカルモデル」でインストールし、認証情報は「クラウドモデル」で設定します。</value></data>
+  <data name="FolderSpeechModel" xml:space="preserve"><value>音声認識モデル</value></data>
+  <data name="FolderTranslationModel" xml:space="preserve"><value>字幕翻訳モデル</value></data>
+  <data name="FolderModelNotInstalled" xml:space="preserve"><value>{0}（未インストール）</value></data>
+  <data name="FolderChatGptModel" xml:space="preserve"><value>ChatGPT サブスクリプション</value></data>
+  <data name="FolderCustomModel" xml:space="preserve"><value>設定済みのカスタム API</value></data>
+  <data name="FolderSource" xml:space="preserve"><value>元の言語</value></data>
+  <data name="FolderTarget" xml:space="preserve"><value>字幕の言語</value></data>
+  <data name="FolderAudio" xml:space="preserve"><value>音声トラック（1–256）</value></data>
+  <data name="FolderStyle" xml:space="preserve"><value>SRT の内容</value></data>
+  <data name="FolderDestination" xml:space="preserve"><value>出力フォルダー（空欄ならメディアと同じ場所）</value></data>
+  <data name="FolderSuffix" xml:space="preserve"><value>.srt の前の接尾辞（任意、例：.en）</value></data>
+  <data name="FolderIdle" xml:space="preserve"><value>Windows の入力待機時間（0–120 分、0 は AheadSubs のみ確認）</value></data>
+  <data name="FolderSave" xml:space="preserve"><value>ルールを保存</value></data>
+  <data name="FolderDelete" xml:space="preserve"><value>ルールを削除</value></data>
+  <data name="FolderDefault" xml:space="preserve"><value>全体設定を使用</value></data>
+  <data name="FolderAuto" xml:space="preserve"><value>自動検出</value></data>
+  <data name="FolderTranslated" xml:space="preserve"><value>翻訳のみ</value></data>
+  <data name="FolderBilingual" xml:space="preserve"><value>二言語</value></data>
+  <data name="FolderLang_zh" xml:space="preserve"><value>中国語（簡体字）</value></data>
+  <data name="FolderLang_zh-TW" xml:space="preserve"><value>中国語（繁体字）</value></data>
+  <data name="FolderLang_en" xml:space="preserve"><value>英語</value></data>
+  <data name="FolderLang_ja" xml:space="preserve"><value>日本語</value></data>
+  <data name="FolderLang_ko" xml:space="preserve"><value>韓国語</value></data>
+  <data name="FolderLang_fr" xml:space="preserve"><value>フランス語</value></data>
+  <data name="FolderLang_de" xml:space="preserve"><value>ドイツ語</value></data>
+  <data name="FolderLang_es" xml:space="preserve"><value>スペイン語</value></data>
+  <data name="FolderLoading" xml:space="preserve"><value>フォルダールールを読み込み中…</value></data>
+  <data name="FolderSaved" xml:space="preserve"><value>フォルダールールを保存しました。</value></data>
+  <data name="FolderRetried" xml:space="preserve"><value>失敗したファイルを再度キューに追加しました。</value></data>
+  <data name="FolderUnavailable" xml:space="preserve"><value>フォルダータスクを読み込めません。しばらくしてから再試行してください。</value></data>
+  <data name="FolderStopped" xml:space="preserve"><value>フォルダーのスキャンと字幕生成には、字幕サービスを起動してください。</value></data>
+  <data name="FolderSelect" xml:space="preserve"><value>ルールを追加または選択するとキューが表示されます。</value></data>
+  <data name="FolderPaused" xml:space="preserve"><value>このルールは一時停止中です。</value></data>
+  <data name="FolderCounts" xml:space="preserve"><value>待機 {0:N0} · 実行中 {1:N0} · 完了 {2:N0} · 失敗 {3:N0} · スキップ {4:N0}</value></data>
+  <data name="FolderRunning" xml:space="preserve"><value>字幕を生成中…</value></data>
+  <data name="FolderFailureCode" xml:space="preserve"><value>生成に失敗しました（{0}）。</value></data>
+  <data name="FolderInvalid" xml:space="preserve"><value>{0} の値を確認してください。</value></data>
+  <data name="FolderInvalidSize" xml:space="preserve"><value>最大サイズには、最小サイズ以上の正の値を指定してください。</value></data>
+  <data name="FolderIssue_regex_timeout" xml:space="preserve"><value>ファイル名の正規表現がタイムアウトしました。式を簡略化して保存してください。</value></data>
+  <data name="FolderIssue_folder_unavailable" xml:space="preserve"><value>フォルダーをスキャンできません。パスとアクセス権を確認してください。</value></data>
+  <data name="FolderIssue_output_exists" xml:space="preserve"><value>SRT が既にあるためスキップしました。</value></data>
+  <data name="FolderIssue_invalid_media" xml:space="preserve"><value>FFprobe でメディアの長さまたは音声ストリームを読み取れません。</value></data>
+  <data name="FolderIssue_invalid_audio" xml:space="preserve"><value>選択した音声トラックが見つかりません。</value></data>
+  <data name="FolderIssue_invalid_output" xml:space="preserve"><value>出力フォルダーまたはファイル名が無効です。</value></data>
+  <data name="FolderIssue_ffprobe_not_found" xml:space="preserve"><value>FFprobe が見つかりません。</value></data>
+  <data name="FolderIssue_operation_failed" xml:space="preserve"><value>メディア、出力フォルダー、アクセス権を確認してください。</value></data>
+  <data name="FolderIssue_generation_changed" xml:space="preserve"><value>字幕の生成中にファイルが変更されました。</value></data>
+  <data name="FolderIssue_generation_timeout" xml:space="preserve"><value>字幕の生成が 24 時間を超えました。</value></data>
+  <data name="FolderIssue_request_timeout" xml:space="preserve"><value>メディアの読み取りがタイムアウトしました。</value></data>
+  <data name="FolderIssue_content_blocked" xml:space="preserve"><value>プロバイダーのコンテンツ審査でエラーが発生しました。</value></data>
+  <data name="FolderIssue_folder_model_not_installed" xml:space="preserve"><value>「ローカルモデル」で選択したモデルをインストールして再試行してください。</value></data>
+  <data name="FolderIssue_folder_model_unavailable" xml:space="preserve"><value>モデルを起動できません。インストール状態、ランタイム、クラウド設定を確認して再試行してください。</value></data>
+</root>

@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="Tagline" xml:space="preserve"><value>실시간 자막 및 번역</value></data>
+  <data name="Connecting" xml:space="preserve"><value>연결 중</value></data>
+  <data name="RefreshStatus" xml:space="preserve"><value>상태 새로 고침</value></data>
+  <data name="LanguageDisplay" xml:space="preserve"><value>언어 및 표시</value></data>
+  <data name="VideoLanguage" xml:space="preserve"><value>영상 언어</value></data>
+  <data name="TranslateTo" xml:space="preserve"><value>번역할 언어</value></data>
+  <data name="TargetLanguage" xml:space="preserve"><value>자막 언어</value></data>
+  <data name="Bilingual" xml:space="preserve"><value>이중 언어 자막 · 원문 아래에 번역 표시</value></data>
+  <data name="Models" xml:space="preserve"><value>사용할 모델</value></data>
+  <data name="Speech" xml:space="preserve"><value>음성 인식</value></data>
+  <data name="SpeechModel" xml:space="preserve"><value>음성 인식 모델</value></data>
+  <data name="Translation" xml:space="preserve"><value>자막 번역</value></data>
+  <data name="TranslationModel" xml:space="preserve"><value>자막 번역 모델</value></data>
+  <data name="CloudSettings" xml:space="preserve"><value>클라우드 설정</value></data>
+  <data name="Context" xml:space="preserve"><value>번역 문맥</value></data>
+  <data name="EnableContext" xml:space="preserve"><value>번역에 문맥 사용</value></data>
+  <data name="PreviousCues" xml:space="preserve"><value>이전 구간 수(0–8)</value></data>
+  <data name="MaxCues" xml:space="preserve"><value>이전 구간 최대 개수</value></data>
+  <data name="Characters" xml:space="preserve"><value>구간당 글자 수(20–1000)</value></data>
+  <data name="MaxCharacters" xml:space="preserve"><value>이전 구간당 최대 글자 수</value></data>
+  <data name="Prompt" xml:space="preserve"><value>번역 프롬프트</value></data>
+  <data name="ReadingStatus" xml:space="preserve"><value>서비스 상태를 읽는 중…</value></data>
+  <data name="Players" xml:space="preserve"><value>플레이어</value></data>
+  <data name="Configure" xml:space="preserve"><value>설정</value></data>
+  <data name="Remove" xml:space="preserve"><value>제거</value></data>
+  <data name="ChooseLocation" xml:space="preserve"><value>위치 선택…</value></data>
+  <data name="TrayHint" xml:space="preserve"><value>트레이 메뉴에서 PotPlayer 미리 읽기를 여세요. Ctrl+Alt+J로 시작하고 Ctrl+Alt+K로 중지합니다.</value></data>
+  <data name="PotHint" xml:space="preserve"><value>PotPlayer의 실시간 자막 번역을 ‘사용 안 함’으로 설정하세요.</value></data>
+  <data name="MpvHint" xml:space="preserve"><value>mpv의 우클릭 메뉴에서 AheadSubs를 여세요.</value></data>
+  <data name="LocalModels" xml:space="preserve"><value>로컬 모델</value></data>
+  <data name="CloudModels" xml:space="preserve"><value>클라우드 모델</value></data>
+  <data name="Provider" xml:space="preserve"><value>제공업체 및 인증 방식</value></data>
+  <data name="SaveKey" xml:space="preserve"><value>키 저장</value></data>
+  <data name="BailianKey" xml:space="preserve"><value>Bailian API 키</value></data>
+  <data name="BailianHint" xml:space="preserve"><value>인식과 번역에 같은 Bailian API 키를 사용합니다. URL을 비워 두면 베이징 엔드포인트를 사용합니다.</value></data>
+  <data name="BailianUrl" xml:space="preserve"><value>Bailian 기본 URL</value></data>
+  <data name="BailianEndpoint" xml:space="preserve"><value>Bailian 엔드포인트</value></data>
+  <data name="Asr" xml:space="preserve"><value>음성 인식(ASR)</value></data>
+  <data name="UseSpeech" xml:space="preserve"><value>인식에 사용</value></data>
+  <data name="BailianSpeech" xml:space="preserve"><value>Bailian 음성 인식 모델</value></data>
+  <data name="UploadSpeech" xml:space="preserve"><value>음성 구간을 업로드해 인식하고 서비스가 반환한 문장별 타임스탬프를 사용합니다.</value></data>
+  <data name="Nmt" xml:space="preserve"><value>기계 번역(NMT)</value></data>
+  <data name="UseTranslation" xml:space="preserve"><value>번역에 사용</value></data>
+  <data name="BailianTranslation" xml:space="preserve"><value>Bailian 번역 모델</value></data>
+  <data name="OpenAiKey" xml:space="preserve"><value>OpenAI API 키</value></data>
+  <data name="Llm" xml:space="preserve"><value>텍스트 번역(LLM)</value></data>
+  <data name="UseChatGpt" xml:space="preserve"><value>ChatGPT 구독 사용</value></data>
+  <data name="SubscriptionHint" xml:space="preserve"><value>승인 후 자막 텍스트가 OpenAI로 전송됩니다. 이용 자격과 한도는 ChatGPT 구독 또는 크레딧에 따릅니다.</value></data>
+  <data name="SignIn" xml:space="preserve"><value>ChatGPT 로그인</value></data>
+  <data name="Account" xml:space="preserve"><value>ChatGPT 계정</value></data>
+  <data name="Reauthorize" xml:space="preserve"><value>다시 인증</value></data>
+  <data name="SignOut" xml:space="preserve"><value>로그아웃</value></data>
+  <data name="Usage" xml:space="preserve"><value>ChatGPT 사용량 보기</value></data>
+  <data name="ChatGptModel" xml:space="preserve"><value>ChatGPT 자막 번역 모델</value></data>
+  <data name="RefreshModels" xml:space="preserve"><value>모델 목록 새로 고침</value></data>
+  <data name="MinimaxKey" xml:space="preserve"><value>MiniMax API 키</value></data>
+  <data name="MinimaxHint" xml:space="preserve"><value>M Plan 키는 구독 한도를 사용하고 일반 API 키는 사용량에 따라 과금됩니다. MINIMAX_API_KEY 환경 변수로도 설정할 수 있습니다.</value></data>
+  <data name="Compatible" xml:space="preserve"><value>OpenAI 호환 엔드포인트</value></data>
+  <data name="AsrEndpoint" xml:space="preserve"><value>음성 인식 · URL 및 모델</value></data>
+  <data name="CustomAsrUrl" xml:space="preserve"><value>사용자 지정 음성 API URL</value></data>
+  <data name="CustomAsrModel" xml:space="preserve"><value>사용자 지정 음성 모델 이름</value></data>
+  <data name="AsrKey" xml:space="preserve"><value>음성 API 키</value></data>
+  <data name="ChooseAsr" xml:space="preserve"><value>이 음성 인식 서비스 사용</value></data>
+  <data name="TranslationEndpoint" xml:space="preserve"><value>텍스트 번역 · URL 및 모델</value></data>
+  <data name="CustomMtUrl" xml:space="preserve"><value>사용자 지정 번역 API URL</value></data>
+  <data name="CustomMtModel" xml:space="preserve"><value>사용자 지정 번역 모델 이름</value></data>
+  <data name="MtKey" xml:space="preserve"><value>번역 API 키</value></data>
+  <data name="ChooseMt" xml:space="preserve"><value>이 번역 서비스 사용</value></data>
+  <data name="Advanced" xml:space="preserve"><value>고급 설정</value></data>
+  <data name="Vad" xml:space="preserve"><value>음성 구간 감지(VAD)</value></data>
+  <data name="VadHint" xml:space="preserve"><value>인식 모델에 오디오를 보내기 전에 발화 구간을 감지합니다.</value></data>
+  <data name="VadModel" xml:space="preserve"><value>음성 구간 감지 모델</value></data>
+  <data name="Threshold" xml:space="preserve"><value>음성 감지 임계값(0–1)</value></data>
+  <data name="VadThreshold" xml:space="preserve"><value>음성 감지 임계값</value></data>
+  <data name="ThresholdHint" xml:space="preserve"><value>값이 높으면 작은 목소리를 놓칠 수 있습니다.</value></data>
+  <data name="MinimumSegment" xml:space="preserve"><value>최소 구간(초)</value></data>
+  <data name="MinimumSpeech" xml:space="preserve"><value>최소 발화 구간(초)</value></data>
+  <data name="MinimumHint" xml:space="preserve"><value>실제 발화 사이의 쉼을 고려해 짧은 구간이 나뉘지 않게 합니다.</value></data>
+  <data name="MaximumSegment" xml:space="preserve"><value>최대 구간(2–20초)</value></data>
+  <data name="MaximumSpeech" xml:space="preserve"><value>최대 발화 구간(초)</value></data>
+  <data name="MaximumHint" xml:space="preserve"><value>연속 발화를 이 길이로 나눠 인식 지연을 줄입니다.</value></data>
+  <data name="VadDefaults" xml:space="preserve"><value>기본값은 Silero가 0.50, FSMN이 0.80입니다. 모델마다 임계값 척도가 다릅니다.</value></data>
+  <data name="Pause" xml:space="preserve"><value>문장 구분 휴지 시간(ms)</value></data>
+  <data name="PauseMs" xml:space="preserve"><value>문장 구분 휴지 시간(밀리초)</value></data>
+  <data name="PauseHint" xml:space="preserve"><value>값이 클수록 짧은 쉼을 같은 문장에 포함합니다.</value></data>
+  <data name="Padding" xml:space="preserve"><value>앞뒤 여백(ms)</value></data>
+  <data name="PaddingMs" xml:space="preserve"><value>앞뒤 여백(밀리초)</value></data>
+  <data name="PaddingHint" xml:space="preserve"><value>말의 앞뒤에 여유 구간을 포함해 단어가 잘리지 않게 합니다.</value></data>
+  <data name="LookAhead" xml:space="preserve"><value>미리 읽기 및 탐색</value></data>
+  <data name="LookAheadHint" xml:space="preserve"><value>타임라인에서 오디오를 읽을 범위를 설정합니다. 모델에 전달할 문맥은 별도로 설정합니다.</value></data>
+  <data name="Chunk" xml:space="preserve"><value>작업 단위(4–20초)</value></data>
+  <data name="ChunkSeconds" xml:space="preserve"><value>작업 단위(초)</value></data>
+  <data name="ChunkHint" xml:space="preserve"><value>백그라운드 작업 단위입니다. 자막 길이는 발화에 맞춰집니다.</value></data>
+  <data name="Backfill" xml:space="preserve"><value>탐색 후 되짚을 구간(0–30초)</value></data>
+  <data name="BackfillSeconds" xml:space="preserve"><value>탐색 후 되짚을 구간(초)</value></data>
+  <data name="BackfillHint" xml:space="preserve"><value>탐색 위치보다 앞선 문장 시작 부분을 포함합니다. 겹치는 자막은 병합합니다.</value></data>
+  <data name="PrePause" xml:space="preserve"><value>이전 쉼 탐색 범위(0–5초)</value></data>
+  <data name="PrePauseSeconds" xml:space="preserve"><value>이전 쉼 탐색 범위(초)</value></data>
+  <data name="PostPause" xml:space="preserve"><value>이후 쉼 탐색 범위(0–5초)</value></data>
+  <data name="PostPauseSeconds" xml:space="preserve"><value>이후 쉼 탐색 범위(초)</value></data>
+  <data name="BoundaryHint" xml:space="preserve"><value>후보 구간 바깥의 가까운 쉼을 찾아 자연스러운 경계에서 나눕니다.</value></data>
+  <data name="Diagnostics" xml:space="preserve"><value>진단</value></data>
+  <data name="DiagnosticsToggle" xml:space="preserve"><value>상세 진단 로그 기록</value></data>
+  <data name="DiagnosticsHint" xml:space="preserve"><value>문제 해결 시 켜세요. 꺼도 오류 메시지는 표시됩니다.</value></data>
+  <data name="OpenLogs" xml:space="preserve"><value>로그 폴더 열기</value></data>
+  <data name="Exit" xml:space="preserve"><value>종료</value></data>
+  <data name="SaveStart" xml:space="preserve"><value>저장 후 시작</value></data>
+  <data name="StopService" xml:space="preserve"><value>서비스 중지</value></data>
+  <data name="TrayClose" xml:space="preserve"><value>창을 닫으면 트레이로 최소화됩니다</value></data>
+  <data name="KeySource" xml:space="preserve"><value>API 키 출처</value></data>
+  <data name="KeyEnv" xml:space="preserve"><value>기본값(환경 변수)</value></data>
+  <data name="KeyFile" xml:space="preserve"><value>키 파일</value></data>
+  <data name="KeyDirect" xml:space="preserve"><value>직접 입력</value></data>
+  <data name="ChooseFile" xml:space="preserve"><value>파일 선택</value></data>
+  <data name="KeyPath" xml:space="preserve"><value>API 키 파일 경로</value></data>
+  <data name="Silero" xml:space="preserve"><value>Silero · 기본</value></data>
+  <data name="Fsmn" xml:space="preserve"><value>Alibaba FSMN · 선택 사항</value></data>
+  <data name="BailianProvider" xml:space="preserve"><value>Alibaba Cloud Model Studio · API 키</value></data>
+  <data name="ChatGptProvider" xml:space="preserve"><value>ChatGPT 구독 · OAuth</value></data>
+  <data name="CompatibleProvider" xml:space="preserve"><value>사용자 지정 호환 API · API 키</value></data>
+  <data name="TrayConnecting" xml:space="preserve"><value>AheadSubs · 연결 중</value></data>
+  <data name="ServiceReady" xml:space="preserve"><value>서비스 준비 완료</value></data>
+  <data name="PreviewPlayerHint" xml:space="preserve"><value>PotPlayer에서 Ctrl+Alt+J로 시작하고 Ctrl+Alt+K로 중지하세요.</value></data>
+  <data name="TwoWindows" xml:space="preserve"><value>재생 창 2개가 연결되었습니다.</value></data>
+  <data name="SaveApply" xml:space="preserve"><value>저장 후 적용</value></data>
+  <data name="OpenSettings" xml:space="preserve"><value>설정 열기</value></data>
+  <data name="PotMenu" xml:space="preserve"><value>PotPlayer 미리 읽기</value></data>
+  <data name="LoadingWindows" xml:space="preserve"><value>재생 창을 불러오는 중…</value></data>
+  <data name="StopSubtitles" xml:space="preserve"><value>자막 서비스 중지</value></data>
+  <data name="StopExit" xml:space="preserve"><value>중지 후 종료</value></data>
+  <data name="NoWindows" xml:space="preserve"><value>열린 PotPlayer 창이 없습니다</value></data>
+  <data name="StartLookAhead" xml:space="preserve"><value>미리 읽기 시작</value></data>
+  <data name="StopLookAhead" xml:space="preserve"><value>미리 읽기 중지</value></data>
+  <data name="WindowsFailed" xml:space="preserve"><value>재생 창을 읽을 수 없습니다. 이 메뉴를 다시 여세요.</value></data>
+  <data name="SubtitlesReady" xml:space="preserve"><value>자막 서비스 준비 완료</value></data>
+  <data name="SubtitlesStopped" xml:space="preserve"><value>자막 서비스 중지됨</value></data>
+  <data name="HotkeyHint" xml:space="preserve"><value>PotPlayer 재생 창에서 Ctrl+Alt+J를 눌러 번역을 시작하세요.</value></data>
+  <data name="StartHint" xml:space="preserve"><value>모델을 선택하고 서비스를 시작하세요. 설정을 적용하면 활성 재생 창이 다시 연결됩니다.</value></data>
+  <data name="TrayReady" xml:space="preserve"><value>AheadSubs · 준비 완료</value></data>
+  <data name="TrayStopped" xml:space="preserve"><value>AheadSubs · 중지됨</value></data>
+  <data name="Sessions" xml:space="preserve"><value>연결된 재생 세션: {0:N0}</value></data>
+  <data name="NoSessions" xml:space="preserve"><value>연결된 재생 창이 없습니다.</value></data>
+  <data name="ConnectionFailed" xml:space="preserve"><value>서비스에 연결할 수 없습니다</value></data>
+  <data name="LocalModel" xml:space="preserve"><value>[로컬] {0}</value></data>
+  <data name="CloudWhisper" xml:space="preserve"><value>[클라우드] OpenAI Whisper</value></data>
+  <data name="ConfiguredSpeech" xml:space="preserve"><value>[사용자 지정] 설정된 음성 인식 API</value></data>
+  <data name="LocalNllb" xml:space="preserve"><value>[로컬] NLLB-200 600M INT8 · CPU / CUDA</value></data>
+  <data name="CloudGpt" xml:space="preserve"><value>[클라우드] OpenAI GPT-4.1 mini</value></data>
+  <data name="CloudChatGpt" xml:space="preserve"><value>[클라우드] ChatGPT 구독</value></data>
+  <data name="CloudModel" xml:space="preserve"><value>[클라우드] {0}</value></data>
+  <data name="CloudOpenAi" xml:space="preserve"><value>[클라우드] OpenAI {0}</value></data>
+  <data name="ConfiguredTranslation" xml:space="preserve"><value>[사용자 지정] 설정된 번역 API</value></data>
+  <data name="ContextHint" xml:space="preserve"><value>이전 구간을 참고하면 지시어나 용어를 정확하게 번역할 수 있지만 토큰 사용량과 지연이 늘 수 있습니다. 0이면 프롬프트만 사용합니다.</value></data>
+  <data name="PromptHint" xml:space="preserve"><value>영어 프롬프트로 분야나 자막 스타일을 지정하세요.</value></data>
+  <data name="SubscriptionUsage" xml:space="preserve"><value>ChatGPT 구독 사용 · {0}</value></data>
+  <data name="ChooseModel" xml:space="preserve"><value>로그인하고 모델을 선택하세요</value></data>
+  <data name="MinimaxUsage" xml:space="preserve"><value>사용량 산정은 MiniMax 키 유형에 따라 다릅니다.</value></data>
+  <data name="RunsLocally" xml:space="preserve"><value>로컬에서 실행</value></data>
+  <data name="MissingModels" xml:space="preserve"><value>설치된 로컬 모델을 선택하거나 본인의 클라우드 API 계정을 사용하세요.</value></data>
+  <data name="InvalidCues" xml:space="preserve"><value>이전 구간 수는 0–8 사이의 정수를 입력하세요.</value></data>
+  <data name="InvalidChars" xml:space="preserve"><value>구간당 글자 수는 20–1000 사이의 정수를 입력하세요.</value></data>
+  <data name="SelectModels" xml:space="preserve"><value>음성 인식 및 번역 모델을 선택하세요. 로컬 모델은 먼저 로컬 모델 페이지에서 설치하세요.</value></data>
+  <data name="InvalidChunk" xml:space="preserve"><value>작업 단위는 4–20초 사이의 정수를 입력하세요.</value></data>
+  <data name="InvalidMaximum" xml:space="preserve"><value>최대 발화 시간은 2–20초 사이로 입력하세요.</value></data>
+  <data name="TimedOut" xml:space="preserve"><value>서비스 응답 시간이 초과되었습니다. 나중에 다시 시도하고 문제가 지속되면 진단 로그를 켜세요.</value></data>
+  <data name="Applying" xml:space="preserve"><value>설정을 적용하고 재생 창을 다시 연결하는 중…</value></data>
+  <data name="Applied" xml:space="preserve"><value>설정을 적용했습니다. 플레이어에서 Ctrl+Alt+J를 눌러 번역을 시작하세요.</value></data>
+  <data name="Stopping" xml:space="preserve"><value>서비스 중지 및 리소스 해제 중…</value></data>
+  <data name="Stopped" xml:space="preserve"><value>서비스를 중지하고 리소스를 해제했습니다.</value></data>
+  <data name="Configured" xml:space="preserve"><value>설정됨</value></data>
+  <data name="PartiallyConfigured" xml:space="preserve"><value>일부 설정됨</value></data>
+  <data name="NotConfigured" xml:space="preserve"><value>설정되지 않음</value></data>
+  <data name="MissingLocation" xml:space="preserve"><value>위치를 찾을 수 없음</value></data>
+  <data name="ChoosePot" xml:space="preserve"><value>PotPlayer 설치 폴더 선택</value></data>
+  <data name="ChooseMpv" xml:space="preserve"><value>mpv 설정 폴더 선택</value></data>
+  <data name="Configuring" xml:space="preserve"><value>설정 중…</value></data>
+  <data name="PlayerConfigured" xml:space="preserve"><value>설정했습니다. 플레이어를 다시 시작하세요.</value></data>
+  <data name="Uninstalling" xml:space="preserve"><value>제거 중…</value></data>
+  <data name="PlayerRemoved" xml:space="preserve"><value>제거했습니다. 플레이어를 다시 시작하세요.</value></data>
+  <data name="SavingKey" xml:space="preserve"><value>키 저장 중…</value></data>
+  <data name="CustomSpeech" xml:space="preserve"><value>[사용자 지정] 음성 인식 API</value></data>
+  <data name="CustomTranslation" xml:space="preserve"><value>[사용자 지정] 번역 API</value></data>
+  <data name="Authorized" xml:space="preserve"><value>ChatGPT 구독이 승인되었습니다.</value></data>
+  <data name="AuthorizedRefresh" xml:space="preserve"><value>ChatGPT 구독이 승인되었습니다. 모델 목록을 새로 고치세요.</value></data>
+  <data name="AuthorizeAgain" xml:space="preserve"><value>ChatGPT 구독을 다시 인증하세요.</value></data>
+  <data name="BrowserSignIn" xml:space="preserve"><value>브라우저에서 로그인해 구독을 인증하세요.</value></data>
+  <data name="SignedOut" xml:space="preserve"><value>ChatGPT에서 로그아웃했습니다.</value></data>
+  <data name="SignedOutLocal" xml:space="preserve"><value>이 기기에서 로그아웃했습니다. ChatGPT 설정에서 권한이 해제되었는지 확인하세요.</value></data>
+  <data name="SigningIn" xml:space="preserve"><value>브라우저에서 ChatGPT 로그인 및 인증을 완료하세요…</value></data>
+  <data name="SigningOut" xml:space="preserve"><value>ChatGPT에서 로그아웃 중…</value></data>
+  <data name="LoadingModels" xml:space="preserve"><value>ChatGPT 모델을 불러오는 중…</value></data>
+  <data name="OpeningLogs" xml:space="preserve"><value>로그 폴더 여는 중…</value></data>
+  <data name="NoLogs" xml:space="preserve"><value>로그 폴더가 아직 생성되지 않았습니다.</value></data>
+  <data name="LogsOpened" xml:space="preserve"><value>로그 폴더를 열었습니다.</value></data>
+  <data name="TrayTitle" xml:space="preserve"><value>자막 번역이 백그라운드에서 실행 중입니다</value></data>
+  <data name="TrayBody" xml:space="preserve"><value>트레이 아이콘을 두 번 클릭하면 설정이 열립니다. 리소스를 해제하려면 메뉴에서 ‘중지 후 종료’를 선택하세요.</value></data>
+  <data name="WaitExit" xml:space="preserve"><value>현재 작업이 끝난 후 종료하세요.</value></data>
+  <data name="Exiting" xml:space="preserve"><value>서비스 중지 후 종료 중…</value></data>
+  <data name="ExitFailed" xml:space="preserve"><value>종료하지 못했습니다: {0}</value></data>
+  <data name="ConfirmExit" xml:space="preserve"><value>서비스 중지를 확인하지 못했습니다. 설정 창만 닫을까요? 백그라운드 프로세스가 계속 실행될 수 있습니다.</value></data>
+  <data name="ExitTitle" xml:space="preserve"><value>자막 번역 종료</value></data>
+  <data name="MissingRuntime" xml:space="preserve"><value>포함된 런타임을 찾을 수 없습니다. 전체 패키지를 풀고 UI 폴더를 함께 두세요.</value></data>
+  <data name="LaunchFailed" xml:space="preserve"><value>자막 서비스를 시작할 수 없습니다.</value></data>
+  <data name="InvalidResponse" xml:space="preserve"><value>서비스 응답이 잘못되었습니다. 고급 설정에서 진단 로그를 켜고 다시 시도하세요.</value></data>
+  <data name="BackendFailed" xml:space="preserve"><value>작업이 실패했습니다. 진단 로그를 확인하세요.</value></data>
+  <data name="ReplaceKey" xml:space="preserve"><value>암호화해 저장했습니다. 새 키를 입력하면 교체됩니다.</value></data>
+  <data name="EncryptedKey" xml:space="preserve"><value>현재 Windows 사용자 계정에 암호화해 저장합니다.</value></data>
+  <data name="ChooseKey" xml:space="preserve"><value>API 키 파일 선택</value></data>
+  <data name="InterfaceLanguage" xml:space="preserve"><value>인터페이스 언어</value></data>
+  <data name="FollowSystem" xml:space="preserve"><value>Windows 표시 언어 따르기</value></data>
+  <data name="PreferenceFailed" xml:space="preserve"><value>인터페이스 언어를 저장하지 못했습니다.</value></data>
+  <data name="HourlyUsd" xml:space="preserve"><value>시간당 약 US${0:F2}–{1:F2}</value></data>
+  <data name="HourlyCny" xml:space="preserve"><value>시간당 약 CN¥{0:F2}–{1:F2}</value></data>
+</root>

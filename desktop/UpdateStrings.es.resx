@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="Title" xml:space="preserve"><value>Actualizaciones</value></data>
+  <data name="CurrentVersion" xml:space="preserve"><value>Versión actual: {0}</value></data>
+  <data name="Automatic" xml:space="preserve"><value>Buscar actualizaciones automáticamente en GitHub</value></data>
+  <data name="Check" xml:space="preserve"><value>Buscar actualizaciones</value></data>
+  <data name="Notes" xml:space="preserve"><value>Notas de la versión</value></data>
+  <data name="Portable" xml:space="preserve"><value>Descargar ZIP portátil</value></data>
+  <data name="Install" xml:space="preserve"><value>Descargar e instalar…</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Cancelar descarga</value></data>
+  <data name="Checking" xml:space="preserve"><value>Buscando actualizaciones…</value></data>
+  <data name="Available" xml:space="preserve"><value>AheadSubs {0} está disponible</value></data>
+  <data name="Notification" xml:space="preserve"><value>Abre la configuración avanzada para ver la actualización.</value></data>
+  <data name="UpToDate" xml:space="preserve"><value>No hay una versión estable más reciente.</value></data>
+  <data name="CheckFailed" xml:space="preserve"><value>No se pudieron buscar actualizaciones. Inténtalo más tarde.</value></data>
+  <data name="PreferenceFailed" xml:space="preserve"><value>No se pudo guardar la preferencia de actualización.</value></data>
+  <data name="BrowserFailed" xml:space="preserve"><value>No se pudo abrir el navegador. Comprueba el navegador predeterminado e inténtalo de nuevo.</value></data>
+  <data name="Confirm" xml:space="preserve"><value>¿Descargar AheadSubs {0} ({1:N0} MiB)? Tras verificarlo, se detendrá el servicio de subtítulos y se cerrará la aplicación para ejecutar el instalador. Guarda primero los ajustes pendientes.</value></data>
+  <data name="Downloading" xml:space="preserve"><value>Descargando y verificando el instalador…</value></data>
+  <data name="Stopping" xml:space="preserve"><value>Deteniendo el servicio de subtítulos antes de instalar…</value></data>
+  <data name="Canceled" xml:space="preserve"><value>Descarga cancelada.</value></data>
+  <data name="Busy" xml:space="preserve"><value>Espera a que termine la operación y vuelve a intentar la actualización.</value></data>
+  <data name="DownloadFailed" xml:space="preserve"><value>No se pudo descargar o verificar el instalador de esta edición. Inténtalo de nuevo o abre las notas de la versión.</value></data>
+  <data name="InstallFailed" xml:space="preserve"><value>No se pudo preparar la actualización. Comprueba el servicio de subtítulos y reinténtalo o abre las notas de la versión.</value></data>
+  <data name="SetupFailed" xml:space="preserve"><value>El instalador no pudo completar la actualización. Vuelve a abrir AheadSubs o descarga el instalador desde GitHub Releases.</value></data>
+</root>

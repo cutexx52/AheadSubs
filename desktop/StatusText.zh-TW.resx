@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="Title" xml:space="preserve"><value>狀態</value></data>
+  <data name="Refresh" xml:space="preserve"><value>立即重新整理</value></data>
+  <data name="Checking" xml:space="preserve"><value>正在檢查…</value></data>
+  <data name="Offline" xml:space="preserve"><value>服務未響應</value></data>
+  <data name="Unsupported" xml:space="preserve"><value>當前後臺不支援狀態頁</value></data>
+  <data name="Checked" xml:space="preserve"><value>檢查於 {0} · 每 3 秒重新整理</value></data>
+  <data name="Preview" xml:space="preserve"><value>示例資料</value></data>
+  <data name="Service" xml:space="preserve"><value>字幕服務</value></data>
+  <data name="Ready" xml:space="preserve"><value>已就緒</value></data>
+  <data name="Degraded" xml:space="preserve"><value>有模型未就緒</value></data>
+  <data name="ServiceHint" xml:space="preserve"><value>可在「字幕」頁啟動或重啟服務。</value></data>
+  <data name="Workers" xml:space="preserve"><value>處理槽位使用中 {0:N0} / {1:N0}</value></data>
+  <data name="Connections" xml:space="preserve"><value>{0:N0} 路播放連線</value></data>
+  <data name="Sources" xml:space="preserve"><value>播放連線</value></data>
+  <data name="Unavailable" xml:space="preserve"><value>正在等待服務。</value></data>
+  <data name="NoConnections" xml:space="preserve"><value>在播放器中開啟 AheadSubs 後，這裡會顯示連線。</value></data>
+  <data name="SourcePlayback" xml:space="preserve"><value>{0} · {1:N0} 路播放</value></data>
+  <data name="SourceText" xml:space="preserve"><value>{0} · {2:N0} 個文字請求處理中</value></data>
+  <data name="SourceBoth" xml:space="preserve"><value>{0} · {1:N0} 路播放，{2:N0} 個文字請求處理中</value></data>
+  <data name="Source_potplayer" xml:space="preserve"><value>PotPlayer</value></data>
+  <data name="Source_mpv" xml:space="preserve"><value>mpv</value></data>
+  <data name="Source_cli" xml:space="preserve"><value>命令列</value></data>
+  <data name="Source_mcp" xml:space="preserve"><value>MCP</value></data>
+  <data name="Source_http" xml:space="preserve"><value>其他 HTTP 客戶端</value></data>
+  <data name="ModelsAndResources" xml:space="preserve"><value>模型與本機資源</value></data>
+  <data name="Models" xml:space="preserve"><value>啟用的模型</value></data>
+  <data name="NoModels" xml:space="preserve"><value>暫無啟用的模型。</value></data>
+  <data name="ResourceScope" xml:space="preserve"><value>字幕服務及其子程序</value></data>
+  <data name="ModelTitle" xml:space="preserve"><value>{0} · {1}</value></data>
+  <data name="ModelState" xml:space="preserve"><value>{0} · {1}</value></data>
+  <data name="Role_asr" xml:space="preserve"><value>語音識別</value></data>
+  <data name="Role_ast" xml:space="preserve"><value>語音翻譯</value></data>
+  <data name="Role_mt" xml:space="preserve"><value>文字翻譯</value></data>
+  <data name="Role_vad" xml:space="preserve"><value>語音活動檢測</value></data>
+  <data name="Device_cpu" xml:space="preserve"><value>CPU</value></data>
+  <data name="Device_cuda" xml:space="preserve"><value>NVIDIA CUDA</value></data>
+  <data name="Device_vulkan" xml:space="preserve"><value>Vulkan GPU</value></data>
+  <data name="Device_cloud" xml:space="preserve"><value>雲端</value></data>
+  <data name="Device_external" xml:space="preserve"><value>外部本地服務</value></data>
+  <data name="State_loaded" xml:space="preserve"><value>已載入</value></data>
+  <data name="State_unavailable" xml:space="preserve"><value>未響應</value></data>
+  <data name="State_unverified" xml:space="preserve"><value>載入狀態未知</value></data>
+  <data name="State_configured" xml:space="preserve"><value>已配置</value></data>
+  <data name="Vram" xml:space="preserve"><value>獨立視訊記憶體</value></data>
+  <data name="Percent" xml:space="preserve"><value>{0:N1}%</value></data>
+  <data name="GiB" xml:space="preserve"><value>{0:N2} GiB</value></data>
+  <data name="MiB" xml:space="preserve"><value>{0:N1} MiB</value></data>
+  <data name="Ratio" xml:space="preserve"><value>{0:N2}×</value></data>
+  <data name="Seconds" xml:space="preserve"><value>{0:N2} 秒</value></data>
+  <data name="Missing" xml:space="preserve"><value>—</value></data>
+  <data name="Performance" xml:space="preserve"><value>字幕效能</value></data>
+  <data name="Rtf" xml:space="preserve"><value>RTF 中位數</value></data>
+  <data name="NoSamples" xml:space="preserve"><value>正在等待新的字幕處理樣本。</value></data>
+  <data name="Samples" xml:space="preserve"><value>最近 15 分鐘 · {0:N0} 個 RTF 樣本 · {1:N0} 個延遲樣本</value></data>
+  <data name="PerformanceHint" xml:space="preserve"><value>RTF 低於 1× 表示處理比播放快。P50 / P95 / P99 衡量從播放更新到字幕可用的等待時間。</value></data>
+  <data name="Cloud" xml:space="preserve"><value>雲端用量</value></data>
+  <data name="Week" xml:space="preserve"><value>UTC 周</value></data>
+  <data name="ThisWeek" xml:space="preserve"><value>本週 · {0} 至 {1}</value></data>
+  <data name="WeekRange" xml:space="preserve"><value>{0} 至 {1}</value></data>
+  <data name="CloudHint" xml:space="preserve"><value>僅統計本機 · 每週從 UTC 週一開始。美元估算基於已知用量和公開費率，未計稅費和優惠。</value></data>
+  <data name="Model" xml:space="preserve"><value>模型</value></data>
+  <data name="Calls" xml:space="preserve"><value>呼叫量</value></data>
+  <data name="Usage" xml:space="preserve"><value>已知用量</value></data>
+  <data name="Estimate" xml:space="preserve"><value>估算花費</value></data>
+  <data name="CallTotal" xml:space="preserve"><value>{0:N0} 次呼叫</value></data>
+  <data name="CostTotal" xml:space="preserve"><value>{0:N0} 次呼叫 · 估算 {1}</value></data>
+  <data name="PartialTotal" xml:space="preserve"><value>{0:N0} 次呼叫 · 部分呼叫估算 {1}</value></data>
+  <data name="PartialCost" xml:space="preserve"><value>{0} · {1:N0}/{2:N0} 次可估算</value></data>
+  <data name="HistoryUnavailable" xml:space="preserve"><value>無法讀取雲端用量。可嘗試重新整理。</value></data>
+  <data name="HistoryIncomplete" xml:space="preserve"><value>部分用量未能記錄或讀取，合計可能不完整。</value></data>
+  <data name="NoUsage" xml:space="preserve"><value>本週暫無雲端模型呼叫記錄。</value></data>
+  <data name="NoEstimate" xml:space="preserve"><value>無法估算</value></data>
+  <data name="Subscription" xml:space="preserve"><value>訂閱額度</value></data>
+  <data name="Tokens" xml:space="preserve"><value>輸入 {0:N0} / 輸出 {1:N0} Token</value></data>
+  <data name="Minutes" xml:space="preserve"><value>{0:N2} 分鐘音訊</value></data>
+  <data name="Failures" xml:space="preserve"><value>{0:N0} 次失敗</value></data>
+  <data name="USD" xml:space="preserve"><value>US${0:N4}</value></data>
+  <data name="SmallCost" xml:space="preserve"><value>低於 US$0.0001</value></data>
+  <data name="CustomModel" xml:space="preserve"><value>自定義模型</value></data>
+  <data name="ProviderRole" xml:space="preserve"><value>{0} · {1}</value></data>
+  <data name="Provider_openai" xml:space="preserve"><value>OpenAI</value></data>
+  <data name="Provider_dashscope" xml:space="preserve"><value>阿里雲百鍊</value></data>
+  <data name="Provider_chatgpt" xml:space="preserve"><value>ChatGPT</value></data>
+  <data name="Provider_minimax" xml:space="preserve"><value>MiniMax</value></data>
+  <data name="Provider_minimax_plan" xml:space="preserve"><value>MiniMax M Plan</value></data>
+  <data name="Provider_compatible" xml:space="preserve"><value>相容介面</value></data>
+</root>

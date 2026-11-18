@@ -33,6 +33,10 @@ public partial class MainWindow : Window
     private JsonObject settings = new();
     private JsonObject models = new();
     private JsonObject integrations = new();
+    private JsonObject? lastAutomation;
+    private bool? serviceRunning;
+    private int? sessionCount;
+    private Exception? serviceFailure;
     private JsonArray chatGptAccounts = new();
     private string miniMaxModel = "MiniMax-M3.1-Flash";
     private bool mcpEnabled, cliInstalled;
@@ -43,28 +47,22 @@ public partial class MainWindow : Window
     {
         previewMode = preview;
         InitializeComponent();
+        ApplyWindowLanguage();
         LoadAutomationText();
         InitializeFolderTasks();
         InitializeInspection();
-        SourceLanguage.ItemsSource = new Choice[] { new("自动识别", ""), new("日语", "ja"),
-            new("英语", "en"), new("中文", "zh"), new("韩语", "ko") };
-        TargetLanguage.ItemsSource = new Choice[] { new("简体中文", "zh"), new("繁體中文", "zh-TW"),
-            new("日语", "ja"), new("英语", "en"), new("韩语", "ko"), new("法语", "fr"), new("德语", "de"), new("西班牙语", "es") };
-        InitializeSetup();
-        Vad.ItemsSource = new Choice[] { new("Silero · 默认", "silero"), new("阿里 FSMN · 可选", "fsmn") };
-        CloudProvider.ItemsSource = new Choice[] { new("阿里云百炼 · API Key", "dashscope"),
-            new("OpenAI · API Key", "openai"), new("ChatGPT 订阅 · OAuth", "chatgpt"),
-            new("MiniMax · API Key", "minimax"), new("自定义兼容接口 · API Key", "compatible") };
+        LocalizeChoices();
         CloudProvider.SelectedIndex = 0;
-        DashScopeSpeech.ItemsSource = DashScopeSpeechModels.Select(CloudChoice).ToArray();
-        DashScopeTranslation.ItemsSource = DashScopeTranslationModels.Select(CloudChoice).ToArray();
+        InitializeSetup();
+        PopulateLanguagePicker();
+        InterfaceLanguage.SelectionChanged += InterfaceLanguageChanged;
         using var iconStream = System.Windows.Application.GetResourceStream(
             new Uri("Assets/AheadSubs.ico", UriKind.Relative)).Stream;
         var appIcon = new System.Drawing.Icon(iconStream);
         tray = new Forms.NotifyIcon
         {
             Icon = appIcon,
-            Text = "AheadSubs · 正在连接", Visible = !preview,
+            Text = UiText.Get("TrayConnecting"), Visible = !preview,
             ContextMenuStrip = new Forms.ContextMenuStrip()
         };
         tray.Disposed += (_, _) => appIcon.Dispose();
@@ -79,9 +77,9 @@ public partial class MainWindow : Window
             UpdatePlayers();
             UpdateModelDownloads();
             LoadControls(); initialized = true;
-            ServiceStatus.Text = "服务已就绪"; ServiceDetail.Text = "在 PotPlayer 播放窗口按 Ctrl+Alt+J 开启，Ctrl+Alt+K 关闭。";
-            SessionStatus.Text = "已连接 2 个播放窗口。"; SessionStatus.Visibility = Visibility.Visible;
-            ApplyButton.Content = "保存并应用";
+            serviceRunning = true;
+            sessionCount = 2;
+            RenderServiceStatus();
             LoadInspectionPreview();
             UpdateAutomation(JsonNode.Parse("""
                 {"mcp_enabled":true,"cli_available":true,"cli_installed":false,
@@ -105,19 +103,30 @@ public partial class MainWindow : Window
                 """)!.AsObject());
             return;
         }
+        Activated += (_, _) =>
+        {
+            var previous = InterfaceLocale.Culture;
+            if (InterfaceLocale.Preference == InterfaceLocale.Automatic && InterfaceLocale.Apply(null)) RefreshLanguage(previous);
+        };
         StatusDashboard.Enable(bridge);
         StateChanged += (_, _) => StatusDashboard.SetWindowActive(WindowState != WindowState.Minimized);
-        tray.ContextMenuStrip.Items.Add("打开设置", null, (_, _) => Dispatcher.Invoke(ShowSettings));
-        var potMenu = new Forms.ToolStripMenuItem("PotPlayer 预读");
-        potMenu.DropDownItems.Add("读取播放窗口…");
-        potMenu.DropDownOpening += async (_, _) => await LoadPotPlayerMenu(potMenu);
-        tray.ContextMenuStrip.Items.Add(potMenu);
-        tray.ContextMenuStrip.Items.Add("停止字幕服务", null, (_, _) => Dispatcher.Invoke(() => Stop(this, new RoutedEventArgs())));
-        tray.ContextMenuStrip.Items.Add(new Forms.ToolStripSeparator());
-        tray.ContextMenuStrip.Items.Add("停止并退出", null, (_, _) => Dispatcher.Invoke(() => Exit(this, new RoutedEventArgs())));
+        LoadTrayMenu();
         tray.DoubleClick += (_, _) => Dispatcher.Invoke(ShowSettings);
         InitializeUpdates();
         Loaded += async (_, _) => await Refresh(loadSettings: true);
+    }
+
+    private void LoadTrayMenu()
+    {
+        while (tray.ContextMenuStrip!.Items.Count > 0) tray.ContextMenuStrip.Items[0].Dispose();
+        tray.ContextMenuStrip.Items.Add(UiText.Get("OpenSettings"), null, (_, _) => Dispatcher.Invoke(ShowSettings));
+        var potMenu = new Forms.ToolStripMenuItem(UiText.Get("PotMenu"));
+        potMenu.DropDownItems.Add(UiText.Get("LoadingWindows"));
+        potMenu.DropDownOpening += async (_, _) => await LoadPotPlayerMenu(potMenu);
+        tray.ContextMenuStrip.Items.Add(potMenu);
+        tray.ContextMenuStrip.Items.Add(UiText.Get("StopSubtitles"), null, (_, _) => Dispatcher.Invoke(() => Stop(this, new RoutedEventArgs())));
+        tray.ContextMenuStrip.Items.Add(new Forms.ToolStripSeparator());
+        tray.ContextMenuStrip.Items.Add(UiText.Get("StopExit"), null, (_, _) => Dispatcher.Invoke(() => Exit(this, new RoutedEventArgs())));
     }
 
     public void ShowSettings()
@@ -138,7 +147,7 @@ public partial class MainWindow : Window
     private async Task LoadPotPlayerMenu(Forms.ToolStripMenuItem menu)
     {
         menu.DropDownItems.Clear();
-        menu.DropDownItems.Add(new Forms.ToolStripMenuItem("读取播放窗口…") { Enabled = false });
+        menu.DropDownItems.Add(new Forms.ToolStripMenuItem(UiText.Get("LoadingWindows")) { Enabled = false });
         try
         {
             using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
@@ -146,7 +155,7 @@ public partial class MainWindow : Window
             var windows = (result["windows"] as JsonArray ?? new()).OfType<JsonObject>().ToList();
             menu.DropDownItems.Clear();
             if (windows.Count == 0)
-                menu.DropDownItems.Add(new Forms.ToolStripMenuItem("没有打开的 PotPlayer 窗口") { Enabled = false });
+                menu.DropDownItems.Add(new Forms.ToolStripMenuItem(UiText.Get("NoWindows")) { Enabled = false });
             foreach (var window in windows)
             {
                 string id = window["id"]?.ToString() ?? "";
@@ -157,14 +166,14 @@ public partial class MainWindow : Window
                     menu.DropDownItems.Add(entry);
                     items = entry.DropDownItems;
                 }
-                items.Add("开启预读", null, async (_, _) => await ControlPotPlayer("pot-start", id));
-                items.Add("关闭预读", null, async (_, _) => await ControlPotPlayer("pot-stop", id));
+                items.Add(UiText.Get("StartLookAhead"), null, async (_, _) => await ControlPotPlayer("pot-start", id));
+                items.Add(UiText.Get("StopLookAhead"), null, async (_, _) => await ControlPotPlayer("pot-stop", id));
             }
         }
         catch (Exception)
         {
             menu.DropDownItems.Clear();
-            menu.DropDownItems.Add(new Forms.ToolStripMenuItem("无法读取窗口，请重新打开此菜单") { Enabled = false });
+            menu.DropDownItems.Add(new Forms.ToolStripMenuItem(UiText.Get("WindowsFailed")) { Enabled = false });
         }
     }
 
@@ -197,7 +206,6 @@ public partial class MainWindow : Window
 
     private void LoadAutomationText()
     {
-        AutomationTab.Language = System.Windows.Markup.XmlLanguage.GetLanguage(AutomationText.Culture.Name);
         AutomationTab.Header = AutomationTitle.Text = AutomationText.Get("Title");
         AutomationIntro.Text = AutomationText.Get("Intro");
         McpHint.Text = AutomationText.Get("McpHint");
@@ -212,6 +220,7 @@ public partial class MainWindow : Window
 
     private void UpdateAutomation(JsonObject result)
     {
+        lastAutomation = result;
         mcpEnabled = result["mcp_enabled"]?.GetValue<bool>() == true;
         cliInstalled = result["cli_installed"]?.GetValue<bool>() == true;
         bool cliAvailable = result["cli_available"]?.GetValue<bool>() == true;
@@ -297,7 +306,7 @@ public partial class MainWindow : Window
 
     private void VadChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (VadThreshold is null) return;
+        if (localizing || VadThreshold is null) return;
         double oldDefault = previousVad == "fsmn" ? 0.8 : 0.5;
         if (string.IsNullOrWhiteSpace(VadThreshold.Text) ||
             (double.TryParse(VadThreshold.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out double current) && Math.Abs(current - oldDefault) < 0.0001))
@@ -321,22 +330,12 @@ public partial class MainWindow : Window
             string previousModels = models.ToJsonString();
             activeModels = (result["active_models"] as JsonArray ?? new()).Select(item => item!.GetValue<string>()).ToHashSet();
             models = result["models"] as JsonObject ?? new();
-            bool running = result["running"]?.GetValue<bool>() == true;
-            ServiceStatus.Text = running ? "字幕服务已就绪" : "字幕服务已停止";
-            ServiceDetail.Text = running
-                ? "在 PotPlayer 播放窗口按 Ctrl+Alt+J，开始为该窗口翻译。"
-                : "选择模型后启动服务。已开启的播放窗口会在应用设置后自动接续。";
-            tray.Text = running ? "AheadSubs · 服务就绪" : "AheadSubs · 已停止";
-            ApplyButton.Content = running ? "保存并应用" : "保存并启动";
-            StopButton.IsEnabled = running && !busy;
+            serviceRunning = result["running"]?.GetValue<bool>() == true;
+            serviceFailure = null;
+            sessionCount = result["active_sessions"]?.GetValue<int>();
+            RenderServiceStatus();
             integrations = result["integrations"] as JsonObject ?? new();
             UpdatePlayers();
-            if (result["active_sessions"] is JsonValue sessionCount && sessionCount.TryGetValue<int>(out int count))
-            {
-                SessionStatus.Text = count > 0 ? $"已连接 {count} 个播放会话。" : "尚未连接播放窗口。";
-                SessionStatus.Visibility = Visibility.Visible;
-            }
-            else SessionStatus.Visibility = Visibility.Collapsed;
             if (loadSettings || !initialized)
             {
                 settings = result["settings"] as JsonObject ?? new();
@@ -367,47 +366,65 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            ServiceStatus.Text = "无法连接后台";
-            ServiceDetail.Text = Friendly(ex);
+            serviceFailure = ex;
+            RenderServiceStatus();
             if (!initialized) { LoadControls(); SourceLanguage.SelectedIndex = 0; TargetLanguage.SelectedIndex = 0; Vad.SelectedIndex = 0; }
         }
         finally { refreshing = false; }
     }
 
-    private void PopulateModels()
+    private void RenderServiceStatus()
     {
-        string speech = Setting("asr", "qwen") switch
+        if (serviceFailure is not null)
+        {
+            ServiceStatus.Text = UiText.Get("ConnectionFailed");
+            ServiceDetail.Text = Friendly(serviceFailure);
+            return;
+        }
+        if (serviceRunning is not bool running) return;
+        ServiceStatus.Text = UiText.Get(running ? "SubtitlesReady" : "SubtitlesStopped");
+        ServiceDetail.Text = UiText.Get(running ? "HotkeyHint" : "StartHint");
+        tray.Text = UiText.Get(running ? "TrayReady" : "TrayStopped");
+        ApplyButton.Content = UiText.Get(running ? "SaveApply" : "SaveStart");
+        StopButton.IsEnabled = running && !busy;
+        SessionStatus.Text = sessionCount is > 0 ? UiText.Get("Sessions", sessionCount.Value) : UiText.Get("NoSessions");
+        SessionStatus.Visibility = sessionCount.HasValue ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void PopulateModels(string? selectedSpeech = null, string? selectedTranslation = null)
+    {
+        string speech = selectedSpeech ?? (Setting("asr", "qwen") switch
         { "qwen" => "qwen-" + Setting("qwen_size", "0.6b"), "local" => "whisper-small",
-          "dashscope" => Setting("dashscope_asr_model", DashScopeSpeechModels[0].Value), var other => other };
-        string translation = Setting("mt", "local") switch
-        { "local" => "nllb", "qwen-mt" => Setting("qwen_mt_model", "qwen-mt-flash"), "openai" => Setting("llm_model", "gpt-4.1-mini"), var other => other };
+          "dashscope" => Setting("dashscope_asr_model", DashScopeSpeechModels[0].Value), var other => other });
+        string translation = selectedTranslation ?? (Setting("mt", "local") switch
+        { "local" => "nllb", "qwen-mt" => Setting("qwen_mt_model", "qwen-mt-flash"), "openai" => Setting("llm_model", "gpt-4.1-mini"), var other => other });
         var speechOptions = LocalModels.Where(m => m.Value != "nllb" && Installed(m.Value))
-            .Select(m => new Choice("[本地] " + m.Label, m.Value)).ToList();
-        speechOptions.Add(new("[云端] OpenAI Whisper", "openai"));
+            .Select(m => new Choice(UiText.Get("LocalModel", m.Label), m.Value)).ToList();
+        speechOptions.Add(new(UiText.Get("CloudWhisper"), "openai"));
         speechOptions.AddRange(DashScopeSpeechModels.Select(CloudChoice));
-        if (speech == "compatible") speechOptions.Add(new("[自定义] 已配置的语音识别 API", "compatible"));
+        if (speech == "compatible") speechOptions.Add(new(UiText.Get("ConfiguredSpeech"), "compatible"));
         SpeechModel.ItemsSource = speechOptions;
         SpeechModel.SelectedValue = speech;
         var translationOptions = new List<Choice>();
-        if (Installed("nllb")) translationOptions.Add(new("[本地] NLLB-200 600M INT8 · CPU / CUDA", "nllb"));
+        if (Installed("nllb")) translationOptions.Add(new(UiText.Get("LocalNllb"), "nllb"));
         translationOptions.AddRange(DashScopeTranslationModels.Select(CloudChoice));
-        translationOptions.Add(new("[云端] OpenAI GPT-4.1 mini", "gpt-4.1-mini"));
-        translationOptions.Add(new("[云端] ChatGPT 订阅", "chatgpt"));
-        translationOptions.Add(new("[云端] " + miniMaxModel, "minimax"));
-        if (Setting("mt") == "openai" && !translationOptions.Any(m => m.Value == translation))
-            translationOptions.Add(new("[云端] OpenAI " + translation, translation));
-        if (translation == "compatible") translationOptions.Add(new("[自定义] 已配置的翻译 API", "compatible"));
+        translationOptions.Add(new(UiText.Get("CloudGpt"), "gpt-4.1-mini"));
+        translationOptions.Add(new(UiText.Get("CloudChatGpt"), "chatgpt"));
+        translationOptions.Add(new(UiText.Get("CloudModel", miniMaxModel), "minimax"));
+        if (translation.Length > 0 && translation != "compatible" && !translationOptions.Any(m => m.Value == translation) && (Setting("mt") == "openai" || selectedTranslation is not null))
+            translationOptions.Add(new(UiText.Get("CloudOpenAi", translation), translation));
+        if (translation == "compatible") translationOptions.Add(new(UiText.Get("ConfiguredTranslation"), "compatible"));
         TranslationModel.ItemsSource = translationOptions;
         TranslationModel.SelectedValue = translation;
         UpdateFolderModelChoices(Selected(FolderRuleSpeechModel), Selected(FolderRuleTranslationModel));
         UpdateContext();
     }
 
-    private static Choice CloudChoice(Choice model) => model with { Label = "[云端] " + model.Label };
+    private static Choice CloudChoice(Choice model) => model with { Label = UiText.Get("CloudModel", model.Label) };
 
     private void SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (TranslationEnhancement is not null && TranslationHint is not null) UpdateContext();
+        if (!localizing && TranslationEnhancement is not null && TranslationHint is not null) UpdateContext();
     }
 
     private void UpdateContext()
@@ -437,12 +454,12 @@ public partial class MainWindow : Window
         TranslationEnhancement.Visibility = key is null ? Visibility.Collapsed : Visibility.Visible;
         PreviousCuesPanel.Visibility = contextual ? Visibility.Visible : Visibility.Collapsed;
         TranslationCapabilityHint.Text = contextual
-            ? "参考前文有助于译准指代和术语，也可能增加 token 用量和延迟。片段数填 0 时只用提示词。"
-            : "用英文提示词指定领域或字幕风格。";
-        TranslationHint.Text = mt == "chatgpt" ? "使用 ChatGPT 订阅额度 · " + (ChatGptModel.SelectedItem is Choice modelChoice ? modelChoice.Label : "请先登录并选择模型")
-            : mt == "minimax" ? "用量由 MiniMax Key 类型决定。"
-            : mt == "nllb" ? "本地运行"
-            : mt.Length == 0 ? "请选择已安装的本地模型，或使用自己的云端 API 账户。"
+            ? UiText.Get("ContextHint")
+            : UiText.Get("PromptHint");
+        TranslationHint.Text = mt == "chatgpt" ? UiText.Get("SubscriptionUsage", ChatGptModel.SelectedItem is Choice modelChoice ? modelChoice.Label : UiText.Get("ChooseModel"))
+            : mt == "minimax" ? UiText.Get("MinimaxUsage")
+            : mt == "nllb" ? UiText.Get("RunsLocally")
+            : mt.Length == 0 ? UiText.Get("MissingModels")
             : "";
         UpdateCompute();
         UpdatePrices();
@@ -491,9 +508,9 @@ public partial class MainWindow : Window
             if (!model.StartsWith("qwen-mt:", StringComparison.Ordinal))
             {
                 if (!int.TryParse(draft.PreviousCues, NumberStyles.None, CultureInfo.InvariantCulture, out count) || count is < 0 or > 8)
-                    throw new InvalidOperationException("前文片段数请填写 0 到 8 的整数。");
+                    throw new InvalidOperationException(UiText.Get("InvalidCues"));
                 if (!int.TryParse(draft.ContextChars, NumberStyles.None, CultureInfo.InvariantCulture, out chars) || chars is < 20 or > 1000)
-                    throw new InvalidOperationException("前文每段最多字符请填写 20 到 1000 的整数。");
+                    throw new InvalidOperationException(UiText.Get("InvalidChars"));
             }
             result[model] = new JsonObject { ["enabled"] = draft.Enabled, ["previous_cues"] = count,
                 ["context_chars"] = chars, ["prompt"] = draft.Prompt };
@@ -543,11 +560,11 @@ public partial class MainWindow : Window
     {
         string speech = preset?.Speech ?? Selected(SpeechModel), translation = preset?.Translation ?? Selected(TranslationModel);
         if (speech.Length == 0 || translation.Length == 0)
-            throw new InvalidOperationException("请选择语音识别和字幕翻译模型；本地模型需先在模型管理中安装。");
+            throw new InvalidOperationException(UiText.Get("SelectModels"));
         if (!int.TryParse(ChunkSeconds.Text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int chunk) || chunk < 4 || chunk > 20)
-            throw new InvalidOperationException("每次处理时长请填写 4 到 20 之间的整数秒数。");
+            throw new InvalidOperationException(UiText.Get("InvalidChunk"));
         if (!double.TryParse(MaxSpeech.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out double maximum) || maximum < 2 || maximum > 20)
-            throw new InvalidOperationException("最长语音段请填写 2 到 20 之间的秒数。");
+            throw new InvalidOperationException(UiText.Get("InvalidMaximum"));
         var value = new JsonObject
         {
             ["source"] = Selected(SourceLanguage), ["route"] = "asr+mt", ["pot_hotkey"] = "1",
@@ -605,13 +622,13 @@ public partial class MainWindow : Window
     }
 
     private static string Friendly(Exception error) => error is OperationCanceledException
-        ? "后台响应超时。请稍后重试；若持续发生，可开启诊断日志排查。" : error.Message;
+        ? UiText.Get("TimedOut") : error.Message;
 
-    private async void Apply(object sender, RoutedEventArgs e) => await Act("正在应用设置，已开启的窗口会自动接续…",
-        async () => { await bridge.Run("apply", input: CollectSettings()); }, "设置已应用。到播放器按 Ctrl+Alt+J 开启翻译。", reloadSettings: true);
+    private async void Apply(object sender, RoutedEventArgs e) => await Act(UiText.Get("Applying"),
+        async () => { await bridge.Run("apply", input: CollectSettings()); }, UiText.Get("Applied"), reloadSettings: true);
 
-    private async void Stop(object sender, RoutedEventArgs e) => await Act("正在停止后台并释放资源…",
-        async () => { await bridge.Run("stop"); }, "服务已停止，后台资源已释放。");
+    private async void Stop(object sender, RoutedEventArgs e) => await Act(UiText.Get("Stopping"),
+        async () => { await bridge.Run("stop"); }, UiText.Get("Stopped"));
 
     private async void ManageModel(object sender, RoutedEventArgs e)
     {
@@ -643,8 +660,8 @@ public partial class MainWindow : Window
         pick.Visibility = !installed && detected ? Visibility.Visible : Visibility.Collapsed;
         folder.Text = detected || installed ? value?["folder"]?.ToString() ?? "" : "";
         folder.Visibility = folder.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
-        status.Text = value?["configured"]?.GetValue<bool>() == true ? "已配置"
-            : installed ? "部分配置" : detected ? "未配置" : "未找到位置";
+        status.Text = value?["configured"]?.GetValue<bool>() == true ? UiText.Get("Configured")
+            : installed ? UiText.Get("PartiallyConfigured") : detected ? UiText.Get("NotConfigured") : UiText.Get("MissingLocation");
     }
 
     private async void ConfigurePlayer(object sender, RoutedEventArgs e) =>
@@ -659,19 +676,19 @@ public partial class MainWindow : Window
         if (pickFolder || integrations[player]?["detected"]?.GetValue<bool>() != true)
         {
             var dialog = new Microsoft.Win32.OpenFolderDialog
-            { Title = player == "potplayer" ? "选择 PotPlayer 安装文件夹" : "选择 mpv 配置文件夹" };
+            { Title = player == "potplayer" ? UiText.Get("ChoosePot") : UiText.Get("ChooseMpv") };
             var current = integrations[player]?["folder"]?.ToString();
             if (Directory.Exists(current)) dialog.InitialDirectory = current;
             if (dialog.ShowDialog(this) != true) return;
             folder = dialog.FolderName;
         }
-        await Act("正在配置…", async () => { await bridge.Run("integrate", player, folder: folder); },
-                  "已配置。重开播放器后生效。");
+        await Act(UiText.Get("Configuring"), async () => { await bridge.Run("integrate", player, folder: folder); },
+                  UiText.Get("PlayerConfigured"));
     }
 
-    private async void RemovePlayer(object sender, RoutedEventArgs e) => await Act("正在卸载…",
+    private async void RemovePlayer(object sender, RoutedEventArgs e) => await Act(UiText.Get("Uninstalling"),
         async () => { await bridge.Run("unintegrate", ((FrameworkElement)sender).Tag.ToString()); },
-        "已卸载。重开播放器后生效。");
+        UiText.Get("PlayerRemoved"));
 
     private IEnumerable<(string Provider, ApiKeyEditor Editor)> KeyEditors()
     {
@@ -702,7 +719,7 @@ public partial class MainWindow : Window
         string group = Selected(CloudProvider);
         var edits = CollectKeyEdits(group);
         if (edits.Count == 0) return;
-        await Act("正在保存密钥…", async () =>
+        await Act(UiText.Get("SavingKey"), async () =>
         {
             var result = await bridge.Run("save-credentials", input: edits);
             LoadKeys(result["credentials"], group);
@@ -769,7 +786,7 @@ public partial class MainWindow : Window
                 "each player has one setup action");
         var catalog = ((IEnumerable<ModelDownload>)SpeechDownloads.ItemsSource).Concat((IEnumerable<ModelDownload>)TranslationDownloads.ItemsSource).ToDictionary(model => model.Id);
         Require(catalog["qwen-1.7b"] is { Installed: true, CanAct: false }
-                && catalog["whisper-small"].Details.Contains(0.49.ToString("0.00", CultureInfo.CurrentUICulture)) && catalog["whisper-small"].CanAct,
+                && catalog["whisper-small"].Details.Contains(0.49.ToString("0.00", InterfaceLocale.Culture)) && catalog["whisper-small"].CanAct,
                 "model size and download state");
         LoadKeys(new JsonObject { ["openai"] = new JsonObject { ["mode"] = "direct", ["saved"] = true } });
         Require(CollectKeyEdits().Count == 0, "loading a stored key leaves it untouched");
@@ -796,7 +813,7 @@ public partial class MainWindow : Window
         Require(values["qwen_size"]?.ToString() == "1.7b" && values["mt_device"]?.ToString() == "cuda"
             && values["source"]?.ToString() == "ja" && values["bilingual"]?.ToString() == "1", "preset keeps the language and display preferences");
         Require(Selected(TranslationModel) == "qwen-mt-flash", "preset selection alone leaves the current route intact");
-        Require(SetupText.Format(CultureInfo.GetCultureInfo("ja-JP"), "download") == "Download now", "unknown locale falls back to English");
+        Require(SetupText.Format(CultureInfo.GetCultureInfo("it-IT"), "download") == "Download now", "unknown locale falls back to English");
         Require(values["min_speech"]?.ToString() == "3" && values["pad_ms"]?.ToString() == "80", "segmentation defaults");
         TargetLanguage.SelectedValue = "en"; Bilingual.IsChecked = false;
         values = CollectSettings();
@@ -820,9 +837,12 @@ public partial class MainWindow : Window
                 "NMT provider receives prompt only");
         SpeechModel.SelectedValue = "qwen-audio-3.1-asr-flash";
         Require(CollectSettings()["asr"]?.ToString() == "dashscope" && !ComputeSummary.Text.Contains("Vulkan"), "cloud ASR route");
-        Require(SpeechCost.Text.Contains("0.03–0.06"), "Chinese hourly estimate");
+        var priceCulture = Language.GetSpecificCulture();
+        bool yuan = priceCulture.Name == "zh-CN";
+        string PriceRange(decimal low, decimal high) => string.Format(priceCulture, "{0:F2}–{1:F2}", low, high);
+        Require(SpeechCost.Text.Contains(yuan ? PriceRange(.03m, .06m) : PriceRange(.00m, .01m)), "hourly estimate");
         QwenUrl.Text = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1";
-        Require(SpeechCost.Text.Contains("0.04–0.08"), "regional hourly estimate");
+        Require(SpeechCost.Text.Contains(yuan ? PriceRange(.04m, .08m) : PriceRange(.01m, .01m)), "regional hourly estimate");
         QwenUrl.Text = "";
         SpeechModel.SelectedValue = "qwen-1.7b";
         TranslationModel.SelectedValue = "nllb"; NllbDevice.SelectedValue = "cuda";
@@ -856,8 +876,8 @@ public partial class MainWindow : Window
         if (!choices.Any(c => c.Value == "compatible")) choices.Add(new(label, "compatible"));
         box.ItemsSource = choices; box.SelectedValue = "compatible";
     }
-    private void ChooseCustomSpeech(object sender, RoutedEventArgs e) => SelectCustom(SpeechModel, "[自定义] 语音识别 API");
-    private void ChooseCustomTranslation(object sender, RoutedEventArgs e) => SelectCustom(TranslationModel, "[自定义] 翻译 API");
+    private void ChooseCustomSpeech(object sender, RoutedEventArgs e) => SelectCustom(SpeechModel, UiText.Get("CustomSpeech"));
+    private void ChooseCustomTranslation(object sender, RoutedEventArgs e) => SelectCustom(TranslationModel, UiText.Get("CustomTranslation"));
 
     private static bool IsDashScopeSpeech(string speech) => speech.StartsWith("qwen-audio-", StringComparison.Ordinal);
 
@@ -903,8 +923,8 @@ public partial class MainWindow : Window
         ChatGptModel.ItemsSource = choices;
         ChatGptModel.SelectedIndex = choices.Count > 0 ? 0 : -1;
         ChatGptStatus.Text = connected
-            ? choices.Count > 0 ? "ChatGPT 订阅已授权。" : "ChatGPT 订阅已授权，请刷新模型。"
-            : id.Length > 0 ? "请重新授权使用 ChatGPT 订阅。" : "请在浏览器中登录并授权使用订阅。";
+            ? choices.Count > 0 ? UiText.Get("Authorized") : UiText.Get("AuthorizedRefresh")
+            : id.Length > 0 ? UiText.Get("AuthorizeAgain") : UiText.Get("BrowserSignIn");
         ChatGptReauthorize.IsEnabled = id.Length > 0;
         ChatGptSignOut.IsEnabled = connected;
         ChatGptReloadModels.IsEnabled = connected;
@@ -925,7 +945,7 @@ public partial class MainWindow : Window
             LoadChatGptAccounts(result["accounts"] as JsonArray ?? new(),
                 result["selected"]?.ToString() ?? account ?? "", model);
             ActionStatus.Text = result["notice"]?.ToString() ?? (command == "chatgpt-logout"
-                ? result["revoked"]?.GetValue<bool>() == true ? "已退出 ChatGPT。" : "已在本机退出。请在 ChatGPT 设置中确认已撤销授权。"
+                ? result["revoked"]?.GetValue<bool>() == true ? UiText.Get("SignedOut") : UiText.Get("SignedOutLocal")
                 : ChatGptStatus.Text);
         }
         catch (Exception ex)
@@ -945,11 +965,11 @@ public partial class MainWindow : Window
     }
 
     private async void ChatGptLogin(object sender, RoutedEventArgs e) => await ChatGptAction(
-        "chatgpt-login", sender == ChatGptReauthorize ? Selected(ChatGptAccount) : null, "请在浏览器中完成 ChatGPT 登录和授权…");
+        "chatgpt-login", sender == ChatGptReauthorize ? Selected(ChatGptAccount) : null, UiText.Get("SigningIn"));
     private async void ChatGptLogout(object sender, RoutedEventArgs e) => await ChatGptAction(
-        "chatgpt-logout", Selected(ChatGptAccount), "正在退出 ChatGPT…");
+        "chatgpt-logout", Selected(ChatGptAccount), UiText.Get("SigningOut"));
     private async void ChatGptRefreshModels(object sender, RoutedEventArgs e) => await ChatGptAction(
-        "chatgpt-models", Selected(ChatGptAccount), "正在读取 ChatGPT 模型…");
+        "chatgpt-models", Selected(ChatGptAccount), UiText.Get("LoadingModels"));
     private void ChatGptUsage(object sender, RoutedEventArgs e) => Process.Start(
         new ProcessStartInfo("https://chatgpt.com/settings/usage") { UseShellExecute = true });
     private void ChooseChatGptTranslation(object sender, RoutedEventArgs e)
@@ -970,14 +990,14 @@ public partial class MainWindow : Window
     private void ChooseOpenAiTranslation(object sender, RoutedEventArgs e)
     { TranslationModel.SelectedValue = "gpt-4.1-mini"; SettingsPanel.SelectedItem = TranslationTab; }
 
-    private async void OpenLogs(object sender, RoutedEventArgs e) => await Act("正在打开日志目录…", async () =>
+    private async void OpenLogs(object sender, RoutedEventArgs e) => await Act(UiText.Get("OpeningLogs"), async () =>
     {
         var result = await bridge.Run("logs");
         string? file = result["logs"]?["server"]?.ToString();
         string? directory = file is null ? null : Path.GetDirectoryName(file);
-        if (directory is null || !Directory.Exists(directory)) throw new InvalidOperationException("尚未创建日志目录。");
+        if (directory is null || !Directory.Exists(directory)) throw new InvalidOperationException(UiText.Get("NoLogs"));
         Process.Start(new ProcessStartInfo(directory) { UseShellExecute = true });
-    }, "日志目录已打开。");
+    }, UiText.Get("LogsOpened"));
 
     private void OnClosing(object? sender, CancelEventArgs e)
     {
@@ -986,15 +1006,15 @@ public partial class MainWindow : Window
         if (!trayExplained)
         {
             trayExplained = true;
-            tray.ShowBalloonTip(3000, "字幕翻译仍在后台", "双击托盘图标打开设置；右键选择“停止并退出”释放资源。", Forms.ToolTipIcon.Info);
+            tray.ShowBalloonTip(3000, UiText.Get("TrayTitle"), UiText.Get("TrayBody"), Forms.ToolTipIcon.Info);
         }
     }
 
     private async void Exit(object sender, RoutedEventArgs e)
     {
         ActionStatus.Visibility = Visibility.Visible;
-        if (busy) { ShowSettings(); ActionStatus.Text = "请等待当前操作结束后退出。"; return; }
-        busy = true; SetBusy(true); ActionStatus.Text = "正在停止服务并退出…";
+        if (busy) { ShowSettings(); ActionStatus.Text = UiText.Get("WaitExit"); return; }
+        busy = true; SetBusy(true); ActionStatus.Text = UiText.Get("Exiting");
         try
         {
             await bridge.Run("stop");
@@ -1003,9 +1023,9 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             busy = false; SetBusy(false); ShowSettings();
-            ActionStatus.Text = "尚未退出：" + Friendly(ex);
+            ActionStatus.Text = UiText.Get("ExitFailed", Friendly(ex));
             if (System.Windows.MessageBox.Show(this,
-                "无法确认后台已经停止。只退出设置界面？后台进程可能仍在运行。", "退出字幕翻译",
+                UiText.Get("ConfirmExit"), UiText.Get("ExitTitle"),
                 MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
                 ExitDesktop();
         }

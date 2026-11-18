@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="SubtitleTab" xml:space="preserve"><value>Sous-titres</value></data>
+  <data name="SubtitleSettings" xml:space="preserve"><value>Réglages des sous-titres</value></data>
+  <data name="CredentialsSaved" xml:space="preserve"><value>Identifiants enregistrés. Appliquez les réglages dans Sous-titres pour les utiliser.</value></data>
+  <data name="Title" xml:space="preserve"><value>Intégrations</value></data>
+  <data name="Intro" xml:space="preserve"><value>Traduisez du texte, générez des SRT ou pilotez la lecture anticipée depuis vos agents et scripts locaux. Démarrez d’abord le service dans Sous-titres.</value></data>
+  <data name="Loading" xml:space="preserve"><value>Chargement</value></data>
+  <data name="Enabled" xml:space="preserve"><value>Activé</value></data>
+  <data name="Disabled" xml:space="preserve"><value>Désactivé</value></data>
+  <data name="McpHint" xml:space="preserve"><value>Ajoutez la configuration à votre client stdio local. Il démarre MCP à la connexion. Les requêtes des modèles cloud sont envoyées au fournisseur configuré.</value></data>
+  <data name="Enable" xml:space="preserve"><value>Activer l’accès MCP</value></data>
+  <data name="Disable" xml:space="preserve"><value>Désactiver l’accès MCP</value></data>
+  <data name="Copy" xml:space="preserve"><value>Copier la configuration MCP</value></data>
+  <data name="Configuration" xml:space="preserve"><value>Configuration du client MCP</value></data>
+  <data name="CliTitle" xml:space="preserve"><value>Ligne de commande</value></data>
+  <data name="CliHint" xml:space="preserve"><value>Après l’installation, rouvrez le terminal et exécutez aheadsubs status. La commande aheadsubs --help affiche les commandes disponibles.</value></data>
+  <data name="SourceHint" xml:space="preserve"><value>Depuis les sources, installez la CLI avec la commande « python -m pip install . » dans le dossier du projet.</value></data>
+  <data name="Install" xml:space="preserve"><value>Installer la CLI</value></data>
+  <data name="Remove" xml:space="preserve"><value>Retirer du PATH</value></data>
+  <data name="Installed" xml:space="preserve"><value>Dans le PATH</value></data>
+  <data name="NotInstalled" xml:space="preserve"><value>Non installé</value></data>
+  <data name="DisabledNotice" xml:space="preserve"><value>L’accès MCP est désactivé.</value></data>
+  <data name="EnabledNotice" xml:space="preserve"><value>Accès MCP activé. Copiez la configuration, puis reconnectez votre client.</value></data>
+  <data name="RemovedNotice" xml:space="preserve"><value>Retiré du PATH utilisateur.</value></data>
+  <data name="InstalledNotice" xml:space="preserve"><value>Ajouté au PATH utilisateur. Rouvrez le terminal.</value></data>
+  <data name="Copied" xml:space="preserve"><value>Configuration MCP copiée.</value></data>
+  <data name="ClipboardUnavailable" xml:space="preserve"><value>Presse-papiers indisponible. Sélectionnez le texte et copiez-le manuellement.</value></data>
+  <data name="Failed" xml:space="preserve"><value>Impossible de mettre à jour les intégrations. Vérifiez l’application et réessayez.</value></data>
+  <data name="FolderTitle" xml:space="preserve"><value>Tâches automatiques</value></data>
+  <data name="FolderIntro" xml:space="preserve"><value>Surveillez les nouveaux médias dans vos dossiers et générez leurs sous-titres hors lecture.</value></data>
+  <data name="FolderNew" xml:space="preserve"><value>Ajouter une règle</value></data>
+  <data name="FolderRules" xml:space="preserve"><value>Règles de dossier</value></data>
+  <data name="FolderRetry" xml:space="preserve"><value>Réessayer les fichiers en échec</value></data>
+  <data name="FolderRuleName" xml:space="preserve"><value>Nom de la règle (facultatif)</value></data>
+  <data name="FolderPath" xml:space="preserve"><value>Dossier à surveiller</value></data>
+  <data name="FolderBrowse" xml:space="preserve"><value>Parcourir…</value></data>
+  <data name="FolderEnabled" xml:space="preserve"><value>Activer cette règle</value></data>
+  <data name="FolderRecursive" xml:space="preserve"><value>Inclure les sous-dossiers</value></data>
+  <data name="FolderExisting" xml:space="preserve"><value>Inclure les fichiers existants</value></data>
+  <data name="FolderFilters" xml:space="preserve"><value>Filtres de fichiers</value></data>
+  <data name="FolderRegex" xml:space="preserve"><value>Expression régulière du nom (facultatif)</value></data>
+  <data name="FolderTypes" xml:space="preserve"><value>Extensions (séparées par des virgules)</value></data>
+  <data name="FolderMin" xml:space="preserve"><value>Taille minimale (MiB)</value></data>
+  <data name="FolderMax" xml:space="preserve"><value>Taille maximale (MiB)</value></data>
+  <data name="FolderSubtitle" xml:space="preserve"><value>Configuration des sous-titres</value></data>
+  <data name="FolderModels" xml:space="preserve"><value>Choisissez les modèles ou utilisez les réglages globaux. Installez les modèles locaux dans Modèles locaux et configurez les identifiants dans Modèles cloud.</value></data>
+  <data name="FolderSpeechModel" xml:space="preserve"><value>Modèle de reconnaissance vocale</value></data>
+  <data name="FolderTranslationModel" xml:space="preserve"><value>Modèle de traduction des sous-titres</value></data>
+  <data name="FolderModelNotInstalled" xml:space="preserve"><value>{0} (non installé)</value></data>
+  <data name="FolderChatGptModel" xml:space="preserve"><value>Abonnement ChatGPT</value></data>
+  <data name="FolderCustomModel" xml:space="preserve"><value>API personnalisée configurée</value></data>
+  <data name="FolderSource" xml:space="preserve"><value>Langue source</value></data>
+  <data name="FolderTarget" xml:space="preserve"><value>Langue des sous-titres</value></data>
+  <data name="FolderAudio" xml:space="preserve"><value>Piste audio (1–256)</value></data>
+  <data name="FolderStyle" xml:space="preserve"><value>Contenu SRT</value></data>
+  <data name="FolderDestination" xml:space="preserve"><value>Dossier de sortie (vide pour écrire à côté du média)</value></data>
+  <data name="FolderSuffix" xml:space="preserve"><value>Suffixe avant .srt (facultatif, ex. .en)</value></data>
+  <data name="FolderIdle" xml:space="preserve"><value>Inactivité de saisie Windows en minutes (0–120, 0 vérifie uniquement AheadSubs)</value></data>
+  <data name="FolderSave" xml:space="preserve"><value>Enregistrer la règle</value></data>
+  <data name="FolderDelete" xml:space="preserve"><value>Supprimer la règle</value></data>
+  <data name="FolderDefault" xml:space="preserve"><value>Utiliser les réglages globaux</value></data>
+  <data name="FolderAuto" xml:space="preserve"><value>Détecter automatiquement</value></data>
+  <data name="FolderTranslated" xml:space="preserve"><value>Traduction seule</value></data>
+  <data name="FolderBilingual" xml:space="preserve"><value>Bilingue</value></data>
+  <data name="FolderLang_zh" xml:space="preserve"><value>Chinois simplifié</value></data>
+  <data name="FolderLang_zh-TW" xml:space="preserve"><value>Chinois traditionnel</value></data>
+  <data name="FolderLang_en" xml:space="preserve"><value>Anglais</value></data>
+  <data name="FolderLang_ja" xml:space="preserve"><value>Japonais</value></data>
+  <data name="FolderLang_ko" xml:space="preserve"><value>Coréen</value></data>
+  <data name="FolderLang_fr" xml:space="preserve"><value>Français</value></data>
+  <data name="FolderLang_de" xml:space="preserve"><value>Allemand</value></data>
+  <data name="FolderLang_es" xml:space="preserve"><value>Espagnol</value></data>
+  <data name="FolderLoading" xml:space="preserve"><value>Chargement des règles…</value></data>
+  <data name="FolderSaved" xml:space="preserve"><value>Règles de dossier enregistrées.</value></data>
+  <data name="FolderRetried" xml:space="preserve"><value>Fichiers en échec remis en attente.</value></data>
+  <data name="FolderUnavailable" xml:space="preserve"><value>Impossible de lire les tâches. Réessayez dans un instant.</value></data>
+  <data name="FolderStopped" xml:space="preserve"><value>Démarrez le service de sous-titres pour analyser les dossiers et générer les sous-titres.</value></data>
+  <data name="FolderSelect" xml:space="preserve"><value>Ajoutez ou sélectionnez une règle pour voir sa file d’attente.</value></data>
+  <data name="FolderPaused" xml:space="preserve"><value>Cette règle est suspendue.</value></data>
+  <data name="FolderCounts" xml:space="preserve"><value>En attente {0:N0} · En cours {1:N0} · Terminés {2:N0} · Échecs {3:N0} · Ignorés {4:N0}</value></data>
+  <data name="FolderRunning" xml:space="preserve"><value>Génération des sous-titres…</value></data>
+  <data name="FolderFailureCode" xml:space="preserve"><value>Échec de la génération ({0}).</value></data>
+  <data name="FolderInvalid" xml:space="preserve"><value>Vérifiez la valeur de {0}.</value></data>
+  <data name="FolderInvalidSize" xml:space="preserve"><value>La taille maximale doit être positive et au moins égale au minimum.</value></data>
+  <data name="FolderIssue_regex_timeout" xml:space="preserve"><value>L’expression régulière est trop lente. Simplifiez-la et enregistrez à nouveau.</value></data>
+  <data name="FolderIssue_folder_unavailable" xml:space="preserve"><value>Impossible d’analyser ce dossier. Vérifiez le chemin et les autorisations.</value></data>
+  <data name="FolderIssue_output_exists" xml:space="preserve"><value>Ignoré car le SRT existe déjà.</value></data>
+  <data name="FolderIssue_invalid_media" xml:space="preserve"><value>FFprobe n’a pas pu lire la durée ou les flux audio du média.</value></data>
+  <data name="FolderIssue_invalid_audio" xml:space="preserve"><value>La piste audio choisie est introuvable.</value></data>
+  <data name="FolderIssue_invalid_output" xml:space="preserve"><value>Le dossier de sortie ou le nom du fichier est invalide.</value></data>
+  <data name="FolderIssue_ffprobe_not_found" xml:space="preserve"><value>FFprobe est introuvable.</value></data>
+  <data name="FolderIssue_operation_failed" xml:space="preserve"><value>Vérifiez le média, le dossier de sortie et les autorisations.</value></data>
+  <data name="FolderIssue_generation_changed" xml:space="preserve"><value>Le fichier a changé pendant la génération.</value></data>
+  <data name="FolderIssue_generation_timeout" xml:space="preserve"><value>La génération a dépassé 24 heures.</value></data>
+  <data name="FolderIssue_request_timeout" xml:space="preserve"><value>La lecture du média a expiré.</value></data>
+  <data name="FolderIssue_content_blocked" xml:space="preserve"><value>Le fournisseur a renvoyé une erreur de modération.</value></data>
+  <data name="FolderIssue_folder_model_not_installed" xml:space="preserve"><value>Installez le modèle choisi dans Modèles locaux, puis réessayez.</value></data>
+  <data name="FolderIssue_folder_model_unavailable" xml:space="preserve"><value>Impossible de démarrer un modèle. Vérifiez son installation, l’environnement d’exécution ou les réglages cloud, puis réessayez.</value></data>
+</root>

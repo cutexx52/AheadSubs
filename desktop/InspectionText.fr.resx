@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="Tab" xml:space="preserve"><value>Bibliothèque de sous-titres</value></data>
+  <data name="Title" xml:space="preserve"><value>Bibliothèque de sous-titres</value></data>
+  <data name="Search" xml:space="preserve"><value>Rechercher un nom ou un chemin</value></data>
+  <data name="Filter" xml:space="preserve"><value>Filtrer par langue source principale</value></data>
+  <data name="Files" xml:space="preserve"><value>Fichiers multimédias</value></data>
+  <data name="AllSources" xml:space="preserve"><value>Toutes les langues sources</value></data>
+  <data name="Version" xml:space="preserve"><value>Version</value></data>
+  <data name="VersionChoice" xml:space="preserve"><value>{0} · {1} · piste {2}</value></data>
+  <data name="PathUnknown" xml:space="preserve"><value>Chemin indisponible</value></data>
+  <data name="Refresh" xml:space="preserve"><value>Actualiser</value></data>
+  <data name="Regenerate" xml:space="preserve"><value>Régénérer</value></data>
+  <data name="RegenerateHint" xml:space="preserve"><value>Crée une version distincte avec les modèles actuels hors lecture.</value></data>
+  <data name="Open" xml:space="preserve"><value>Ouvrir le SRT</value></data>
+  <data name="Save" xml:space="preserve"><value>Enregistrer le SRT…</value></data>
+  <data name="SrtFilter" xml:space="preserve"><value>Sous-titres SubRip (*.srt)|*.srt</value></data>
+  <data name="Saved" xml:space="preserve"><value>Sous-titres enregistrés dans {0}</value></data>
+  <data name="Time" xml:space="preserve"><value>Temps</value></data>
+  <data name="Original" xml:space="preserve"><value>Original</value></data>
+  <data name="Translation" xml:space="preserve"><value>Sous-titre</value></data>
+  <data name="PrimarySource" xml:space="preserve"><value>Langue source principale   {0}</value></data>
+  <data name="Coverage" xml:space="preserve"><value>Part traitée   {0}</value></data>
+  <data name="Targets" xml:space="preserve"><value>Langues de sous-titres disponibles   {0}</value></data>
+  <data name="NoTargets" xml:space="preserve"><value>Aucune pour le moment</value></data>
+  <data name="Unknown" xml:space="preserve"><value>Inconnu</value></data>
+  <data name="Queued" xml:space="preserve"><value>En attente. La génération démarrera hors lecture.</value></data>
+  <data name="Running" xml:space="preserve"><value>Génération en arrière-plan, suspendue pendant la lecture.</value></data>
+  <data name="Complete" xml:space="preserve"><value>Génération en arrière-plan terminée.</value></data>
+  <data name="Failed" xml:space="preserve"><value>La génération s’est arrêtée. {0}</value></data>
+  <data name="Interrupted" xml:space="preserve"><value>La génération a été interrompue. Vous pouvez la relancer.</value></data>
+  <data name="ReadFailed" xml:space="preserve"><value>Impossible de lire le cache des sous-titres. Actualisez la vue.</value></data>
+  <data name="ActionFailed" xml:space="preserve"><value>L’opération sur les sous-titres a échoué.</value></data>
+  <data name="Loading" xml:space="preserve"><value>Lecture des sous-titres…</value></data>
+  <data name="EmptyLibrary" xml:space="preserve"><value>Générez des sous-titres pendant la lecture, puis actualisez la bibliothèque.</value></data>
+  <data name="NoMatches" xml:space="preserve"><value>Aucun fichier ne correspond à la recherche et à la langue.</value></data>
+  <data name="EmptyVersion" xml:space="preserve"><value>Cette version ne contient pas encore de sous-titres.</value></data>
+  <data name="PreviewRows" xml:space="preserve"><value>Aperçu des sous-titres récents. L’export SRT inclut tous les sous-titres générés pour cette version.</value></data>
+  <data name="Language_ja" xml:space="preserve"><value>Japonais</value></data>
+  <data name="Language_en" xml:space="preserve"><value>Anglais</value></data>
+  <data name="Language_zh" xml:space="preserve"><value>Chinois simplifié</value></data>
+  <data name="Language_zh-cn" xml:space="preserve"><value>Chinois simplifié</value></data>
+  <data name="Language_zh-tw" xml:space="preserve"><value>Chinois traditionnel</value></data>
+  <data name="Language_zh-hant" xml:space="preserve"><value>Chinois traditionnel</value></data>
+  <data name="Language_zh-hans" xml:space="preserve"><value>Chinois simplifié</value></data>
+  <data name="Language_ko" xml:space="preserve"><value>Coréen</value></data>
+  <data name="Language_fr" xml:space="preserve"><value>Français</value></data>
+  <data name="Language_de" xml:space="preserve"><value>Allemand</value></data>
+  <data name="Language_es" xml:space="preserve"><value>Espagnol</value></data>
+  <data name="Language_ru" xml:space="preserve"><value>Russe</value></data>
+  <data name="Language_pt" xml:space="preserve"><value>Portugais</value></data>
+  <data name="Language_it" xml:space="preserve"><value>Italien</value></data>
+  <data name="Error_inspection_no_subtitles" xml:space="preserve"><value>Cette version ne contient pas encore de sous-titres SRT à exporter.</value></data>
+  <data name="Error_inspection_invalid_output" xml:space="preserve"><value>Choisissez un fichier SRT hors du dossier de cache.</value></data>
+  <data name="Error_inspection_path_unknown" xml:space="preserve"><value>Relancez la lecture du média pour enregistrer son chemin avant de régénérer.</value></data>
+  <data name="Error_inspection_busy" xml:space="preserve"><value>Une autre régénération est déjà en attente ou en cours.</value></data>
+  <data name="Error_inspection_media_changed" xml:space="preserve"><value>Le fichier a été déplacé ou remplacé, ou il est inaccessible.</value></data>
+  <data name="Error_inspection_probe_failed" xml:space="preserve"><value>Impossible de lire la durée ou la piste audio du média.</value></data>
+  <data name="Error_inspection_service_required" xml:space="preserve"><value>Démarrez le service de sous-titres AheadSubs avant de régénérer.</value></data>
+  <data name="Error_inspection_write_failed" xml:space="preserve"><value>Impossible d’écrire le SRT. Vérifiez le dossier ou fermez l’application qui utilise le fichier.</value></data>
+  <data name="Error_content_blocked" xml:space="preserve"><value>Le fournisseur a bloqué ce contenu.</value></data>
+  <data name="Error_moderation_unavailable" xml:space="preserve"><value>La modération du fournisseur est temporairement indisponible.</value></data>
+  <data name="Error_authentication_failed" xml:space="preserve"><value>Vérifiez la clé API du fournisseur.</value></data>
+  <data name="Error_chatgpt_sign_in_required" xml:space="preserve"><value>Reconnectez-vous à ChatGPT dans les réglages cloud.</value></data>
+  <data name="Error_permission_denied" xml:space="preserve"><value>Accès refusé par l’API. Vérifiez les autorisations du compte ou du modèle.</value></data>
+  <data name="Error_not_found" xml:space="preserve"><value>Modèle ou service API introuvable.</value></data>
+  <data name="Error_rate_limited" xml:space="preserve"><value>Limite de l’API atteinte. Vérifiez le quota, le solde ou la fréquence des requêtes.</value></data>
+  <data name="Error_provider_unavailable" xml:space="preserve"><value>Le fournisseur est temporairement indisponible.</value></data>
+  <data name="Error_invalid_request" xml:space="preserve"><value>Le fournisseur a rejeté la requête.</value></data>
+  <data name="Error_request_timeout" xml:space="preserve"><value>La requête au fournisseur a expiré.</value></data>
+  <data name="Error_translation_failed" xml:space="preserve"><value>Échec de la traduction.</value></data>
+  <data name="Error_processing_failed" xml:space="preserve"><value>Échec du traitement des sous-titres.</value></data>
+</root>

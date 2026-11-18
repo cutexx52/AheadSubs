@@ -19,9 +19,9 @@
   <StackPanel>
    <DockPanel Margin="0,0,0,12">
     <Button x:Name="RefreshButton" DockPanel.Dock="Right" VerticalAlignment="Top" Margin="12,0,0,0"
-     Content="{local:StatusText Refresh}" Click="RefreshClicked"/>
+     Content="{DynamicResource Status.Refresh}" Click="RefreshClicked"/>
     <StackPanel>
-     <TextBlock Text="{local:StatusText Title}" Style="{DynamicResource PageTitle}"/>
+     <TextBlock Text="{DynamicResource Status.Title}" Style="{DynamicResource PageTitle}"/>
      <TextBlock x:Name="Updated" Style="{StaticResource Hint}"/>
     </StackPanel>
    </DockPanel>
@@ -29,7 +29,7 @@
     <Grid>
      <Grid.ColumnDefinitions><ColumnDefinition Width="2*"/><ColumnDefinition Width="3*"/></Grid.ColumnDefinitions>
      <StackPanel Margin="0,0,20,0">
-      <TextBlock Text="{local:StatusText Service}" Style="{StaticResource Hint}"/>
+      <TextBlock Text="{DynamicResource Status.Service}" Style="{StaticResource Hint}"/>
       <TextBlock x:Name="ServiceValue" Style="{StaticResource StatusValue}" AutomationProperties.LiveSetting="Polite"/>
       <TextBlock x:Name="ServiceHint" Style="{StaticResource Hint}" Margin="0,4,0,0"/>
      </StackPanel>
@@ -46,12 +46,12 @@
    </Border>
    <Border Style="{DynamicResource Card}">
     <StackPanel>
-     <TextBlock Text="{local:StatusText ModelsAndResources}" Style="{DynamicResource Section}"/>
+     <TextBlock Text="{DynamicResource Status.ModelsAndResources}" Style="{DynamicResource Section}"/>
      <Grid>
       <Grid.ColumnDefinitions><ColumnDefinition Width="3*"/><ColumnDefinition Width="2*"/></Grid.ColumnDefinitions>
       <StackPanel Margin="0,0,20,0">
        <TextBlock x:Name="ModelHint" Style="{StaticResource Hint}"/>
-       <ItemsControl x:Name="Models" AutomationProperties.Name="{local:StatusText Models}">
+       <ItemsControl x:Name="Models" AutomationProperties.Name="{DynamicResource Status.Models}">
         <ItemsControl.ItemTemplate><DataTemplate>
          <StackPanel Margin="0,0,0,7">
           <TextBlock Text="{Binding Title}" TextWrapping="Wrap" FontWeight="SemiBold"/>
@@ -61,8 +61,8 @@
        </ItemsControl>
       </StackPanel>
       <StackPanel Grid.Column="1">
-       <TextBlock Text="{local:StatusText ResourceScope}" Style="{StaticResource Hint}" Margin="0,0,0,4"/>
-       <ItemsControl x:Name="ResourceRows" AutomationProperties.Name="{local:StatusText ResourceScope}">
+       <TextBlock Text="{DynamicResource Status.ResourceScope}" Style="{StaticResource Hint}" Margin="0,0,0,4"/>
+       <ItemsControl x:Name="ResourceRows" AutomationProperties.Name="{DynamicResource Status.ResourceScope}">
         <ItemsControl.ItemTemplate><DataTemplate>
          <Grid Margin="0,2,0,2">
           <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
@@ -77,11 +77,11 @@
    </Border>
    <Border Style="{DynamicResource Card}">
     <StackPanel>
-     <TextBlock Text="{local:StatusText Performance}" Style="{DynamicResource Section}"/>
+     <TextBlock Text="{DynamicResource Status.Performance}" Style="{DynamicResource Section}"/>
      <Grid>
       <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
       <StackPanel Margin="0,0,10,0">
-       <TextBlock Text="{local:StatusText Rtf}" Style="{StaticResource Hint}"/>
+       <TextBlock Text="{DynamicResource Status.Rtf}" Style="{StaticResource Hint}"/>
        <TextBlock x:Name="Rtf" Style="{StaticResource StatusValue}"/>
       </StackPanel>
       <StackPanel Grid.Column="1" Margin="0,0,10,0">
@@ -95,29 +95,29 @@
       </StackPanel>
      </Grid>
      <TextBlock x:Name="PerformanceSamples" Style="{StaticResource Hint}" Margin="0,7,0,0"/>
-     <TextBlock Text="{local:StatusText PerformanceHint}" Style="{StaticResource Hint}" Margin="0,3,0,0"/>
+     <TextBlock Text="{DynamicResource Status.PerformanceHint}" Style="{StaticResource Hint}" Margin="0,3,0,0"/>
     </StackPanel>
    </Border>
    <Border Style="{DynamicResource Card}">
     <StackPanel>
      <DockPanel>
       <ComboBox DockPanel.Dock="Right" x:Name="Weeks" DisplayMemberPath="Label" SelectedValuePath="Date"
-       AutomationProperties.Name="{local:StatusText Week}" Margin="12,0,0,0" SelectionChanged="WeekChanged"/>
+       AutomationProperties.Name="{DynamicResource Status.Week}" Margin="12,0,0,0" SelectionChanged="WeekChanged"/>
       <StackPanel VerticalAlignment="Center">
-       <TextBlock Text="{local:StatusText Cloud}" Style="{DynamicResource Section}"/>
+       <TextBlock Text="{DynamicResource Status.Cloud}" Style="{DynamicResource Section}"/>
        <TextBlock x:Name="CloudSummary" TextWrapping="Wrap" FontWeight="SemiBold"/>
       </StackPanel>
      </DockPanel>
-     <TextBlock Text="{local:StatusText CloudHint}" Style="{StaticResource Hint}" Margin="0,9,0,12"/>
+     <TextBlock Text="{DynamicResource Status.CloudHint}" Style="{StaticResource Hint}" Margin="0,9,0,12"/>
      <Grid x:Name="CloudHeader" Margin="0,0,0,6">
       <Grid.ColumnDefinitions><ColumnDefinition Width="2*"/><ColumnDefinition Width="76"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-      <TextBlock Text="{local:StatusText Model}" Style="{StaticResource TableHeader}"/>
-      <TextBlock Grid.Column="1" Text="{local:StatusText Calls}" Style="{StaticResource TableHeader}"/>
-      <TextBlock Grid.Column="2" Text="{local:StatusText Usage}" Style="{StaticResource TableHeader}"/>
-      <TextBlock Grid.Column="3" Text="{local:StatusText Estimate}" Style="{StaticResource TableHeader}"/>
+      <TextBlock Text="{DynamicResource Status.Model}" Style="{StaticResource TableHeader}"/>
+      <TextBlock Grid.Column="1" Text="{DynamicResource Status.Calls}" Style="{StaticResource TableHeader}"/>
+      <TextBlock Grid.Column="2" Text="{DynamicResource Status.Usage}" Style="{StaticResource TableHeader}"/>
+      <TextBlock Grid.Column="3" Text="{DynamicResource Status.Estimate}" Style="{StaticResource TableHeader}"/>
      </Grid>
      <TextBlock x:Name="CloudEmpty" Style="{StaticResource Hint}"/>
-     <ItemsControl x:Name="CloudRows" AutomationProperties.Name="{local:StatusText Cloud}">
+     <ItemsControl x:Name="CloudRows" AutomationProperties.Name="{DynamicResource Status.Cloud}">
       <ItemsControl.ItemTemplate><DataTemplate>
        <Border BorderBrush="#E3E7ED" BorderThickness="0,1,0,0" Padding="0,8">
         <Grid>

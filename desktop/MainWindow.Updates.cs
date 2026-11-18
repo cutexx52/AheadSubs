@@ -53,14 +53,7 @@ public partial class MainWindow
         if (updatePackage?.IsSupported != true) return;
 
         installedUpdateRoot = FindInstalledUpdateRoot();
-        UpdateCard.Language = System.Windows.Markup.XmlLanguage.GetLanguage(AutomationText.Culture.Name);
-        UpdateTitle.Text = UpdateText("Title");
-        InstalledVersion.Text = UpdateText("CurrentVersion", updatePackage.Version);
-        AutomaticUpdates.Content = UpdateText("Automatic");
-        CheckUpdateButton.Content = UpdateText("Check");
-        ReleaseNotesButton.Content = UpdateText("Notes");
-        GetUpdateButton.Content = UpdateText(installedUpdateRoot is null ? "Portable" : "Install");
-        CancelUpdateButton.Content = UpdateText("Cancel");
+        LocalizeUpdates();
         AutomaticUpdates.IsChecked = true;
         try
         {
@@ -81,6 +74,18 @@ public partial class MainWindow
             updateTimer.Start();
             await CheckForReleaseAsync(manual: false);
         };
+    }
+
+    private void LocalizeUpdates()
+    {
+        if (updatePackage?.IsSupported != true) return;
+        UpdateTitle.Text = UpdateText("Title");
+        InstalledVersion.Text = UpdateText("CurrentVersion", updatePackage.Version);
+        AutomaticUpdates.Content = UpdateText("Automatic");
+        CheckUpdateButton.Content = UpdateText("Check");
+        ReleaseNotesButton.Content = UpdateText("Notes");
+        GetUpdateButton.Content = UpdateText(installedUpdateRoot is null ? "Portable" : "Install");
+        CancelUpdateButton.Content = UpdateText("Cancel");
     }
 
     private static string? FindInstalledUpdateRoot()

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="heading" xml:space="preserve"><value>Préréglages</value></data>
+  <data name="active" xml:space="preserve"><value>Préréglages · {0}</value></data>
+  <data name="custom" xml:space="preserve"><value>Personnalisé</value></data>
+  <data name="cpu" xml:space="preserve"><value>Local · CPU</value></data>
+  <data name="gpu" xml:space="preserve"><value>Local · GPU d’entrée de gamme</value></data>
+  <data name="high-gpu" xml:space="preserve"><value>Local · GPU haute performance</value></data>
+  <data name="recommended" xml:space="preserve"><value>Recommandé · reconnaissance locale et traduction cloud</value></data>
+  <data name="detail-cpu" xml:space="preserve"><value>Whisper Small + NLLB · CPU</value></data>
+  <data name="detail-gpu" xml:space="preserve"><value>Qwen3-ASR 0.6B · Vulkan / NLLB · CPU</value></data>
+  <data name="detail-high-gpu" xml:space="preserve"><value>Qwen3-ASR 1.7B · Vulkan / NLLB · NVIDIA CUDA</value></data>
+  <data name="detail-recommended" xml:space="preserve"><value>Qwen3-ASR 1.7B · Vulkan / Qwen-MT Flash · clé API Bailian requise</value></data>
+  <data name="missing" xml:space="preserve"><value>À télécharger : {0}</value></data>
+  <data name="checking" xml:space="preserve"><value>Vérification des prérequis…</value></data>
+  <data name="ready" xml:space="preserve"><value>Prêt à appliquer.</value></data>
+  <data name="retry" xml:space="preserve"><value>Revérifier</value></data>
+  <data name="check-failed" xml:space="preserve"><value>Impossible de vérifier ce préréglage. Réessayez.</value></data>
+  <data name="ffmpeg" xml:space="preserve"><value>FFmpeg et FFprobe sont requis. Utilisez le paquet Windows complet.</value></data>
+  <data name="vulkan" xml:space="preserve"><value>Aucun périphérique Vulkan détecté. Vérifiez le pilote graphique ou choisissez « Local · CPU ».</value></data>
+  <data name="cuda" xml:space="preserve"><value>NVIDIA CUDA est indisponible. Vérifiez le pilote et le paquet CUDA ou choisissez « Local · GPU d’entrée de gamme ».</value></data>
+  <data name="dashscope" xml:space="preserve"><value>Enregistrez la clé API Bailian et vérifiez l’URL du service.</value></data>
+  <data name="models" xml:space="preserve"><value>Gérer les modèles</value></data>
+  <data name="download" xml:space="preserve"><value>Télécharger maintenant</value></data>
+  <data name="keys" xml:space="preserve"><value>Configurer Bailian</value></data>
+  <data name="apply" xml:space="preserve"><value>Appliquer le préréglage</value></data>
+  <data name="applying" xml:space="preserve"><value>Application du préréglage…</value></data>
+  <data name="applied" xml:space="preserve"><value>Préréglage appliqué.</value></data>
+  <data name="downloading" xml:space="preserve"><value>Téléchargement de {0}…</value></data>
+  <data name="downloaded" xml:space="preserve"><value>Téléchargement terminé.</value></data>
+  <data name="download-failed" xml:space="preserve"><value>Échec du téléchargement. Vérifiez la connexion et l’espace disque, puis réessayez.</value></data>
+  <data name="needed" xml:space="preserve"><value>Requis par le préréglage choisi</value></data>
+  <data name="model-page" xml:space="preserve"><value>Modèles locaux</value></data>
+  <data name="model-asr" xml:space="preserve"><value>Reconnaissance vocale</value></data>
+  <data name="model-mt" xml:space="preserve"><value>Traduction</value></data>
+  <data name="model-vad" xml:space="preserve"><value>Détection d’activité vocale</value></data>
+  <data name="managed-vad" xml:space="preserve"><value>Silero est inclus. FSMN est préparé lorsque vous le sélectionnez dans les réglages avancés.</value></data>
+  <data name="installed-model" xml:space="preserve"><value>Installé</value></data>
+  <data name="active-model" xml:space="preserve"><value>Installé · en cours d’utilisation</value></data>
+  <data name="download-model" xml:space="preserve"><value>Télécharger</value></data>
+  <data name="remove-model" xml:space="preserve"><value>Désinstaller</value></data>
+  <data name="uninstall-ask" xml:space="preserve"><value>Désinstaller {0} ? D’autres applications peuvent utiliser les modèles du cache partagé Hugging Face.</value></data>
+  <data name="uninstall-ask-local" xml:space="preserve"><value>Désinstaller {0} ?</value></data>
+  <data name="uninstall-active" xml:space="preserve"><value>Changez de modèle ou arrêtez le service de sous-titres avant de désinstaller ce modèle.</value></data>
+  <data name="uninstall-incomplete" xml:space="preserve"><value>Le cache incomplet du modèle n’a pas pu être supprimé.</value></data>
+  <data name="uninstall-location" xml:space="preserve"><value>Le chemin du cache est hors du dépôt de ce modèle.</value></data>
+  <data name="uninstall-failed" xml:space="preserve"><value>Impossible de supprimer le cache du modèle. Fermez les applications qui l’utilisent et réessayez.</value></data>
+  <data name="uninstalling" xml:space="preserve"><value>Désinstallation de {0}…</value></data>
+  <data name="uninstalled" xml:space="preserve"><value>Modèle désinstallé.</value></data>
+  <data name="model-info" xml:space="preserve"><value>{0} · environ {1:0.00} Go</value></data>
+  <data name="shared-info" xml:space="preserve"><value>Les deux modèles Qwen3-ASR partagent environ 0,63 Go de données d’alignement et de fichiers d’exécution.</value></data>
+  <data name="whisper-device" xml:space="preserve"><value>Périphérique de Whisper Small</value></data>
+  <data name="nllb-device" xml:space="preserve"><value>Périphérique de NLLB</value></data>
+  <data name="cpu-device" xml:space="preserve"><value>CPU</value></data>
+  <data name="cuda-device" xml:space="preserve"><value>NVIDIA CUDA</value></data>
+  <data name="asr-device" xml:space="preserve"><value>Reconnaissance : {0}</value></data>
+  <data name="mt-device" xml:space="preserve"><value>Traduction : {0}</value></data>
+</root>

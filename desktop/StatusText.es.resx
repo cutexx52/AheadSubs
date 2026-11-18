@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="Title" xml:space="preserve"><value>Estado</value></data>
+  <data name="Refresh" xml:space="preserve"><value>Actualizar ahora</value></data>
+  <data name="Checking" xml:space="preserve"><value>Comprobando estado…</value></data>
+  <data name="Offline" xml:space="preserve"><value>Servicio no disponible</value></data>
+  <data name="Unsupported" xml:space="preserve"><value>Estado no disponible</value></data>
+  <data name="Checked" xml:space="preserve"><value>Comprobado a las {0} · se actualiza cada 3 segundos</value></data>
+  <data name="Preview" xml:space="preserve"><value>Datos de ejemplo</value></data>
+  <data name="Service" xml:space="preserve"><value>Servicio de subtítulos</value></data>
+  <data name="Ready" xml:space="preserve"><value>Listo</value></data>
+  <data name="Degraded" xml:space="preserve"><value>Modelo no disponible</value></data>
+  <data name="ServiceHint" xml:space="preserve"><value>Inicia o reinicia el servicio desde Subtítulos.</value></data>
+  <data name="Workers" xml:space="preserve"><value>Puestos de procesamiento en uso: {0:N0} / {1:N0}</value></data>
+  <data name="Connections" xml:space="preserve"><value>Conexiones de reproducción activas: {0:N0}</value></data>
+  <data name="Sources" xml:space="preserve"><value>Conexiones de reproducción</value></data>
+  <data name="Unavailable" xml:space="preserve"><value>Esperando al servicio.</value></data>
+  <data name="NoConnections" xml:space="preserve"><value>Inicia la reproducción con una integración para ver aquí su actividad.</value></data>
+  <data name="SourcePlayback" xml:space="preserve"><value>{0} · reproducciones: {1:N0}</value></data>
+  <data name="SourceText" xml:space="preserve"><value>{0} · solicitudes de texto en curso: {2:N0}</value></data>
+  <data name="SourceBoth" xml:space="preserve"><value>{0} · reproducciones: {1:N0}, solicitudes de texto en curso: {2:N0}</value></data>
+  <data name="Source_potplayer" xml:space="preserve"><value>PotPlayer</value></data>
+  <data name="Source_mpv" xml:space="preserve"><value>mpv</value></data>
+  <data name="Source_cli" xml:space="preserve"><value>Línea de comandos</value></data>
+  <data name="Source_mcp" xml:space="preserve"><value>MCP</value></data>
+  <data name="Source_http" xml:space="preserve"><value>Otros clientes HTTP</value></data>
+  <data name="ModelsAndResources" xml:space="preserve"><value>Modelos y recursos locales</value></data>
+  <data name="Models" xml:space="preserve"><value>Modelos activos</value></data>
+  <data name="NoModels" xml:space="preserve"><value>No se han registrado modelos activos.</value></data>
+  <data name="ResourceScope" xml:space="preserve"><value>Servicio de subtítulos y procesos secundarios</value></data>
+  <data name="ModelTitle" xml:space="preserve"><value>{0} · {1}</value></data>
+  <data name="ModelState" xml:space="preserve"><value>{0} · {1}</value></data>
+  <data name="Role_asr" xml:space="preserve"><value>Reconocimiento de voz</value></data>
+  <data name="Role_ast" xml:space="preserve"><value>Traducción de voz</value></data>
+  <data name="Role_mt" xml:space="preserve"><value>Traducción de texto</value></data>
+  <data name="Role_vad" xml:space="preserve"><value>Detección de actividad de voz</value></data>
+  <data name="Device_cpu" xml:space="preserve"><value>CPU</value></data>
+  <data name="Device_cuda" xml:space="preserve"><value>NVIDIA CUDA</value></data>
+  <data name="Device_vulkan" xml:space="preserve"><value>Vulkan GPU</value></data>
+  <data name="Device_cloud" xml:space="preserve"><value>Nube</value></data>
+  <data name="Device_external" xml:space="preserve"><value>Servicio local externo</value></data>
+  <data name="State_loaded" xml:space="preserve"><value>Cargado</value></data>
+  <data name="State_unavailable" xml:space="preserve"><value>Inaccesible</value></data>
+  <data name="State_unverified" xml:space="preserve"><value>Estado de carga desconocido</value></data>
+  <data name="State_configured" xml:space="preserve"><value>Configurado</value></data>
+  <data name="Vram" xml:space="preserve"><value>Memoria de GPU dedicada</value></data>
+  <data name="Percent" xml:space="preserve"><value>{0:N1} %</value></data>
+  <data name="GiB" xml:space="preserve"><value>{0:N2} GiB</value></data>
+  <data name="MiB" xml:space="preserve"><value>{0:N1} MiB</value></data>
+  <data name="Ratio" xml:space="preserve"><value>{0:N2}×</value></data>
+  <data name="Seconds" xml:space="preserve"><value>{0:N2} s</value></data>
+  <data name="Missing" xml:space="preserve"><value>—</value></data>
+  <data name="Performance" xml:space="preserve"><value>Rendimiento de subtítulos</value></data>
+  <data name="Rtf" xml:space="preserve"><value>Mediana del RTF</value></data>
+  <data name="NoSamples" xml:space="preserve"><value>Esperando nuevas muestras de procesamiento.</value></data>
+  <data name="Samples" xml:space="preserve"><value>Últimos 15 minutos · {0:N0} muestras de RTF y {1:N0} de latencia</value></data>
+  <data name="PerformanceHint" xml:space="preserve"><value>Un RTF inferior a 1 indica que el procesamiento supera la velocidad de reproducción. P50 / P95 / P99 miden la espera desde la actualización de reproducción hasta que hay subtítulos.</value></data>
+  <data name="Cloud" xml:space="preserve"><value>Uso de la nube</value></data>
+  <data name="Week" xml:space="preserve"><value>Semana UTC</value></data>
+  <data name="ThisWeek" xml:space="preserve"><value>Esta semana · {0} – {1}</value></data>
+  <data name="WeekRange" xml:space="preserve"><value>{0} – {1}</value></data>
+  <data name="CloudHint" xml:space="preserve"><value>Datos de esta instalación. La semana comienza el lunes (UTC). Las estimaciones en USD usan el consumo conocido y los precios de lista antes de impuestos y descuentos.</value></data>
+  <data name="Model" xml:space="preserve"><value>Modelo</value></data>
+  <data name="Calls" xml:space="preserve"><value>Llamadas</value></data>
+  <data name="Usage" xml:space="preserve"><value>Uso conocido</value></data>
+  <data name="Estimate" xml:space="preserve"><value>Estimación</value></data>
+  <data name="CallTotal" xml:space="preserve"><value>{0:N0} llamadas</value></data>
+  <data name="CostTotal" xml:space="preserve"><value>{0:N0} llamadas · estimación {1}</value></data>
+  <data name="PartialTotal" xml:space="preserve"><value>{0:N0} llamadas · estimación parcial {1}</value></data>
+  <data name="PartialCost" xml:space="preserve"><value>{0} · {1:N0}/{2:N0} con precio</value></data>
+  <data name="HistoryUnavailable" xml:space="preserve"><value>No se pudo leer el uso de la nube. Actualiza la vista.</value></data>
+  <data name="HistoryIncomplete" xml:space="preserve"><value>No se pudieron registrar o leer algunos datos. Los totales pueden estar incompletos.</value></data>
+  <data name="NoUsage" xml:space="preserve"><value>No se registraron llamadas a modelos en la nube esta semana.</value></data>
+  <data name="NoEstimate" xml:space="preserve"><value>Estimación no disponible</value></data>
+  <data name="Subscription" xml:space="preserve"><value>Suscripción</value></data>
+  <data name="Tokens" xml:space="preserve"><value>Tokens: {0:N0} de entrada / {1:N0} de salida</value></data>
+  <data name="Minutes" xml:space="preserve"><value>{0:N2} min de audio</value></data>
+  <data name="Failures" xml:space="preserve"><value>{0:N0} fallidas</value></data>
+  <data name="USD" xml:space="preserve"><value>{0:N4} USD</value></data>
+  <data name="SmallCost" xml:space="preserve"><value>Menos de 0,0001 USD</value></data>
+  <data name="CustomModel" xml:space="preserve"><value>Modelo personalizado</value></data>
+  <data name="ProviderRole" xml:space="preserve"><value>{0} · {1}</value></data>
+  <data name="Provider_openai" xml:space="preserve"><value>OpenAI</value></data>
+  <data name="Provider_dashscope" xml:space="preserve"><value>Alibaba Cloud Model Studio</value></data>
+  <data name="Provider_chatgpt" xml:space="preserve"><value>ChatGPT</value></data>
+  <data name="Provider_minimax" xml:space="preserve"><value>MiniMax</value></data>
+  <data name="Provider_minimax_plan" xml:space="preserve"><value>MiniMax M Plan</value></data>
+  <data name="Provider_compatible" xml:space="preserve"><value>Servicio compatible</value></data>
+</root>
