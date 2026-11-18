@@ -156,7 +156,7 @@ public partial class MainWindow
             if (missingRequirements.Length > 0) throw new InvalidOperationException(SetupText.Get(missingRequirements[0]));
             if (preset.MissingModels(Installed).Length > 0)
                 throw new InvalidOperationException(SetupText.Get("missing", string.Join(", ", preset.MissingModels(Installed).Select(ModelName))));
-            await bridge.Run("apply", input: CollectSettings(preset));
+            await ApplySettings(CollectSettings(preset));
             applied = true;
         }, SetupText.Get("applied"), reloadSettings: true);
         UpdatePresetGuide();

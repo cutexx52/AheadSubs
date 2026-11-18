@@ -29,6 +29,10 @@
   <data name="keys" xml:space="preserve"><value>配置百鍊</value></data>
   <data name="apply" xml:space="preserve"><value>應用方案</value></data>
   <data name="applying" xml:space="preserve"><value>正在應用方案…</value></data>
+  <data name="restart-models" xml:space="preserve"><value>正在等候目前的工作完成，隨後會重新載入本機模型…</value></data>
+  <data name="restart" xml:space="preserve"><value>正在重新啟動字幕服務，等候目前的工作完成…</value></data>
+  <data name="load-models" xml:space="preserve"><value>正在載入本機模型，可能需要一些時間…</value></data>
+  <data name="start" xml:space="preserve"><value>正在啟動字幕服務…</value></data>
   <data name="applied" xml:space="preserve"><value>已應用方案。</value></data>
   <data name="downloading" xml:space="preserve"><value>正在下載 {0}…</value></data>
   <data name="downloaded" xml:space="preserve"><value>下載完成。</value></data>

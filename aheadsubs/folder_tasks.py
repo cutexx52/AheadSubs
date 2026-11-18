@@ -216,7 +216,7 @@ class BackgroundPlayback:
             if self.open_pipeline is not None:
                 if not self.relay.background_idle():
                     raise Deferred
-                self.pipeline = self.open_pipeline()
+                self.pipeline = self.open_pipeline() or self.pipeline
                 self.open_pipeline = None
             if self.pipeline is None:
                 result = self.relay.update_background(data["session"], playback)
@@ -321,6 +321,10 @@ class FolderWorker:
         generation = Generation(path=str(path), output=str(output), timeout=86400, **options)
         with ExitStack() as resources:
             client = self.client
+            if callable(client.defaults):
+                with client.relay.lock:
+                    client = BackgroundPlayback(client.relay, client.defaults())
+                    client.pipeline = client.relay.pipeline
             if rule.speech_model is not None or rule.translation_model is not None:
                 if self.open_pipeline is None:
                     raise OperationError("folder_model_unavailable")

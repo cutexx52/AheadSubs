@@ -194,12 +194,7 @@ def subtitle_profile(args, settings, translator):
     return profile
 
 
-def make_relay(args, desktop_settings):
-    settings = Segmentation(args.before, args.after, args.max_speech, args.min_silence_ms,
-                            args.pad_ms, args.vad_threshold, not args.no_vad, args.backfill, args.min_speech)
-    recognizer, translator, speech_translator = make_backends(args, desktop_settings)
-    profile = subtitle_profile(args, settings, translator)
-    dashscope_url = dashscope_endpoint(args)
+def transcription_profile(args, settings):
     asr_device = args.asr_device or args.device
     transcription_profile = [args.asr, asdict(settings), args.vad_model if settings.enabled else None]
     if args.asr == "local":
@@ -209,26 +204,43 @@ def make_relay(args, desktop_settings):
     elif args.asr == "qwen":
         transcription_profile.extend([args.qwen_size, args.asr_model])
     elif args.asr == "dashscope":
-        transcription_profile.extend([dashscope_url, args.dashscope_asr_model])
+        transcription_profile.extend([dashscope_endpoint(args), args.dashscope_asr_model])
+    return transcription_profile
+
+
+def segmentation(args):
+    return Segmentation(args.before, args.after, args.max_speech, args.min_silence_ms, args.pad_ms,
+                        args.vad_threshold, not args.no_vad, args.backfill, args.min_speech)
+
+
+def translation_preferences(args):
+    return TranslationSettings(args.translation_previous_cues, args.translation_prompt, args.translation_context_chars)
+
+
+def make_relay(args, desktop_settings):
+    settings = segmentation(args)
+    recognizer, translator, speech_translator = make_backends(args, desktop_settings)
+    profile = subtitle_profile(args, settings, translator)
+    dashscope_url = dashscope_endpoint(args)
     segmenter = Segmenter(settings, args.vad_model)
     usage = CloudUsage(args.cache)
     model_status = monitor_pipeline(args, recognizer, translator, speech_translator, dashscope_url, usage)
     return Relay(args.cache, recognizer, translator, profile, args.workers, args.chunk, speech_translator, segmenter,
-                 model_status=model_status, cloud_usage=usage, transcription_profile=transcription_profile,
-                 translation_settings=TranslationSettings(args.translation_previous_cues, args.translation_prompt,
-                                                          args.translation_context_chars))
+                 model_status=model_status, cloud_usage=usage, transcription_profile=transcription_profile(args, settings),
+                 translation_settings=translation_preferences(args))
 
 
-def build_folder_pipeline(relay, desktop_settings, args, translation, shared_asr, shared_mt):
+def build_folder_pipeline(relay, desktop_settings, args, translation, shared_asr, shared_mt, base):
     recognizer, translator, _ = make_backends(args, desktop_settings, shared_asr=shared_asr,
                                               shared_mt=shared_mt, local_files_only=True)
     monitor_pipeline(args, recognizer, translator, None, dashscope_endpoint(args), relay.cloud_usage,
                      meter_asr=shared_asr is None, meter_mt=shared_mt is None)
-    profile = subtitle_profile(args, relay.segmenter.settings, translator)
-    return SubtitlePipeline(recognizer, translator, profile, translation_settings=translation)
+    profile = subtitle_profile(args, base.segmenter.settings, translator)
+    return SubtitlePipeline(recognizer, translator, profile, translation_settings=translation,
+                            chunk=base.chunk, segmenter=base.segmenter)
 
 
-def main():
+def parse_command(argv=None):
     parser = argparse.ArgumentParser(prog="python -m aheadsubs")
     commands = parser.add_subparsers(dest="mode", required=True)
     server = commands.add_parser("serve")
@@ -305,7 +317,11 @@ def main():
         command.add_argument("--interval", type=float, default=0.4)
     for command in (pot, pot_open, clock):
         command.add_argument("--audio", type=int, default=0)
-    args = parser.parse_args()
+    return parser, parser.parse_args(argv)
+
+
+def main():
+    parser, args = parse_command()
     if args.mode == "serve":
         if args.vad_threshold is None:
             args.vad_threshold = VAD_THRESHOLDS[args.vad_model]
@@ -349,10 +365,16 @@ def main():
                     local_models.append("nllb")
             defaults = {"source": args.default_source, "target": args.default_target,
                         "bilingual": args.default_bilingual}
+            apply_settings = None
             if args.desktop_config is not None:
+                from .desktop.live_settings import LiveSettings
                 from .desktop.folder_tasks import background_worker
 
-                build_pipeline = partial(build_folder_pipeline, relay, desktop_settings)
+                live = LiveSettings(args, desktop_settings, relay, defaults, token)
+                defaults = live.playback_defaults
+                apply_settings = live.apply if token else None
+
+                build_pipeline = partial(build_folder_pipeline, relay)
                 resources.enter_context(background_worker(relay, defaults, args, desktop_settings, build_pipeline))
                 global_models = tuple(local_models)
 
@@ -360,7 +382,7 @@ def main():
                     return sorted(set(global_models) | relay.active_background_models())
 
                 local_models = service_models
-            serve(relay, args.port, token, defaults, local_models=local_models)
+            serve(relay, args.port, token, defaults, local_models=local_models, apply_settings=apply_settings)
         return
     if args.interval <= 0:
         parser.error("--interval must be positive")

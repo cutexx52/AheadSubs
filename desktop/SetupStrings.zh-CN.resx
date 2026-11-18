@@ -29,6 +29,10 @@
   <data name="keys" xml:space="preserve"><value>配置百炼</value></data>
   <data name="apply" xml:space="preserve"><value>应用方案</value></data>
   <data name="applying" xml:space="preserve"><value>正在应用方案…</value></data>
+  <data name="restart-models" xml:space="preserve"><value>正在等待当前任务结束，随后会重新加载本地模型…</value></data>
+  <data name="restart" xml:space="preserve"><value>正在重启字幕服务，等待当前任务结束…</value></data>
+  <data name="load-models" xml:space="preserve"><value>正在加载本地模型，可能需要一些时间…</value></data>
+  <data name="start" xml:space="preserve"><value>正在启动字幕服务…</value></data>
   <data name="applied" xml:space="preserve"><value>已应用方案。</value></data>
   <data name="downloading" xml:space="preserve"><value>正在下载 {0}…</value></data>
   <data name="downloaded" xml:space="preserve"><value>下载完成。</value></data>

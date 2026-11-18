@@ -60,10 +60,11 @@ def enhancement_key(settings):
     return None
 
 
-def config():
-    if not CONFIG.is_file():
+def config(path=None):
+    path = CONFIG if path is None else path
+    if not path.is_file():
         return DEFAULTS.copy()
-    saved = json.loads(CONFIG.read_text(encoding="utf-8"))
+    saved = json.loads(path.read_text(encoding="utf-8"))
     if "min_speech" not in saved:
         if str(saved.get("pad_ms")) == "160":
             saved["pad_ms"] = DEFAULTS["pad_ms"]
@@ -192,71 +193,95 @@ def background_start(on_wait=None, restart=False):
     with (DATA / "starting.lock").open("a+b") as startup:
         if not lock_service(startup, wait=restart) or PAUSED.exists():
             return
-        health = service_health()
-        if health:
-            if not restart:
+        start_locked(restart, on_wait=on_wait)
+
+
+def start_locked(restart, *, on_wait=None, apply_saved=False, progress=None):
+    health = service_health()
+    if health:
+        if not restart:
+            return
+        from aheadsubs.client import RelayClient
+
+        if not CONTROL.is_file():
+            raise ServiceStateError("service-owned", "当前字幕服务由另一个程序启动，请先关闭该服务。")
+        token = CONTROL.read_text(encoding="ascii")
+        if apply_saved and health.get("live_settings"):
+            from .live_settings import credential_stamp
+
+            payload = {"token": token, "credentials": credential_stamp(config(), token)}
+            reply = RelayClient(PORT).send("settings/apply", payload, timeout=30)
+            if reply["applied"]:
                 return
-            from aheadsubs.client import RelayClient
+        if progress:
+            progress("restart-models" if uses_local_models(config()) else "restart")
+        RelayClient(PORT).send("shutdown", {"token": token})
+        if pid := health.get("pid"):
+            import psutil
 
-            if not CONTROL.is_file():
-                raise ServiceStateError("service-owned", "当前字幕服务由另一个程序启动，请先关闭该服务。")
-            RelayClient(PORT).send("shutdown", {"token": CONTROL.read_text(encoding="ascii")})
-            if pid := health.get("pid"):
-                import psutil
+            try:
+                psutil.Process(pid).wait(timeout=100)
+            except psutil.NoSuchProcess:
+                pass
+        deadline = time.monotonic() + 5
+        while healthy():
+            if time.monotonic() >= deadline:
+                raise ServiceStateError("service-busy", "旧字幕服务尚未退出。")
+            time.sleep(0.25)
+    settings = config()
+    if progress:
+        progress("load-models" if uses_local_models(settings) else "start")
+    CONTROL.write_text(secrets.token_urlsafe(32), encoding="ascii")
+    process = spawn(service_args(settings))
+    while process.poll() is None and not healthy():
+        if on_wait:
+            on_wait()
+        time.sleep(0.4)
+    if not healthy():
+        raise ServiceStateError("service-start", f"字幕服务启动失败，请查看 {LOG}。" if diagnostics_enabled()
+                           else "字幕服务启动失败。开启诊断模式后重试可查看日志。")
 
-                try:
-                    psutil.Process(pid).wait(timeout=100)
-                except psutil.NoSuchProcess:
-                    pass
-            deadline = time.monotonic() + 5
-            while healthy():
-                if time.monotonic() >= deadline:
-                    raise ServiceStateError("service-busy", "旧字幕服务尚未退出。")
-                time.sleep(0.25)
-        settings = config()
-        CONTROL.write_text(secrets.token_urlsafe(32), encoding="ascii")
-        args = ["serve", "--port", str(PORT), "--cache", str(DATA / "cache"), "--control-token-file", str(CONTROL),
-                "--desktop-config", str(CONFIG),
-                "--default-target", settings["target"]]
-        if settings["source"]:
-            args.extend(["--default-source", settings["source"]])
-        if settings["bilingual"] == "1":
-            args.append("--default-bilingual")
-        for name in DEFAULTS:
-            if name in {"source", "target", "bilingual", "translation_enhancements",
-                        "potplayer_directory", "mpv_directory", "key_file", "qwen_mt_key_file", "minimax_key_file"}:
-                continue
-            if name == "pot_hotkey":
-                if settings[name] == "1":
-                    args.extend(["--pot-hotkey-launcher", str(LAUNCHER)])
-                continue
-            if name == "diagnostics":
-                if settings[name] == "1":
-                    args.append("--diagnostics")
-                continue
-            if name == "route":
-                if settings[name] == "OpenAI AST (English)":
-                    args.append("--ast")
-                continue
-            value = settings[name]
-            if value:
-                args.extend(["--" + name.replace("_", "-"), value])
-        enhancement = settings["translation_enhancements"].get(enhancement_key(settings), {})
-        if enhancement.get("enabled"):
-            args.extend(["--translation-previous-cues", str(enhancement["previous_cues"]),
-                         f"--translation-prompt={enhancement['prompt']}"])
-            if "context_chars" in enhancement:
-                args.extend(["--translation-context-chars", str(enhancement["context_chars"])])
-        if settings["asr"] == "qwen":
-            args.extend(["--qwen-root", str(QWEN)])
-        process = spawn(args)
-        while process.poll() is None and not healthy():
-            if on_wait:
-                on_wait()
-            time.sleep(0.4)
-        if not healthy():
-            raise ServiceStateError("service-start", f"字幕服务启动失败，请查看 {LOG}。" if diagnostics_enabled()
-                               else "字幕服务启动失败。开启诊断模式后重试可查看日志。")
+
+def uses_local_models(settings):
+    return settings["route"] == "asr+mt" and (settings["asr"] in {"local", "qwen"} or settings["mt"] == "local")
+
+
+def service_args(settings):
+    args = ["serve", "--port", str(PORT), "--cache", str(DATA / "cache"), "--control-token-file", str(CONTROL),
+            "--desktop-config", str(CONFIG),
+            "--default-target", settings["target"]]
+    if settings["source"]:
+        args.extend(["--default-source", settings["source"]])
+    if settings["bilingual"] == "1":
+        args.append("--default-bilingual")
+    for name in DEFAULTS:
+        if name in {"source", "target", "bilingual", "translation_enhancements",
+                    "potplayer_directory", "mpv_directory", "key_file", "qwen_mt_key_file", "minimax_key_file"}:
+            continue
+        if name == "pot_hotkey":
+            if settings[name] == "1":
+                args.extend(["--pot-hotkey-launcher", str(LAUNCHER)])
+            continue
+        if name == "diagnostics":
+            if settings[name] == "1":
+                args.append("--diagnostics")
+            continue
+        if name == "route":
+            if settings[name] == "OpenAI AST (English)":
+                args.append("--ast")
+            continue
+        value = settings[name]
+        if value:
+            args.extend(["--" + name.replace("_", "-"), value])
+    enhancement = settings["translation_enhancements"].get(enhancement_key(settings), {})
+    if enhancement.get("enabled"):
+        args.extend(["--translation-previous-cues", str(enhancement["previous_cues"]),
+                     f"--translation-prompt={enhancement['prompt']}"])
+        if "context_chars" in enhancement:
+            args.extend(["--translation-context-chars", str(enhancement["context_chars"])])
+    if settings["asr"] == "qwen":
+        args.extend(["--qwen-root", str(QWEN)])
+    return args
 
 
 def prepare():

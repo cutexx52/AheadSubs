@@ -29,6 +29,10 @@
   <data name="keys" xml:space="preserve"><value>Configurar Bailian</value></data>
   <data name="apply" xml:space="preserve"><value>Aplicar preajuste</value></data>
   <data name="applying" xml:space="preserve"><value>Aplicando el preajuste…</value></data>
+  <data name="restart-models" xml:space="preserve"><value>Los modelos locales se volverán a cargar cuando termine la tarea en curso…</value></data>
+  <data name="restart" xml:space="preserve"><value>El servicio de subtítulos se reiniciará cuando termine la tarea en curso…</value></data>
+  <data name="load-models" xml:space="preserve"><value>Cargando los modelos locales. Esto puede tardar un momento…</value></data>
+  <data name="start" xml:space="preserve"><value>Iniciando el servicio de subtítulos…</value></data>
   <data name="applied" xml:space="preserve"><value>Preajuste aplicado.</value></data>
   <data name="downloading" xml:space="preserve"><value>Descargando {0}…</value></data>
   <data name="downloaded" xml:space="preserve"><value>Descarga completada.</value></data>

@@ -29,6 +29,10 @@
   <data name="keys" xml:space="preserve"><value>Configurer Bailian</value></data>
   <data name="apply" xml:space="preserve"><value>Appliquer le préréglage</value></data>
   <data name="applying" xml:space="preserve"><value>Application du préréglage…</value></data>
+  <data name="restart-models" xml:space="preserve"><value>Les modèles locaux seront rechargés à la fin du traitement en cours…</value></data>
+  <data name="restart" xml:space="preserve"><value>Redémarrage du service de sous-titres en attente de la fin du traitement en cours…</value></data>
+  <data name="load-models" xml:space="preserve"><value>Chargement des modèles locaux. Cette opération peut prendre un moment…</value></data>
+  <data name="start" xml:space="preserve"><value>Démarrage du service de sous-titres…</value></data>
   <data name="applied" xml:space="preserve"><value>Préréglage appliqué.</value></data>
   <data name="downloading" xml:space="preserve"><value>Téléchargement de {0}…</value></data>
   <data name="downloaded" xml:space="preserve"><value>Téléchargement terminé.</value></data>

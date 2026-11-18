@@ -57,7 +57,7 @@ def check_requirements(item, endpoint=None):
     return {"missing": missing}
 
 
-def apply(updates):
+def validate_settings(updates):
     if not isinstance(updates, dict) or not updates.keys() <= (runtime.DEFAULTS.keys() | {"credentials"}):
         raise UserInputError("unknown-settings", "设置包含未知选项。")
     settings = runtime.config()
@@ -117,10 +117,18 @@ def apply(updates):
             validate_chatgpt(settings["chatgpt_account"], settings["chatgpt_model"])
         if settings["mt"] == "minimax":
             credentials.resolve(settings, "minimax")
-    runtime.save_config(settings)
-    runtime.PAUSED.unlink(missing_ok=True)
-    runtime.background_start(restart=True)
-    return status()
+    return settings
+
+
+def apply(updates, progress=None, *, include_status=True):
+    runtime.DATA.mkdir(parents=True, exist_ok=True)
+    with (runtime.DATA / "starting.lock").open("a+b") as startup:
+        runtime.lock_service(startup, wait=True)
+        settings = validate_settings(updates)
+        runtime.save_config(settings)
+        runtime.PAUSED.unlink(missing_ok=True)
+        runtime.start_locked(True, apply_saved=True, progress=progress)
+    return status() if include_status else {}
 
 
 def validate_enhancements(values):
@@ -215,7 +223,8 @@ def run_command(command, item=None, folder=None):
         assets.uninstall_model(item, MODELS[item])
         return status()
     if command == "apply":
-        return apply(json.load(sys.stdin))
+        return apply(json.load(sys.stdin), lambda stage: print("apply:" + stage, file=sys.stderr, flush=True),
+                     include_status=item != "refresh-in-ui")
     if command == "save-credentials":
         settings = runtime.config()
         credentials.update(settings, json.load(sys.stdin))

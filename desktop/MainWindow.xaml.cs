@@ -625,8 +625,11 @@ public partial class MainWindow : Window
     private static string Friendly(Exception error) => error is OperationCanceledException
         ? UiText.Get("TimedOut") : error.Message;
 
+    private Task<JsonObject> ApplySettings(JsonObject values) =>
+        bridge.Run("apply", "refresh-in-ui", input: values, progress: stage => ActionStatus.Text = SetupText.Get(stage));
+
     private async void Apply(object sender, RoutedEventArgs e) => await Act(UiText.Get("Applying"),
-        async () => { await bridge.Run("apply", input: CollectSettings()); }, UiText.Get("Applied"), reloadSettings: true);
+        async () => { await ApplySettings(CollectSettings()); }, UiText.Get("Applied"), reloadSettings: true);
 
     private async void Stop(object sender, RoutedEventArgs e) => await Act(UiText.Get("Stopping"),
         async () => { await bridge.Run("stop"); }, UiText.Get("Stopped"));

@@ -29,6 +29,10 @@
   <data name="keys" xml:space="preserve"><value>Configure Bailian</value></data>
   <data name="apply" xml:space="preserve"><value>Apply preset</value></data>
   <data name="applying" xml:space="preserve"><value>Applying preset…</value></data>
+  <data name="restart-models" xml:space="preserve"><value>Waiting for current work to finish, then reloading local models…</value></data>
+  <data name="restart" xml:space="preserve"><value>Restarting the subtitle service. Waiting for current work to finish…</value></data>
+  <data name="load-models" xml:space="preserve"><value>Loading local models. This may take a moment…</value></data>
+  <data name="start" xml:space="preserve"><value>Starting the subtitle service…</value></data>
   <data name="applied" xml:space="preserve"><value>Preset applied.</value></data>
   <data name="downloading" xml:space="preserve"><value>Downloading {0}…</value></data>
   <data name="downloaded" xml:space="preserve"><value>Download complete.</value></data>

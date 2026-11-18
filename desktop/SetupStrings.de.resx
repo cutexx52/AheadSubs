@@ -29,6 +29,10 @@
   <data name="keys" xml:space="preserve"><value>Bailian einrichten</value></data>
   <data name="apply" xml:space="preserve"><value>Voreinstellung anwenden</value></data>
   <data name="applying" xml:space="preserve"><value>Voreinstellung wird angewendet…</value></data>
+  <data name="restart-models" xml:space="preserve"><value>Die lokalen Modelle werden neu geladen, sobald der aktuelle Vorgang abgeschlossen ist…</value></data>
+  <data name="restart" xml:space="preserve"><value>Der Untertiteldienst wird neu gestartet, sobald der aktuelle Vorgang abgeschlossen ist…</value></data>
+  <data name="load-models" xml:space="preserve"><value>Lokale Modelle werden geladen. Das kann einen Moment dauern…</value></data>
+  <data name="start" xml:space="preserve"><value>Untertiteldienst wird gestartet…</value></data>
   <data name="applied" xml:space="preserve"><value>Voreinstellung angewendet.</value></data>
   <data name="downloading" xml:space="preserve"><value>{0} wird heruntergeladen…</value></data>
   <data name="downloaded" xml:space="preserve"><value>Download abgeschlossen.</value></data>

@@ -1,3 +1,4 @@
+from copy import copy
 import io
 import wave
 from dataclasses import dataclass, replace
@@ -54,6 +55,13 @@ class Segmenter:
                 speech_pad_ms=0,
                 min_speech_duration_ms=96,
             )
+
+    def with_settings(self, settings):
+        updated = copy(self)
+        updated.settings = settings
+        if hasattr(self, "options"):
+            updated.options = replace(self.options, threshold=settings.vad_threshold)
+        return updated
 
     @property
     def planning_margin(self):

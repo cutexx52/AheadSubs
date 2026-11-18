@@ -29,6 +29,10 @@
   <data name="keys" xml:space="preserve"><value>Bailian を設定</value></data>
   <data name="apply" xml:space="preserve"><value>プリセットを適用</value></data>
   <data name="applying" xml:space="preserve"><value>プリセットを適用中…</value></data>
+  <data name="restart-models" xml:space="preserve"><value>現在の処理が終了してから、ローカルモデルを再読み込みします…</value></data>
+  <data name="restart" xml:space="preserve"><value>字幕サービスを再起動するため、現在の処理の終了を待っています…</value></data>
+  <data name="load-models" xml:space="preserve"><value>ローカルモデルを読み込んでいます。しばらくお待ちください…</value></data>
+  <data name="start" xml:space="preserve"><value>字幕サービスを起動しています…</value></data>
   <data name="applied" xml:space="preserve"><value>プリセットを適用しました。</value></data>
   <data name="downloading" xml:space="preserve"><value>{0} をダウンロード中…</value></data>
   <data name="downloaded" xml:space="preserve"><value>ダウンロードが完了しました。</value></data>
