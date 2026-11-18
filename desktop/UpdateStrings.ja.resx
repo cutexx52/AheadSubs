@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="Title" xml:space="preserve"><value>ソフトウェア更新</value></data>
+  <data name="CurrentVersion" xml:space="preserve"><value>現在のバージョン {0}</value></data>
+  <data name="Automatic" xml:space="preserve"><value>GitHub で更新を自動確認</value></data>
+  <data name="Check" xml:space="preserve"><value>更新を確認</value></data>
+  <data name="Notes" xml:space="preserve"><value>リリースノート</value></data>
+  <data name="Portable" xml:space="preserve"><value>ポータブル版 ZIP をダウンロード</value></data>
+  <data name="Install" xml:space="preserve"><value>ダウンロードしてインストール…</value></data>
+  <data name="Cancel" xml:space="preserve"><value>ダウンロードをキャンセル</value></data>
+  <data name="Checking" xml:space="preserve"><value>更新を確認中…</value></data>
+  <data name="Available" xml:space="preserve"><value>AheadSubs {0} が利用できます</value></data>
+  <data name="Notification" xml:space="preserve"><value>詳細設定を開いて更新を確認してください。</value></data>
+  <data name="UpToDate" xml:space="preserve"><value>新しい安定版はありません。</value></data>
+  <data name="CheckFailed" xml:space="preserve"><value>更新を確認できません。後でもう一度試してください。</value></data>
+  <data name="PreferenceFailed" xml:space="preserve"><value>更新設定を保存できませんでした。</value></data>
+  <data name="BrowserFailed" xml:space="preserve"><value>ブラウザーを開けません。既定のブラウザーを確認して再試行してください。</value></data>
+  <data name="Confirm" xml:space="preserve"><value>AheadSubs {0}（{1:N0} MiB）をダウンロードしますか？ 検証後、字幕サービスを停止してアプリを閉じ、インストーラーを実行します。先に編集中の設定を保存してください。</value></data>
+  <data name="Downloading" xml:space="preserve"><value>インストーラーをダウンロードして検証中…</value></data>
+  <data name="Stopping" xml:space="preserve"><value>インストール前に字幕サービスを停止中…</value></data>
+  <data name="Canceled" xml:space="preserve"><value>ダウンロードをキャンセルしました。</value></data>
+  <data name="Busy" xml:space="preserve"><value>現在の操作が完了してから、もう一度更新してください。</value></data>
+  <data name="DownloadFailed" xml:space="preserve"><value>この環境用のインストーラーをダウンロードまたは検証できません。再試行するかリリースノートを開いてください。</value></data>
+  <data name="InstallFailed" xml:space="preserve"><value>更新を準備できません。字幕サービスを確認して再試行するか、リリースノートを開いてください。</value></data>
+  <data name="SetupFailed" xml:space="preserve"><value>インストーラーが更新を完了できませんでした。AheadSubs を開き直すか、GitHub Releases からインストーラーをダウンロードしてください。</value></data>
+</root>

@@ -61,6 +61,7 @@ public partial class MainWindow
 
     private async void PresetChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (localizing) return;
         missingRequirements = null;
         if (PresetStatus is null) return;
         if (PresetDisclosure.IsExpanded && initialized) await CheckPreset();

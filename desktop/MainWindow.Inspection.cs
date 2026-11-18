@@ -39,7 +39,18 @@ public partial class MainWindow
 
     private void InitializeInspection()
     {
-        InspectTab.Language = System.Windows.Markup.XmlLanguage.GetLanguage(Culture.Name);
+        LocalizeInspection();
+        InspectStatus.Text = Get("EmptyLibrary");
+        inspectionTimer.Tick += async (_, _) =>
+        {
+            if (IsVisible && SettingsPanel.SelectedItem == InspectTab && !inspectionAction)
+                await Inspect(quiet: true);
+        };
+        SetInspectionFiles([], null);
+    }
+
+    private void LocalizeInspection()
+    {
         InspectTab.Header = Get("Tab");
         InspectTitle.Text = Get("Title");
         InspectSearchLabel.Content = Get("Search");
@@ -53,13 +64,6 @@ public partial class MainWindow
         InspectTranslationColumn.Header = Get("Translation");
         AutomationProperties.SetName(SourceFilter, Get("Filter"));
         AutomationProperties.SetName(MediaList, Get("Files"));
-        InspectStatus.Text = Get("EmptyLibrary");
-        inspectionTimer.Tick += async (_, _) =>
-        {
-            if (IsVisible && SettingsPanel.SelectedItem == InspectTab && !inspectionAction)
-                await Inspect(quiet: true);
-        };
-        SetInspectionFiles([], null);
     }
 
     private SubtitleVersion? SelectedVersion()

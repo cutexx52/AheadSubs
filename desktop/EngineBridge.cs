@@ -6,6 +6,11 @@ namespace AheadSubs;
 
 internal sealed class InspectionBridgeException(string message) : InvalidOperationException(message);
 
+internal sealed class DesktopBridgeException(string key) : InvalidOperationException
+{
+    public override string Message => UiText.Get(key);
+}
+
 /// <summary>The desktop never imports engine code or reads secrets. Commands use one JSON response.</summary>
 internal sealed class EngineBridge
 {
@@ -25,7 +30,7 @@ internal sealed class EngineBridge
     {
         string python = new[] { Path.Combine(Root, "runtime", "python.exe"),
             Path.Combine(Root, ".venv", "Scripts", "python.exe") }.FirstOrDefault(File.Exists)
-            ?? throw new InvalidOperationException("找不到随软件提供的运行环境。请重新解压完整安装包，不要单独移动 UI 文件夹。");
+            ?? throw new DesktopBridgeException("MissingRuntime");
         var info = new ProcessStartInfo(python)
         {
             WorkingDirectory = Root, UseShellExecute = false, CreateNoWindow = true,
@@ -33,6 +38,7 @@ internal sealed class EngineBridge
             StandardOutputEncoding = System.Text.Encoding.UTF8,
             StandardErrorEncoding = System.Text.Encoding.UTF8
         };
+        info.Environment["AHEADSUBS_UI_LOCALE"] = InterfaceLocale.Culture.Name;
         info.Environment["PYTHONUTF8"] = "1";
         info.ArgumentList.Add("-m");
         info.ArgumentList.Add("aheadsubs.desktop.bridge");
@@ -43,7 +49,7 @@ internal sealed class EngineBridge
             info.ArgumentList.Add("--folder");
             info.ArgumentList.Add(folder);
         }
-        using var process = Process.Start(info) ?? throw new IOException("无法启动字幕服务。");
+        using var process = Process.Start(info) ?? throw new DesktopBridgeException("LaunchFailed");
         using var registration = cancellationToken.Register(() =>
         {
             try { if (!process.HasExited) process.Kill(entireProcessTree: true); }
@@ -65,15 +71,27 @@ internal sealed class EngineBridge
         JsonObject? data;
         try { data = JsonNode.Parse(response) as JsonObject; }
         catch (System.Text.Json.JsonException)
-        { throw new InvalidOperationException("后台没有返回有效结果。请在高级设置中打开诊断日志后重试。"); }
+        { throw new DesktopBridgeException("InvalidResponse"); }
         if (data is null || data["ok"]?.GetValue<bool>() != true)
         {
             string? code = data?["error_code"]?.ToString();
             if (command.StartsWith("inspect-", StringComparison.Ordinal) && InspectionText.Error(code) is { } message)
                 throw new InspectionBridgeException(message);
-            throw new InvalidOperationException(SetupText.Error(code)
-                ?? data?["error"]?.ToString() ?? "后台操作失败，请查看诊断日志。");
+            throw new InvalidOperationException(LocalizedError(code, data?["error_args"] as JsonArray)
+                ?? data?["error"]?.ToString() ?? UiText.Get("BackendFailed"));
         }
         return data;
+    }
+
+    internal static string? LocalizedError(string? code, JsonArray? arguments = null)
+    {
+        if (code is null) return null;
+        if (code == "backend-failed") return UiText.Get("BackendFailed");
+        var format = UiText.Resources.GetString("Error_" + code, InterfaceLocale.Culture);
+        if (format is null)
+            return InspectionText.Error(code) ?? SetupText.Error(code);
+        var values = (arguments ?? []).Select(value => (object)(value?.ToString() ?? "")).ToArray();
+        try { return string.Format(InterfaceLocale.Culture, format, values); }
+        catch (FormatException) { return null; }
     }
 }

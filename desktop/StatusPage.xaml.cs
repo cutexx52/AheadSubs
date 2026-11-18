@@ -26,14 +26,17 @@ public partial class StatusPage : System.Windows.Controls.UserControl
     private CancellationTokenSource? visibility;
     private bool windowActive = true, loading, live;
     private DateTimeOffset offlineReadAt;
+    private JsonObject? lastSnapshot;
+    private string lastOffline = "Checking", lastEmpty = "Checking";
+    private DateTime? lastChecked;
+    private bool preview;
     private JsonObject? cloud;
     private string? cloudSignature;
 
     public StatusPage()
     {
         InitializeComponent();
-        Language = System.Windows.Markup.XmlLanguage.GetLanguage(Culture.Name);
-        RenderLive(null, StatusText.Get("Checking"));
+        RenderLive(null, "Checking");
         RenderCloud(null, "Checking");
         polling.Tick += async (_, _) => await Refresh();
         IsVisibleChanged += (_, _) => UpdatePolling();
@@ -96,8 +99,9 @@ public partial class StatusPage : System.Windows.Controls.UserControl
             }
             if (token.IsCancellationRequested) return;
 
-            RenderLive(snapshot, StatusText.Get(offline));
-            Updated.Text = StatusText.Format("Checked", DateTime.Now.ToString("T", Culture));
+            RenderLive(snapshot, offline);
+            lastChecked = DateTime.Now;
+            Updated.Text = StatusText.Format("Checked", lastChecked.Value.ToString("T", Culture));
             if (snapshot is not null)
             {
                 live = true;
@@ -126,6 +130,7 @@ public partial class StatusPage : System.Windows.Controls.UserControl
 
     internal void Preview(JsonObject snapshot)
     {
+        preview = true;
         RenderLive(snapshot, "");
         Updated.Text = StatusText.Get("Preview");
         RenderCloud(snapshot["cloud"] as JsonObject);
@@ -135,6 +140,8 @@ public partial class StatusPage : System.Windows.Controls.UserControl
 
     private void RenderLive(JsonObject? snapshot, string offline)
     {
+        lastSnapshot = snapshot;
+        lastOffline = offline;
         bool ready = Flag(snapshot, "ready");
         var sourceRows = Rows(snapshot, "sources");
         var modelRows = Rows(snapshot, "models");
@@ -144,7 +151,7 @@ public partial class StatusPage : System.Windows.Controls.UserControl
         var workers = snapshot?["workers"] as JsonObject;
         var resources = snapshot?["resources"] as JsonObject;
 
-        ServiceValue.Text = snapshot is null ? offline : StatusText.Get(ready ? "Ready" : "Degraded");
+        ServiceValue.Text = snapshot is null ? StatusText.Get(offline) : StatusText.Get(ready ? "Ready" : "Degraded");
         ServiceValue.Foreground = ready ? ReadyBrush : WarningBrush;
         ServiceHint.Text = workers is null ? StatusText.Get("ServiceHint") :
             StatusText.Format("Workers", Integer(workers, "busy"), Integer(workers, "limit"));
@@ -180,8 +187,18 @@ public partial class StatusPage : System.Windows.Controls.UserControl
             StatusText.Format("Samples", Integer(rtf, "count"), Integer(latency, "count"));
     }
 
-    private void RenderCloud(JsonObject? usage, string empty = "HistoryUnavailable")
+    internal void Localize()
     {
+        RenderLive(lastSnapshot, lastOffline);
+        Updated.Text = preview ? StatusText.Get("Preview") : lastChecked is { } time
+            ? StatusText.Format("Checked", time.ToString("T", Culture)) : "";
+        cloudSignature = null;
+        RenderCloud(cloud, lastEmpty, relabel: true);
+    }
+
+    private void RenderCloud(JsonObject? usage, string empty = "HistoryUnavailable", bool relabel = false)
+    {
+        lastEmpty = empty;
         string signature = usage?.ToJsonString() ?? empty;
         if (cloudSignature == signature) return;
         cloudSignature = signature;
@@ -189,7 +206,7 @@ public partial class StatusPage : System.Windows.Controls.UserControl
         var dates = (usage?["weeks"] as JsonArray)?.Select(node => node?.ToString()).OfType<string>()
             .Where(date => DateOnly.TryParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture,
                 DateTimeStyles.None, out _)).ToArray() ?? [];
-        if (!dates.SequenceEqual((Weeks.ItemsSource as Week[] ?? []).Select(week => week.Date)))
+        if (relabel || !dates.SequenceEqual((Weeks.ItemsSource as Week[] ?? []).Select(week => week.Date)))
         {
             string? previous = Weeks.SelectedIndex > 0 ? Weeks.SelectedValue as string : null;
             Weeks.ItemsSource = dates.Select((date, index) =>

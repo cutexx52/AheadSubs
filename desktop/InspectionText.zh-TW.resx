@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="Tab" xml:space="preserve"><value>字幕庫</value></data>
+  <data name="Title" xml:space="preserve"><value>字幕庫</value></data>
+  <data name="Search" xml:space="preserve"><value>搜尋檔名或路徑</value></data>
+  <data name="Filter" xml:space="preserve"><value>主要源語言篩選</value></data>
+  <data name="Files" xml:space="preserve"><value>媒體檔案</value></data>
+  <data name="AllSources" xml:space="preserve"><value>所有源語言</value></data>
+  <data name="Version" xml:space="preserve"><value>版本</value></data>
+  <data name="VersionChoice" xml:space="preserve"><value>{0} · {1} · 音軌 {2}</value></data>
+  <data name="PathUnknown" xml:space="preserve"><value>未記錄路徑</value></data>
+  <data name="Refresh" xml:space="preserve"><value>重新整理</value></data>
+  <data name="Regenerate" xml:space="preserve"><value>重新生成</value></data>
+  <data name="RegenerateHint" xml:space="preserve"><value>播放空閒時用當前模型生成新版本。</value></data>
+  <data name="Open" xml:space="preserve"><value>開啟 SRT</value></data>
+  <data name="Save" xml:space="preserve"><value>另存 SRT…</value></data>
+  <data name="SrtFilter" xml:space="preserve"><value>SubRip 字幕 (*.srt)|*.srt</value></data>
+  <data name="Saved" xml:space="preserve"><value>字幕已儲存到 {0}</value></data>
+  <data name="Time" xml:space="preserve"><value>時間</value></data>
+  <data name="Original" xml:space="preserve"><value>識別原文</value></data>
+  <data name="Translation" xml:space="preserve"><value>目標字幕</value></data>
+  <data name="PrimarySource" xml:space="preserve"><value>主要源語言   {0}</value></data>
+  <data name="Coverage" xml:space="preserve"><value>已處理   {0}</value></data>
+  <data name="Targets" xml:space="preserve"><value>已有字幕的語言   {0}</value></data>
+  <data name="NoTargets" xml:space="preserve"><value>暫無</value></data>
+  <data name="Unknown" xml:space="preserve"><value>未知</value></data>
+  <data name="Queued" xml:space="preserve"><value>已排隊，播放空閒時開始生成。</value></data>
+  <data name="Running" xml:space="preserve"><value>正在後臺生成，播放時暫停。</value></data>
+  <data name="Complete" xml:space="preserve"><value>後臺生成已完成。</value></data>
+  <data name="Failed" xml:space="preserve"><value>生成已停止。{0}</value></data>
+  <data name="Interrupted" xml:space="preserve"><value>生成已中斷，可以重新生成。</value></data>
+  <data name="ReadFailed" xml:space="preserve"><value>無法讀取字幕快取，請重新整理後重試。</value></data>
+  <data name="ActionFailed" xml:space="preserve"><value>字幕操作失敗。</value></data>
+  <data name="Loading" xml:space="preserve"><value>正在讀取字幕…</value></data>
+  <data name="EmptyLibrary" xml:space="preserve"><value>在播放器中生成字幕後，即可重新整理檢視。</value></data>
+  <data name="NoMatches" xml:space="preserve"><value>沒有符合搜尋和語言篩選的檔案。</value></data>
+  <data name="EmptyVersion" xml:space="preserve"><value>此版本暫時沒有字幕。</value></data>
+  <data name="PreviewRows" xml:space="preserve"><value>僅預覽最近的字幕。SRT 匯出包含此版本已生成的全部字幕。</value></data>
+  <data name="Language_ja" xml:space="preserve"><value>日語</value></data>
+  <data name="Language_en" xml:space="preserve"><value>英語</value></data>
+  <data name="Language_zh" xml:space="preserve"><value>簡體中文</value></data>
+  <data name="Language_zh-cn" xml:space="preserve"><value>簡體中文</value></data>
+  <data name="Language_zh-tw" xml:space="preserve"><value>繁體中文</value></data>
+  <data name="Language_zh-hant" xml:space="preserve"><value>繁體中文</value></data>
+  <data name="Language_zh-hans" xml:space="preserve"><value>簡體中文</value></data>
+  <data name="Language_ko" xml:space="preserve"><value>韓語</value></data>
+  <data name="Language_fr" xml:space="preserve"><value>法語</value></data>
+  <data name="Language_de" xml:space="preserve"><value>德語</value></data>
+  <data name="Language_es" xml:space="preserve"><value>西班牙語</value></data>
+  <data name="Language_ru" xml:space="preserve"><value>俄語</value></data>
+  <data name="Language_pt" xml:space="preserve"><value>葡萄牙語</value></data>
+  <data name="Language_it" xml:space="preserve"><value>義大利語</value></data>
+  <data name="Error_inspection_no_subtitles" xml:space="preserve"><value>此版本暫時沒有可匯出的 SRT 字幕。</value></data>
+  <data name="Error_inspection_invalid_output" xml:space="preserve"><value>請選擇快取目錄之外的 SRT 檔案。</value></data>
+  <data name="Error_inspection_path_unknown" xml:space="preserve"><value>請先重新播放媒體以記錄檔案路徑，再重新生成。</value></data>
+  <data name="Error_inspection_busy" xml:space="preserve"><value>已有重新生成任務在排隊或執行。</value></data>
+  <data name="Error_inspection_media_changed" xml:space="preserve"><value>媒體已移動、已更換或暫時不可訪問。</value></data>
+  <data name="Error_inspection_probe_failed" xml:space="preserve"><value>無法讀取媒體時長或音軌。</value></data>
+  <data name="Error_inspection_service_required" xml:space="preserve"><value>請先啟動 AheadSubs 字幕服務，再重新生成。</value></data>
+  <data name="Error_inspection_write_failed" xml:space="preserve"><value>無法寫入 SRT 檔案，請檢查儲存位置或關閉正在使用該檔案的應用。</value></data>
+  <data name="Error_content_blocked" xml:space="preserve"><value>請求被服務商的內容稽核攔截。</value></data>
+  <data name="Error_moderation_unavailable" xml:space="preserve"><value>服務商的內容稽核暫時不可用。</value></data>
+  <data name="Error_authentication_failed" xml:space="preserve"><value>請檢查 API 金鑰設定。</value></data>
+  <data name="Error_chatgpt_sign_in_required" xml:space="preserve"><value>請在雲端配置中重新登入 ChatGPT。</value></data>
+  <data name="Error_permission_denied" xml:space="preserve"><value>API 服務拒絕訪問，請檢查賬號或模型許可權。</value></data>
+  <data name="Error_not_found" xml:space="preserve"><value>API 模型或介面不存在，請檢查模型名與地址。</value></data>
+  <data name="Error_rate_limited" xml:space="preserve"><value>API 達到限額，請檢查額度、餘額或請求頻率。</value></data>
+  <data name="Error_provider_unavailable" xml:space="preserve"><value>API 服務暫時不可用。</value></data>
+  <data name="Error_invalid_request" xml:space="preserve"><value>API 拒絕了請求引數。</value></data>
+  <data name="Error_request_timeout" xml:space="preserve"><value>API 請求超時。</value></data>
+  <data name="Error_translation_failed" xml:space="preserve"><value>翻譯失敗。</value></data>
+  <data name="Error_processing_failed" xml:space="preserve"><value>字幕處理失敗。</value></data>
+</root>

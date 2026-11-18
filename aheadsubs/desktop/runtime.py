@@ -11,6 +11,7 @@ from urllib.error import URLError
 from urllib.request import ProxyHandler, build_opener
 
 from ..inference.providers import MINIMAX_MODEL
+from ..user_errors import ServiceStateError
 from ..paths import user_data_directory
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -138,7 +139,7 @@ def lock_service(stream, wait=False):
             if not wait:
                 return False
             if time.monotonic() >= deadline:
-                raise RuntimeError("等待上一项服务操作超时。")
+                raise ServiceStateError("service-busy", "等待上一项服务操作超时。")
             time.sleep(0.25)
 
 
@@ -162,7 +163,7 @@ def background_stop():
         if not health:
             return
         if not CONTROL.is_file():
-            raise RuntimeError("当前字幕服务由另一个程序启动，请从原来的启动方式关闭。")
+            raise ServiceStateError("service-owned", "当前字幕服务由另一个程序启动，请从原来的启动方式关闭。")
         import psutil
 
         try:
@@ -184,7 +185,7 @@ def background_stop():
         except psutil.NoSuchProcess:
             pass
         if healthy():
-            raise RuntimeError("字幕服务尚未退出，请查看后台日志。")
+            raise ServiceStateError("service-busy", "字幕服务尚未退出，请查看后台日志。")
 
 
 def background_start(on_wait=None, restart=False):
@@ -203,7 +204,7 @@ def start_locked(restart, *, on_wait=None, apply_saved=False, progress=None):
         from aheadsubs.client import RelayClient
 
         if not CONTROL.is_file():
-            raise RuntimeError("当前字幕服务由另一个程序启动，请先关闭该服务。")
+            raise ServiceStateError("service-owned", "当前字幕服务由另一个程序启动，请先关闭该服务。")
         token = CONTROL.read_text(encoding="ascii")
         if apply_saved and health.get("live_settings"):
             from .live_settings import credential_stamp
@@ -225,7 +226,7 @@ def start_locked(restart, *, on_wait=None, apply_saved=False, progress=None):
         deadline = time.monotonic() + 5
         while healthy():
             if time.monotonic() >= deadline:
-                raise RuntimeError("旧字幕服务尚未退出。")
+                raise ServiceStateError("service-busy", "旧字幕服务尚未退出。")
             time.sleep(0.25)
     settings = config()
     if progress:
@@ -237,7 +238,7 @@ def start_locked(restart, *, on_wait=None, apply_saved=False, progress=None):
             on_wait()
         time.sleep(0.4)
     if not healthy():
-        raise RuntimeError(f"字幕服务启动失败，请查看 {LOG}。" if diagnostics_enabled()
+        raise ServiceStateError("service-start", f"字幕服务启动失败，请查看 {LOG}。" if diagnostics_enabled()
                            else "字幕服务启动失败。开启诊断模式后重试可查看日志。")
 
 

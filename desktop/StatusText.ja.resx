@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="Title" xml:space="preserve"><value>状態</value></data>
+  <data name="Refresh" xml:space="preserve"><value>今すぐ更新</value></data>
+  <data name="Checking" xml:space="preserve"><value>状態を確認中…</value></data>
+  <data name="Offline" xml:space="preserve"><value>サービスに接続できません</value></data>
+  <data name="Unsupported" xml:space="preserve"><value>状態を取得できません</value></data>
+  <data name="Checked" xml:space="preserve"><value>最終確認 {0} · 3 秒ごとに更新</value></data>
+  <data name="Preview" xml:space="preserve"><value>サンプルデータ</value></data>
+  <data name="Service" xml:space="preserve"><value>字幕サービス</value></data>
+  <data name="Ready" xml:space="preserve"><value>準備完了</value></data>
+  <data name="Degraded" xml:space="preserve"><value>モデルを使用できません</value></data>
+  <data name="ServiceHint" xml:space="preserve"><value>「字幕」からサービスを起動または再起動してください。</value></data>
+  <data name="Workers" xml:space="preserve"><value>使用中の処理枠：{0:N0} / {1:N0}</value></data>
+  <data name="Connections" xml:space="preserve"><value>再生接続数：{0:N0}</value></data>
+  <data name="Sources" xml:space="preserve"><value>再生接続</value></data>
+  <data name="Unavailable" xml:space="preserve"><value>サービスを待機中です。</value></data>
+  <data name="NoConnections" xml:space="preserve"><value>連携済みのプレーヤーで再生すると、ここに状態が表示されます。</value></data>
+  <data name="SourcePlayback" xml:space="preserve"><value>{0} · 再生 {1:N0}</value></data>
+  <data name="SourceText" xml:space="preserve"><value>{0} · 処理中のテキスト要求 {2:N0}</value></data>
+  <data name="SourceBoth" xml:space="preserve"><value>{0} · 再生 {1:N0}、処理中のテキスト要求 {2:N0}</value></data>
+  <data name="Source_potplayer" xml:space="preserve"><value>PotPlayer</value></data>
+  <data name="Source_mpv" xml:space="preserve"><value>mpv</value></data>
+  <data name="Source_cli" xml:space="preserve"><value>コマンドライン</value></data>
+  <data name="Source_mcp" xml:space="preserve"><value>MCP</value></data>
+  <data name="Source_http" xml:space="preserve"><value>その他の HTTP クライアント</value></data>
+  <data name="ModelsAndResources" xml:space="preserve"><value>モデルとローカルリソース</value></data>
+  <data name="Models" xml:space="preserve"><value>使用中のモデル</value></data>
+  <data name="NoModels" xml:space="preserve"><value>使用中のモデルは報告されていません。</value></data>
+  <data name="ResourceScope" xml:space="preserve"><value>字幕サービスと子プロセス</value></data>
+  <data name="ModelTitle" xml:space="preserve"><value>{0} · {1}</value></data>
+  <data name="ModelState" xml:space="preserve"><value>{0} · {1}</value></data>
+  <data name="Role_asr" xml:space="preserve"><value>音声認識</value></data>
+  <data name="Role_ast" xml:space="preserve"><value>音声翻訳</value></data>
+  <data name="Role_mt" xml:space="preserve"><value>テキスト翻訳</value></data>
+  <data name="Role_vad" xml:space="preserve"><value>音声区間検出</value></data>
+  <data name="Device_cpu" xml:space="preserve"><value>CPU</value></data>
+  <data name="Device_cuda" xml:space="preserve"><value>NVIDIA CUDA</value></data>
+  <data name="Device_vulkan" xml:space="preserve"><value>Vulkan GPU</value></data>
+  <data name="Device_cloud" xml:space="preserve"><value>クラウド</value></data>
+  <data name="Device_external" xml:space="preserve"><value>外部ローカルサービス</value></data>
+  <data name="State_loaded" xml:space="preserve"><value>読み込み済み</value></data>
+  <data name="State_unavailable" xml:space="preserve"><value>接続不可</value></data>
+  <data name="State_unverified" xml:space="preserve"><value>読み込み状態不明</value></data>
+  <data name="State_configured" xml:space="preserve"><value>設定済み</value></data>
+  <data name="Vram" xml:space="preserve"><value>専用 GPU メモリ</value></data>
+  <data name="Percent" xml:space="preserve"><value>{0:N1}%</value></data>
+  <data name="GiB" xml:space="preserve"><value>{0:N2} GiB</value></data>
+  <data name="MiB" xml:space="preserve"><value>{0:N1} MiB</value></data>
+  <data name="Ratio" xml:space="preserve"><value>{0:N2}×</value></data>
+  <data name="Seconds" xml:space="preserve"><value>{0:N2} 秒</value></data>
+  <data name="Missing" xml:space="preserve"><value>—</value></data>
+  <data name="Performance" xml:space="preserve"><value>字幕処理の性能</value></data>
+  <data name="Rtf" xml:space="preserve"><value>RTF 中央値</value></data>
+  <data name="NoSamples" xml:space="preserve"><value>新しい字幕処理サンプルを待機中です。</value></data>
+  <data name="Samples" xml:space="preserve"><value>過去 15 分 · RTF {0:N0} 件 · 遅延 {1:N0} 件</value></data>
+  <data name="PerformanceHint" xml:space="preserve"><value>RTF が 1 倍未満なら再生より速く処理できています。P50 / P95 / P99 は再生状態の更新から字幕が利用可能になるまでの待ち時間を示します。</value></data>
+  <data name="Cloud" xml:space="preserve"><value>クラウド使用量</value></data>
+  <data name="Week" xml:space="preserve"><value>週（UTC）</value></data>
+  <data name="ThisWeek" xml:space="preserve"><value>今週 · {0} – {1}</value></data>
+  <data name="WeekRange" xml:space="preserve"><value>{0} – {1}</value></data>
+  <data name="CloudHint" xml:space="preserve"><value>このインストールでの使用量です。週の開始は月曜（UTC）。米ドルの概算は記録済みの使用量と税・割引適用前の定価に基づきます。</value></data>
+  <data name="Model" xml:space="preserve"><value>モデル</value></data>
+  <data name="Calls" xml:space="preserve"><value>呼び出し</value></data>
+  <data name="Usage" xml:space="preserve"><value>記録済み使用量</value></data>
+  <data name="Estimate" xml:space="preserve"><value>概算</value></data>
+  <data name="CallTotal" xml:space="preserve"><value>呼び出し {0:N0} 回</value></data>
+  <data name="CostTotal" xml:space="preserve"><value>呼び出し {0:N0} 回 · 概算 {1}</value></data>
+  <data name="PartialTotal" xml:space="preserve"><value>呼び出し {0:N0} 回 · 一部の概算 {1}</value></data>
+  <data name="PartialCost" xml:space="preserve"><value>{0} · 料金判明 {1:N0}/{2:N0}</value></data>
+  <data name="HistoryUnavailable" xml:space="preserve"><value>クラウド使用量を取得できません。更新してください。</value></data>
+  <data name="HistoryIncomplete" xml:space="preserve"><value>一部の使用量を記録または読み取りできませんでした。合計が不完全な場合があります。</value></data>
+  <data name="NoUsage" xml:space="preserve"><value>今週のクラウドモデル呼び出しはありません。</value></data>
+  <data name="NoEstimate" xml:space="preserve"><value>概算なし</value></data>
+  <data name="Subscription" xml:space="preserve"><value>サブスクリプション</value></data>
+  <data name="Tokens" xml:space="preserve"><value>入力 {0:N0} / 出力 {1:N0} トークン</value></data>
+  <data name="Minutes" xml:space="preserve"><value>音声 {0:N2} 分</value></data>
+  <data name="Failures" xml:space="preserve"><value>失敗 {0:N0} 回</value></data>
+  <data name="USD" xml:space="preserve"><value>US${0:N4}</value></data>
+  <data name="SmallCost" xml:space="preserve"><value>US$0.0001 未満</value></data>
+  <data name="CustomModel" xml:space="preserve"><value>カスタムモデル</value></data>
+  <data name="ProviderRole" xml:space="preserve"><value>{0} · {1}</value></data>
+  <data name="Provider_openai" xml:space="preserve"><value>OpenAI</value></data>
+  <data name="Provider_dashscope" xml:space="preserve"><value>Alibaba Cloud Model Studio</value></data>
+  <data name="Provider_chatgpt" xml:space="preserve"><value>ChatGPT</value></data>
+  <data name="Provider_minimax" xml:space="preserve"><value>MiniMax</value></data>
+  <data name="Provider_minimax_plan" xml:space="preserve"><value>MiniMax M Plan</value></data>
+  <data name="Provider_compatible" xml:space="preserve"><value>互換エンドポイント</value></data>
+</root>

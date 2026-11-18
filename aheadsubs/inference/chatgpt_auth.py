@@ -16,6 +16,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, urlencode
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
+from ..user_errors import UserInputError
 from ..paths import user_data_directory
 from .errors import ProviderError, provider_error
 
@@ -137,19 +138,19 @@ def _authorize(client_id, host, previous):
         if "scopes" in previous and PLAN_SCOPE not in previous["scopes"]:
             params["prompt"] = "consent"
         if not webbrowser.open(ISSUER + "/api/accounts/authorize?" + urlencode(params)):
-            raise ValueError("无法打开默认浏览器。")
+            raise UserInputError("browser-unavailable", "无法打开默认浏览器。")
         deadline = time.monotonic() + 180
         while result is None and time.monotonic() < deadline:
             server.handle_request()
     if result is None:
-        raise ValueError("ChatGPT 登录超时，请重试。")
+        raise UserInputError("auth-timeout", "ChatGPT 登录超时，请重试。")
     if result.get("error"):
-        raise ValueError("ChatGPT 未完成授权，请重新登录。")
+        raise UserInputError("auth-invalid", "ChatGPT 未完成授权，请重新登录。")
     ids = result.get("client_id", [] if client_id == DYNAMIC_CLIENT else [client_id])
     codes = result.get("code", [])
     if (len(codes) != 1 or len(ids) != 1 or not ids[0].startswith("oaiapp_")
             or (client_id != DYNAMIC_CLIENT and ids[0] != client_id)):
-        raise ValueError("ChatGPT 登录回调无效，请重试。")
+        raise UserInputError("auth-invalid", "ChatGPT 登录回调无效，请重试。")
     return ids[0], {"grant_type": "authorization_code", "client_id": ids[0], "code": codes[0],
                     "code_verifier": verifier, "redirect_uri": redirect, "resource": RESOURCE}, nonce
 
@@ -169,7 +170,7 @@ def _identity(data, client_id, nonce):
                 or ("azp" in claims and claims["azp"] != client_id)):
             raise ValueError
     except (jwt.PyJWTError, ValueError, TypeError, KeyError, StopIteration):
-        raise ValueError("无法验证 ChatGPT 账号，请重新登录。") from None
+        raise UserInputError("auth-invalid", "无法验证 ChatGPT 账号，请重新登录。") from None
     email = claims.get("email")
     return {"subject": claims["sub"], "email": email if isinstance(email, str) else ""}
 
@@ -187,7 +188,7 @@ def _token_record(data, previous=None):
         if PLAN_SCOPE in scope and (not isinstance(refresh, str) or not refresh):
             raise ValueError
     except (ValueError, TypeError, KeyError, AttributeError):
-        raise ValueError("ChatGPT 返回了无效的登录状态，请重新登录。") from None
+        raise UserInputError("auth-invalid", "ChatGPT 返回了无效的登录状态，请重新登录。") from None
     if PLAN_SCOPE not in scope:
         return {"scopes": scope}
     return {"access_token": access, "refresh_token": refresh, "expires_at": time.time() + expires,
@@ -249,7 +250,7 @@ class ChatGPTAccounts:
             client_id = account or state.get("pending_client", DYNAMIC_CLIENT)
             previous = state["profiles"].get(client_id, {})
             if account and not previous:
-                raise ValueError("找不到此 ChatGPT 账号。")
+                raise UserInputError("chatgpt_sign_in_required", "找不到此 ChatGPT 账号。")
         issued, form, nonce = _authorize(client_id, host, previous)
         if client_id == DYNAMIC_CLIENT:
             with self._store(write=True) as state:
@@ -260,7 +261,7 @@ class ChatGPTAccounts:
         except _RemoteError as exc:
             raise provider_error(exc) from None
         if previous.get("subject", identity["subject"]) != identity["subject"]:
-            raise ValueError("返回的 ChatGPT 账号与所选账号不同。")
+            raise UserInputError("auth-account", "返回的 ChatGPT 账号与所选账号不同。")
         record = _token_record(data)
         with self._store(write=True) as state:
             state["profiles"][issued] = {**identity, **record, "models": previous.get("models", [])}
@@ -315,7 +316,7 @@ class ChatGPTAccounts:
                 raise ProviderError("chatgpt_sign_in_required") from None
             raise provider_error(exc) from None
         if not isinstance(data, dict) or not isinstance(data.get("models"), list):
-            raise ValueError("ChatGPT 返回了无法读取的模型列表。")
+            raise UserInputError("auth-models", "ChatGPT 返回了无法读取的模型列表。")
         models = [
             {"id": model["slug"], "name": model["display_name"]}
             for model in data["models"] if isinstance(model, dict) and model.get("visibility") == "list"

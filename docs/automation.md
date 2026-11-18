@@ -12,7 +12,7 @@ AheadSubs exposes the same operations, argument validation, and error codes over
 
 The MCP client can submit local media or text and write SRT files to a destination it specifies. With cloud models, requests use the configured provider. Share the configuration with clients you trust on the same machine.
 
-The Integrations page, AheadSubs CLI messages, and MCP tool descriptions use the system UI locale. Set the process environment variable `AHEADSUBS_UI_LOCALE` to `en` or `zh-CN` to override it. Unsupported locales fall back to English. Speech and subtitle languages are configured separately. Automation preserves error details returned by the subtitle service.
+The Integrations page follows the [desktop interface language](desktop.md). Standalone AheadSubs CLI messages and MCP tool descriptions use the system UI locale. Set the process environment variable `AHEADSUBS_UI_LOCALE` to `en` or `zh-CN` to override it. Unsupported locales fall back to English. Speech and subtitle languages are configured separately. Automation preserves error details returned by the subtitle service.
 
 ## CLI examples
 

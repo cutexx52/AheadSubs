@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="heading" xml:space="preserve"><value>設定プリセット</value></data>
+  <data name="active" xml:space="preserve"><value>設定プリセット · {0}</value></data>
+  <data name="custom" xml:space="preserve"><value>カスタム</value></data>
+  <data name="cpu" xml:space="preserve"><value>ローカル · CPU</value></data>
+  <data name="gpu" xml:space="preserve"><value>ローカル · 入門向け GPU</value></data>
+  <data name="high-gpu" xml:space="preserve"><value>ローカル · 高性能 GPU</value></data>
+  <data name="recommended" xml:space="preserve"><value>おすすめ · ローカル認識＋クラウド翻訳</value></data>
+  <data name="detail-cpu" xml:space="preserve"><value>Whisper Small + NLLB · CPU</value></data>
+  <data name="detail-gpu" xml:space="preserve"><value>Qwen3-ASR 0.6B · Vulkan / NLLB · CPU</value></data>
+  <data name="detail-high-gpu" xml:space="preserve"><value>Qwen3-ASR 1.7B · Vulkan / NLLB · NVIDIA CUDA</value></data>
+  <data name="detail-recommended" xml:space="preserve"><value>Qwen3-ASR 1.7B · Vulkan / Qwen-MT Flash · Bailian API キーが必要</value></data>
+  <data name="missing" xml:space="preserve"><value>ダウンロードが必要：{0}</value></data>
+  <data name="checking" xml:space="preserve"><value>要件を確認中…</value></data>
+  <data name="ready" xml:space="preserve"><value>適用できます。</value></data>
+  <data name="retry" xml:space="preserve"><value>再確認</value></data>
+  <data name="check-failed" xml:space="preserve"><value>プリセットを確認できません。もう一度試してください。</value></data>
+  <data name="ffmpeg" xml:space="preserve"><value>FFmpeg と FFprobe が必要です。Windows 版の完全なパッケージを使用してください。</value></data>
+  <data name="vulkan" xml:space="preserve"><value>Vulkan デバイスが見つかりません。グラフィックスドライバーを確認するか「ローカル · CPU」を選択してください。</value></data>
+  <data name="cuda" xml:space="preserve"><value>NVIDIA CUDA を使用できません。ドライバーと CUDA パッケージを確認するか「ローカル · 入門向け GPU」を選択してください。</value></data>
+  <data name="dashscope" xml:space="preserve"><value>Bailian API キーを保存し、サービス URL を確認してください。</value></data>
+  <data name="models" xml:space="preserve"><value>モデルを管理</value></data>
+  <data name="download" xml:space="preserve"><value>今すぐダウンロード</value></data>
+  <data name="keys" xml:space="preserve"><value>Bailian を設定</value></data>
+  <data name="apply" xml:space="preserve"><value>プリセットを適用</value></data>
+  <data name="applying" xml:space="preserve"><value>プリセットを適用中…</value></data>
+  <data name="restart-models" xml:space="preserve"><value>現在の処理が終了してから、ローカルモデルを再読み込みします…</value></data>
+  <data name="restart" xml:space="preserve"><value>字幕サービスを再起動するため、現在の処理の終了を待っています…</value></data>
+  <data name="load-models" xml:space="preserve"><value>ローカルモデルを読み込んでいます。しばらくお待ちください…</value></data>
+  <data name="start" xml:space="preserve"><value>字幕サービスを起動しています…</value></data>
+  <data name="applied" xml:space="preserve"><value>プリセットを適用しました。</value></data>
+  <data name="downloading" xml:space="preserve"><value>{0} をダウンロード中…</value></data>
+  <data name="downloaded" xml:space="preserve"><value>ダウンロードが完了しました。</value></data>
+  <data name="download-failed" xml:space="preserve"><value>ダウンロードに失敗しました。ネットワーク接続と空き容量を確認して再試行してください。</value></data>
+  <data name="needed" xml:space="preserve"><value>選択したプリセットに必要</value></data>
+  <data name="model-page" xml:space="preserve"><value>ローカルモデル</value></data>
+  <data name="model-asr" xml:space="preserve"><value>音声認識</value></data>
+  <data name="model-mt" xml:space="preserve"><value>翻訳</value></data>
+  <data name="model-vad" xml:space="preserve"><value>音声区間検出</value></data>
+  <data name="managed-vad" xml:space="preserve"><value>Silero は同梱されています。FSMN は詳細設定で選ぶと準備されます。</value></data>
+  <data name="installed-model" xml:space="preserve"><value>インストール済み</value></data>
+  <data name="active-model" xml:space="preserve"><value>インストール済み · 使用中</value></data>
+  <data name="download-model" xml:space="preserve"><value>ダウンロード</value></data>
+  <data name="remove-model" xml:space="preserve"><value>アンインストール</value></data>
+  <data name="uninstall-ask" xml:space="preserve"><value>{0} をアンインストールしますか？ 他のアプリが Hugging Face の共有キャッシュにあるモデルを使用している場合があります。</value></data>
+  <data name="uninstall-ask-local" xml:space="preserve"><value>{0} をアンインストールしますか？</value></data>
+  <data name="uninstall-active" xml:space="preserve"><value>アンインストールする前に他のモデルに切り替えるか、字幕サービスを停止してください。</value></data>
+  <data name="uninstall-incomplete" xml:space="preserve"><value>モデルのキャッシュが不完全なため削除できません。</value></data>
+  <data name="uninstall-location" xml:space="preserve"><value>キャッシュのパスがこのモデルのリポジトリ外にあります。</value></data>
+  <data name="uninstall-failed" xml:space="preserve"><value>モデルのキャッシュを削除できません。使用中のアプリを閉じて再試行してください。</value></data>
+  <data name="uninstalling" xml:space="preserve"><value>{0} をアンインストール中…</value></data>
+  <data name="uninstalled" xml:space="preserve"><value>モデルをアンインストールしました。</value></data>
+  <data name="model-info" xml:space="preserve"><value>{0} · 約 {1:0.00} GB</value></data>
+  <data name="shared-info" xml:space="preserve"><value>2 つの Qwen3-ASR モデルは、アライメント、言語の自動検出、ランタイム用のファイル（約 0.71 GB）を共有します。</value></data>
+  <data name="whisper-device" xml:space="preserve"><value>Whisper Small の実行デバイス</value></data>
+  <data name="nllb-device" xml:space="preserve"><value>NLLB の実行デバイス</value></data>
+  <data name="cpu-device" xml:space="preserve"><value>CPU</value></data>
+  <data name="cuda-device" xml:space="preserve"><value>NVIDIA CUDA</value></data>
+  <data name="asr-device" xml:space="preserve"><value>音声認識：{0}</value></data>
+  <data name="mt-device" xml:space="preserve"><value>翻訳：{0}</value></data>
+</root>

@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="Tagline" xml:space="preserve"><value>リアルタイム字幕と翻訳</value></data>
+  <data name="Connecting" xml:space="preserve"><value>接続中</value></data>
+  <data name="RefreshStatus" xml:space="preserve"><value>状態を更新</value></data>
+  <data name="LanguageDisplay" xml:space="preserve"><value>言語と表示</value></data>
+  <data name="VideoLanguage" xml:space="preserve"><value>動画の言語</value></data>
+  <data name="TranslateTo" xml:space="preserve"><value>翻訳先</value></data>
+  <data name="TargetLanguage" xml:space="preserve"><value>字幕の言語</value></data>
+  <data name="Bilingual" xml:space="preserve"><value>二言語字幕（上に原文、下に翻訳）</value></data>
+  <data name="Models" xml:space="preserve"><value>使用するモデル</value></data>
+  <data name="Speech" xml:space="preserve"><value>音声認識</value></data>
+  <data name="SpeechModel" xml:space="preserve"><value>音声認識モデル</value></data>
+  <data name="Translation" xml:space="preserve"><value>字幕翻訳</value></data>
+  <data name="TranslationModel" xml:space="preserve"><value>字幕翻訳モデル</value></data>
+  <data name="CloudSettings" xml:space="preserve"><value>クラウド設定</value></data>
+  <data name="Context" xml:space="preserve"><value>翻訳コンテキスト</value></data>
+  <data name="EnableContext" xml:space="preserve"><value>翻訳にコンテキストを使用</value></data>
+  <data name="PreviousCues" xml:space="preserve"><value>前の区間数（0–8）</value></data>
+  <data name="MaxCues" xml:space="preserve"><value>前の区間の最大数</value></data>
+  <data name="Characters" xml:space="preserve"><value>区間あたりの文字数（20–1000）</value></data>
+  <data name="MaxCharacters" xml:space="preserve"><value>前の区間あたりの最大文字数</value></data>
+  <data name="Prompt" xml:space="preserve"><value>翻訳プロンプト</value></data>
+  <data name="ReadingStatus" xml:space="preserve"><value>サービスの状態を取得中…</value></data>
+  <data name="Players" xml:space="preserve"><value>プレーヤー</value></data>
+  <data name="Configure" xml:space="preserve"><value>設定</value></data>
+  <data name="Remove" xml:space="preserve"><value>アンインストール</value></data>
+  <data name="ChooseLocation" xml:space="preserve"><value>場所を選択…</value></data>
+  <data name="TrayHint" xml:space="preserve"><value>トレイメニューの「PotPlayer 先読み」を開きます。Ctrl+Alt+J で開始、Ctrl+Alt+K で停止します。</value></data>
+  <data name="PotHint" xml:space="preserve"><value>PotPlayer のリアルタイム字幕翻訳を「使用しない」に設定してください。</value></data>
+  <data name="MpvHint" xml:space="preserve"><value>mpv の右クリックメニューから AheadSubs を開きます。</value></data>
+  <data name="LocalModels" xml:space="preserve"><value>ローカルモデル</value></data>
+  <data name="CloudModels" xml:space="preserve"><value>クラウドモデル</value></data>
+  <data name="Provider" xml:space="preserve"><value>プロバイダーと認証方法</value></data>
+  <data name="SaveKey" xml:space="preserve"><value>キーを保存</value></data>
+  <data name="BailianKey" xml:space="preserve"><value>Bailian API キー</value></data>
+  <data name="BailianHint" xml:space="preserve"><value>認識と翻訳には同じ Bailian API キーを使用します。URL が空欄なら北京のエンドポイントを使用します。</value></data>
+  <data name="BailianUrl" xml:space="preserve"><value>Bailian ベース URL</value></data>
+  <data name="BailianEndpoint" xml:space="preserve"><value>Bailian エンドポイント</value></data>
+  <data name="Asr" xml:space="preserve"><value>音声認識（ASR）</value></data>
+  <data name="UseSpeech" xml:space="preserve"><value>認識に使用</value></data>
+  <data name="BailianSpeech" xml:space="preserve"><value>Bailian 音声認識モデル</value></data>
+  <data name="UploadSpeech" xml:space="preserve"><value>音声区間をアップロードして認識し、サービスが返す文ごとのタイムスタンプを使用します。</value></data>
+  <data name="Nmt" xml:space="preserve"><value>機械翻訳（NMT）</value></data>
+  <data name="UseTranslation" xml:space="preserve"><value>翻訳に使用</value></data>
+  <data name="BailianTranslation" xml:space="preserve"><value>Bailian 翻訳モデル</value></data>
+  <data name="OpenAiKey" xml:space="preserve"><value>OpenAI API キー</value></data>
+  <data name="Llm" xml:space="preserve"><value>テキスト翻訳（LLM）</value></data>
+  <data name="UseChatGpt" xml:space="preserve"><value>ChatGPT サブスクリプションを使用</value></data>
+  <data name="SubscriptionHint" xml:space="preserve"><value>認証後、字幕テキストが OpenAI に送信されます。利用条件と上限は ChatGPT の契約またはクレジットに従います。</value></data>
+  <data name="SignIn" xml:space="preserve"><value>ChatGPT にログイン</value></data>
+  <data name="Account" xml:space="preserve"><value>ChatGPT アカウント</value></data>
+  <data name="Reauthorize" xml:space="preserve"><value>再認証</value></data>
+  <data name="SignOut" xml:space="preserve"><value>ログアウト</value></data>
+  <data name="Usage" xml:space="preserve"><value>ChatGPT の使用量を確認</value></data>
+  <data name="ChatGptModel" xml:space="preserve"><value>ChatGPT 字幕翻訳モデル</value></data>
+  <data name="RefreshModels" xml:space="preserve"><value>モデル一覧を更新</value></data>
+  <data name="MinimaxKey" xml:space="preserve"><value>MiniMax API キー</value></data>
+  <data name="MinimaxHint" xml:space="preserve"><value>M Plan キーは契約の利用枠を、通常の API キーは従量課金を使用します。環境変数 MINIMAX_API_KEY でも設定できます。</value></data>
+  <data name="Compatible" xml:space="preserve"><value>OpenAI 互換エンドポイント</value></data>
+  <data name="AsrEndpoint" xml:space="preserve"><value>音声認識 · URL とモデル</value></data>
+  <data name="CustomAsrUrl" xml:space="preserve"><value>カスタム音声 API の URL</value></data>
+  <data name="CustomAsrModel" xml:space="preserve"><value>カスタム音声モデル名</value></data>
+  <data name="AsrKey" xml:space="preserve"><value>音声 API キー</value></data>
+  <data name="ChooseAsr" xml:space="preserve"><value>この音声認識サービスを使用</value></data>
+  <data name="TranslationEndpoint" xml:space="preserve"><value>テキスト翻訳 · URL とモデル</value></data>
+  <data name="CustomMtUrl" xml:space="preserve"><value>カスタム翻訳 API の URL</value></data>
+  <data name="CustomMtModel" xml:space="preserve"><value>カスタム翻訳モデル名</value></data>
+  <data name="MtKey" xml:space="preserve"><value>翻訳 API キー</value></data>
+  <data name="ChooseMt" xml:space="preserve"><value>この翻訳サービスを使用</value></data>
+  <data name="Advanced" xml:space="preserve"><value>詳細設定</value></data>
+  <data name="Vad" xml:space="preserve"><value>音声区間検出（VAD）</value></data>
+  <data name="VadHint" xml:space="preserve"><value>音声認識モデルに送る前に、発話区間を検出します。</value></data>
+  <data name="VadModel" xml:space="preserve"><value>音声区間検出モデル</value></data>
+  <data name="Threshold" xml:space="preserve"><value>音声検出しきい値（0–1）</value></data>
+  <data name="VadThreshold" xml:space="preserve"><value>音声検出しきい値</value></data>
+  <data name="ThresholdHint" xml:space="preserve"><value>値が高いと、小声を検出できない場合があります。</value></data>
+  <data name="MinimumSegment" xml:space="preserve"><value>最短区間（秒）</value></data>
+  <data name="MinimumSpeech" xml:space="preserve"><value>最短発話区間（秒）</value></data>
+  <data name="MinimumHint" xml:space="preserve"><value>実際の間を考慮し、短い発話をなるべく分割せずに処理します。</value></data>
+  <data name="MaximumSegment" xml:space="preserve"><value>最長区間（2–20 秒）</value></data>
+  <data name="MaximumSpeech" xml:space="preserve"><value>最長発話区間（秒）</value></data>
+  <data name="MaximumHint" xml:space="preserve"><value>連続した発話をこの長さで分割し、認識の遅延を抑えます。</value></data>
+  <data name="VadDefaults" xml:space="preserve"><value>既定値は Silero が 0.50、FSMN が 0.80 です。しきい値の尺度はモデルごとに異なります。</value></data>
+  <data name="Pause" xml:space="preserve"><value>文の区切りとする無音時間（ms）</value></data>
+  <data name="PauseMs" xml:space="preserve"><value>文の区切りとする無音時間（ミリ秒）</value></data>
+  <data name="PauseHint" xml:space="preserve"><value>値を大きくすると、短い間を同じ文として扱います。</value></data>
+  <data name="Padding" xml:space="preserve"><value>前後の余白（ms）</value></data>
+  <data name="PaddingMs" xml:space="preserve"><value>前後の余白（ミリ秒）</value></data>
+  <data name="PaddingHint" xml:space="preserve"><value>発話の前後に音声を含め、語頭や語尾の欠落を防ぎます。</value></data>
+  <data name="LookAhead" xml:space="preserve"><value>先読みとシーク</value></data>
+  <data name="LookAheadHint" xml:space="preserve"><value>タイムライン上で音声を読み取る範囲を設定します。モデルに渡すコンテキストは別途設定します。</value></data>
+  <data name="Chunk" xml:space="preserve"><value>処理単位（4–20 秒）</value></data>
+  <data name="ChunkSeconds" xml:space="preserve"><value>処理単位（秒）</value></data>
+  <data name="ChunkHint" xml:space="preserve"><value>バックグラウンド処理の単位です。字幕の長さは発話に合わせます。</value></data>
+  <data name="Backfill" xml:space="preserve"><value>シーク後にさかのぼる時間（0–30 秒）</value></data>
+  <data name="BackfillSeconds" xml:space="preserve"><value>シーク後にさかのぼる時間（秒）</value></data>
+  <data name="BackfillHint" xml:space="preserve"><value>シーク先より前にある文頭を取り込みます。重複する字幕は統合します。</value></data>
+  <data name="PrePause" xml:space="preserve"><value>前方の無音を探す範囲（0–5 秒）</value></data>
+  <data name="PrePauseSeconds" xml:space="preserve"><value>前方の無音を探す範囲（秒）</value></data>
+  <data name="PostPause" xml:space="preserve"><value>後方の無音を探す範囲（0–5 秒）</value></data>
+  <data name="PostPauseSeconds" xml:space="preserve"><value>後方の無音を探す範囲（秒）</value></data>
+  <data name="BoundaryHint" xml:space="preserve"><value>候補区間の外側にも無音を探し、自然な位置で音声を区切ります。</value></data>
+  <data name="Diagnostics" xml:space="preserve"><value>診断</value></data>
+  <data name="DiagnosticsToggle" xml:space="preserve"><value>詳細な診断ログを記録</value></data>
+  <data name="DiagnosticsHint" xml:space="preserve"><value>問題の調査時に有効にしてください。無効でもエラーメッセージは表示されます。</value></data>
+  <data name="OpenLogs" xml:space="preserve"><value>ログフォルダーを開く</value></data>
+  <data name="Exit" xml:space="preserve"><value>終了</value></data>
+  <data name="SaveStart" xml:space="preserve"><value>保存して開始</value></data>
+  <data name="StopService" xml:space="preserve"><value>サービスを停止</value></data>
+  <data name="TrayClose" xml:space="preserve"><value>閉じると通知領域に格納されます</value></data>
+  <data name="KeySource" xml:space="preserve"><value>API キーの取得元</value></data>
+  <data name="KeyEnv" xml:space="preserve"><value>既定（環境変数）</value></data>
+  <data name="KeyFile" xml:space="preserve"><value>キーファイル</value></data>
+  <data name="KeyDirect" xml:space="preserve"><value>直接入力</value></data>
+  <data name="ChooseFile" xml:space="preserve"><value>ファイルを選択</value></data>
+  <data name="KeyPath" xml:space="preserve"><value>API キーファイルのパス</value></data>
+  <data name="Silero" xml:space="preserve"><value>Silero · 既定</value></data>
+  <data name="Fsmn" xml:space="preserve"><value>Alibaba FSMN · 任意</value></data>
+  <data name="BailianProvider" xml:space="preserve"><value>Alibaba Cloud Model Studio · API キー</value></data>
+  <data name="ChatGptProvider" xml:space="preserve"><value>ChatGPT サブスクリプション · OAuth</value></data>
+  <data name="CompatibleProvider" xml:space="preserve"><value>カスタム互換 API · API キー</value></data>
+  <data name="TrayConnecting" xml:space="preserve"><value>AheadSubs · 接続中</value></data>
+  <data name="SaveApply" xml:space="preserve"><value>保存して適用</value></data>
+  <data name="OpenSettings" xml:space="preserve"><value>設定を開く</value></data>
+  <data name="PotMenu" xml:space="preserve"><value>PotPlayer 先読み</value></data>
+  <data name="LoadingWindows" xml:space="preserve"><value>再生ウィンドウを取得中…</value></data>
+  <data name="StopSubtitles" xml:space="preserve"><value>字幕サービスを停止</value></data>
+  <data name="StopExit" xml:space="preserve"><value>停止して終了</value></data>
+  <data name="NoWindows" xml:space="preserve"><value>PotPlayer のウィンドウがありません</value></data>
+  <data name="StartLookAhead" xml:space="preserve"><value>先読みを開始</value></data>
+  <data name="StopLookAhead" xml:space="preserve"><value>先読みを停止</value></data>
+  <data name="WindowsFailed" xml:space="preserve"><value>再生ウィンドウを取得できません。このメニューを開き直してください。</value></data>
+  <data name="SubtitlesReady" xml:space="preserve"><value>字幕サービス準備完了</value></data>
+  <data name="SubtitlesStopped" xml:space="preserve"><value>字幕サービス停止中</value></data>
+  <data name="HotkeyHint" xml:space="preserve"><value>PotPlayer の再生ウィンドウで Ctrl+Alt+J を押すと翻訳を開始します。</value></data>
+  <data name="StartHint" xml:space="preserve"><value>モデルを選んでサービスを起動してください。設定を適用すると使用中の再生ウィンドウが再接続します。</value></data>
+  <data name="TrayReady" xml:space="preserve"><value>AheadSubs · 準備完了</value></data>
+  <data name="TrayStopped" xml:space="preserve"><value>AheadSubs · 停止中</value></data>
+  <data name="Sessions" xml:space="preserve"><value>接続中の再生セッション：{0:N0}</value></data>
+  <data name="NoSessions" xml:space="preserve"><value>接続中の再生ウィンドウはありません。</value></data>
+  <data name="ConnectionFailed" xml:space="preserve"><value>サービスに接続できません</value></data>
+  <data name="LocalModel" xml:space="preserve"><value>[ローカル] {0}</value></data>
+  <data name="CloudWhisper" xml:space="preserve"><value>[クラウド] OpenAI Whisper</value></data>
+  <data name="ConfiguredSpeech" xml:space="preserve"><value>[カスタム] 設定済みの音声認識 API</value></data>
+  <data name="LocalNllb" xml:space="preserve"><value>[ローカル] NLLB-200 600M INT8 · CPU / CUDA</value></data>
+  <data name="CloudGpt" xml:space="preserve"><value>[クラウド] OpenAI GPT-4.1 mini</value></data>
+  <data name="CloudChatGpt" xml:space="preserve"><value>[クラウド] ChatGPT サブスクリプション</value></data>
+  <data name="CloudModel" xml:space="preserve"><value>[クラウド] {0}</value></data>
+  <data name="CloudOpenAi" xml:space="preserve"><value>[クラウド] OpenAI {0}</value></data>
+  <data name="ConfiguredTranslation" xml:space="preserve"><value>[カスタム] 設定済みの翻訳 API</value></data>
+  <data name="ContextHint" xml:space="preserve"><value>前の区間を含めると指示語や用語を訳しやすくなりますが、トークン数や遅延が増える場合があります。0 ならプロンプトのみ使用します。</value></data>
+  <data name="PromptHint" xml:space="preserve"><value>分野や字幕の文体を英語のプロンプトで指定します。</value></data>
+  <data name="SubscriptionUsage" xml:space="preserve"><value>ChatGPT サブスクリプションを使用 · {0}</value></data>
+  <data name="ChooseModel" xml:space="preserve"><value>ログインしてモデルを選択してください</value></data>
+  <data name="MinimaxUsage" xml:space="preserve"><value>使用量の扱いは MiniMax キーの種類によって異なります。</value></data>
+  <data name="RunsLocally" xml:space="preserve"><value>ローカルで実行</value></data>
+  <data name="MissingModels" xml:space="preserve"><value>インストール済みのローカルモデルを選ぶか、ご自身のクラウド API アカウントを使用してください。</value></data>
+  <data name="InvalidCues" xml:space="preserve"><value>前の区間数には 0–8 の整数を入力してください。</value></data>
+  <data name="InvalidChars" xml:space="preserve"><value>区間あたりの文字数には 20–1000 の整数を入力してください。</value></data>
+  <data name="SelectModels" xml:space="preserve"><value>音声認識と翻訳のモデルを選んでください。ローカルモデルは先に「ローカルモデル」でインストールしてください。</value></data>
+  <data name="InvalidChunk" xml:space="preserve"><value>処理単位には 4–20 秒の整数を入力してください。</value></data>
+  <data name="InvalidMaximum" xml:space="preserve"><value>最長発話時間には 2–20 秒の値を入力してください。</value></data>
+  <data name="TimedOut" xml:space="preserve"><value>サービスの応答がタイムアウトしました。後でもう一度試し、問題が続く場合は診断ログを有効にしてください。</value></data>
+  <data name="Applying" xml:space="preserve"><value>設定を適用して再生ウィンドウを再接続中…</value></data>
+  <data name="Applied" xml:space="preserve"><value>設定を適用しました。プレーヤーで Ctrl+Alt+J を押すと翻訳を開始します。</value></data>
+  <data name="Stopping" xml:space="preserve"><value>サービスを停止し、リソースを解放中…</value></data>
+  <data name="Stopped" xml:space="preserve"><value>サービスを停止し、リソースを解放しました。</value></data>
+  <data name="Configured" xml:space="preserve"><value>設定済み</value></data>
+  <data name="PartiallyConfigured" xml:space="preserve"><value>一部設定済み</value></data>
+  <data name="NotConfigured" xml:space="preserve"><value>未設定</value></data>
+  <data name="MissingLocation" xml:space="preserve"><value>場所が見つかりません</value></data>
+  <data name="ChoosePot" xml:space="preserve"><value>PotPlayer のインストールフォルダーを選択</value></data>
+  <data name="ChooseMpv" xml:space="preserve"><value>mpv の設定フォルダーを選択</value></data>
+  <data name="Configuring" xml:space="preserve"><value>設定中…</value></data>
+  <data name="PlayerConfigured" xml:space="preserve"><value>設定しました。プレーヤーを再起動してください。</value></data>
+  <data name="Uninstalling" xml:space="preserve"><value>アンインストール中…</value></data>
+  <data name="PlayerRemoved" xml:space="preserve"><value>アンインストールしました。プレーヤーを再起動してください。</value></data>
+  <data name="SavingKey" xml:space="preserve"><value>キーを保存中…</value></data>
+  <data name="CustomSpeech" xml:space="preserve"><value>[カスタム] 音声認識 API</value></data>
+  <data name="CustomTranslation" xml:space="preserve"><value>[カスタム] 翻訳 API</value></data>
+  <data name="Authorized" xml:space="preserve"><value>ChatGPT サブスクリプションを認証しました。</value></data>
+  <data name="AuthorizedRefresh" xml:space="preserve"><value>ChatGPT サブスクリプションを認証しました。モデル一覧を更新してください。</value></data>
+  <data name="AuthorizeAgain" xml:space="preserve"><value>ChatGPT サブスクリプションを再認証してください。</value></data>
+  <data name="BrowserSignIn" xml:space="preserve"><value>ブラウザーでログインしてサブスクリプションを認証してください。</value></data>
+  <data name="SignedOut" xml:space="preserve"><value>ChatGPT からログアウトしました。</value></data>
+  <data name="SignedOutLocal" xml:space="preserve"><value>この端末でログアウトしました。ChatGPT の設定で認証が取り消されているか確認してください。</value></data>
+  <data name="SigningIn" xml:space="preserve"><value>ブラウザーで ChatGPT へのログインと認証を完了してください…</value></data>
+  <data name="SigningOut" xml:space="preserve"><value>ChatGPT からログアウト中…</value></data>
+  <data name="LoadingModels" xml:space="preserve"><value>ChatGPT のモデル一覧を取得中…</value></data>
+  <data name="OpeningLogs" xml:space="preserve"><value>ログフォルダーを開いています…</value></data>
+  <data name="NoLogs" xml:space="preserve"><value>ログフォルダーはまだ作成されていません。</value></data>
+  <data name="LogsOpened" xml:space="preserve"><value>ログフォルダーを開きました。</value></data>
+  <data name="TrayTitle" xml:space="preserve"><value>字幕翻訳はバックグラウンドで実行中です</value></data>
+  <data name="TrayBody" xml:space="preserve"><value>トレイアイコンをダブルクリックすると設定を開きます。リソースを解放するにはメニューから「停止して終了」を選んでください。</value></data>
+  <data name="WaitExit" xml:space="preserve"><value>現在の操作が完了してから終了してください。</value></data>
+  <data name="Exiting" xml:space="preserve"><value>サービスを停止して終了中…</value></data>
+  <data name="ExitFailed" xml:space="preserve"><value>終了できませんでした：{0}</value></data>
+  <data name="ConfirmExit" xml:space="preserve"><value>サービスの停止を確認できません。設定画面を閉じますか？ バックグラウンドプロセスは実行を続ける可能性があります。</value></data>
+  <data name="ExitTitle" xml:space="preserve"><value>字幕翻訳を終了</value></data>
+  <data name="MissingRuntime" xml:space="preserve"><value>同梱のランタイムが見つかりません。パッケージ全体を展開し、UI フォルダーを同じ場所に置いてください。</value></data>
+  <data name="LaunchFailed" xml:space="preserve"><value>字幕サービスを起動できません。</value></data>
+  <data name="InvalidResponse" xml:space="preserve"><value>サービスからの応答が無効です。詳細設定で診断ログを有効にして再試行してください。</value></data>
+  <data name="BackendFailed" xml:space="preserve"><value>操作に失敗しました。診断ログを確認してください。</value></data>
+  <data name="ReplaceKey" xml:space="preserve"><value>暗号化して保存済みです。新しいキーを入力すると置き換わります。</value></data>
+  <data name="EncryptedKey" xml:space="preserve"><value>現在の Windows ユーザー用に暗号化して保存します。</value></data>
+  <data name="ChooseKey" xml:space="preserve"><value>API キーファイルを選択</value></data>
+  <data name="InterfaceLanguage" xml:space="preserve"><value>表示言語</value></data>
+  <data name="FollowSystem" xml:space="preserve"><value>Windows の表示言語を使用</value></data>
+  <data name="PreferenceFailed" xml:space="preserve"><value>表示言語を保存できませんでした。</value></data>
+  <data name="HourlyUsd" xml:space="preserve"><value>約 US${0:F2}–{1:F2}/時</value></data>
+  <data name="HourlyCny" xml:space="preserve"><value>約 CN¥{0:F2}–{1:F2}/時</value></data>
+  <data name="Error_invalid-setting" xml:space="preserve"><value>{0} の値を確認してください。</value></data>
+  <data name="Error_unknown-settings" xml:space="preserve"><value>設定に不明な項目があります。</value></data>
+  <data name="Error_target-required" xml:space="preserve"><value>字幕の言語を選択してください。</value></data>
+  <data name="Error_timeline-number" xml:space="preserve"><value>タイムライン設定には数値を入力し、小数点にはピリオドを使用してください。</value></data>
+  <data name="Error_timeline-range" xml:space="preserve"><value>タイムライン設定に範囲外の値があります。</value></data>
+  <data name="Error_integer-setting" xml:space="preserve"><value>{0} には整数を入力してください。</value></data>
+  <data name="Error_bad-enhancements" xml:space="preserve"><value>翻訳コンテキスト設定を確認してください。</value></data>
+  <data name="Error_account-model" xml:space="preserve"><value>クラウドモデルで、この ChatGPT アカウントが利用できるモデルを選択してください。</value></data>
+  <data name="Error_model-unsupported" xml:space="preserve"><value>対応するローカルモデルを選択してください。</value></data>
+  <data name="Error_window-closed" xml:space="preserve"><value>選択した PotPlayer ウィンドウは閉じられました。</value></data>
+  <data name="Error_player-required" xml:space="preserve"><value>プレーヤーを選択してください。</value></data>
+  <data name="Error_folder-required" xml:space="preserve"><value>既存のフォルダーを選択してください。</value></data>
+  <data name="Error_player-missing" xml:space="preserve"><value>プレーヤーが見つかりません。インストール先または設定フォルダーを選択してください。</value></data>
+  <data name="Error_key-protection" xml:space="preserve"><value>Windows が API キーを読み取りまたは保護できません。再入力して保存してください。</value></data>
+  <data name="Error_key-settings" xml:space="preserve"><value>API キーの設定を確認してください。</value></data>
+  <data name="Error_key-single-line" xml:space="preserve"><value>{0} の API キーを空白を含まない 1 行で入力してください。</value></data>
+  <data name="Error_key-required" xml:space="preserve"><value>クラウドモデルで {0} の API キーを入力してください。</value></data>
+  <data name="Error_key-file-required" xml:space="preserve"><value>{0} の API キーファイルを選択してください。</value></data>
+  <data name="Error_key-file-invalid" xml:space="preserve"><value>ファイルから有効な {0} API キーを読み取れません。ファイルを選び直してください。</value></data>
+  <data name="Error_key-decryption" xml:space="preserve"><value>{0} API キーを復号できません。クラウドモデルで再入力してください。</value></data>
+  <data name="Error_key-https" xml:space="preserve"><value>リモートの {0} への API キー送信には HTTPS を使用してください。</value></data>
+  <data name="Error_bailian-url" xml:space="preserve"><value>Bailian コンソールの /compatible-mode/v1 で終わるベース URL を入力してください。</value></data>
+  <data name="Error_browser-unavailable" xml:space="preserve"><value>既定のブラウザーを開けません。</value></data>
+  <data name="Error_auth-timeout" xml:space="preserve"><value>ChatGPT のログインがタイムアウトしました。再試行してください。</value></data>
+  <data name="Error_auth-invalid" xml:space="preserve"><value>ChatGPT の認証を確認できません。再度ログインしてください。</value></data>
+  <data name="Error_auth-account" xml:space="preserve"><value>認証したアカウントが選択した ChatGPT アカウントと異なります。</value></data>
+  <data name="Error_auth-models" xml:space="preserve"><value>ChatGPT のモデル一覧を読み取れません。更新してください。</value></data>
+  <data name="Error_service-owned" xml:space="preserve"><value>字幕サービスを起動した別のアプリから先に停止してください。</value></data>
+  <data name="Error_service-busy" xml:space="preserve"><value>前のサービス操作が完了していません。少し待って再試行してください。</value></data>
+  <data name="Error_service-start" xml:space="preserve"><value>字幕サービスを起動できません。詳細設定で診断ログを有効にして再試行してください。</value></data>
+  <data name="Chinese" xml:space="preserve"><value>中国語</value></data>
+</root>

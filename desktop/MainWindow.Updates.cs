@@ -36,6 +36,16 @@ public partial class MainWindow
     private CancellationTokenSource? updateDownload;
     private Version? announcedUpdate;
 
+    private string? updateStatusKey;
+    private object[] updateStatusArgs = [];
+
+    private void SetUpdateStatus(string key, params object[] args)
+    {
+        updateStatusKey = key;
+        updateStatusArgs = args;
+        UpdateStatus.Text = UpdateText(key, args);
+    }
+
     private static string UpdateText(string key, params object[] args)
     {
         string text = UpdateResources.GetString(key, AutomationText.Culture)!;
@@ -53,14 +63,7 @@ public partial class MainWindow
         if (updatePackage?.IsSupported != true) return;
 
         installedUpdateRoot = FindInstalledUpdateRoot();
-        UpdateCard.Language = System.Windows.Markup.XmlLanguage.GetLanguage(AutomationText.Culture.Name);
-        UpdateTitle.Text = UpdateText("Title");
-        InstalledVersion.Text = UpdateText("CurrentVersion", updatePackage.Version);
-        AutomaticUpdates.Content = UpdateText("Automatic");
-        CheckUpdateButton.Content = UpdateText("Check");
-        ReleaseNotesButton.Content = UpdateText("Notes");
-        GetUpdateButton.Content = UpdateText(installedUpdateRoot is null ? "Portable" : "Install");
-        CancelUpdateButton.Content = UpdateText("Cancel");
+        LocalizeUpdates();
         AutomaticUpdates.IsChecked = true;
         try
         {
@@ -81,6 +84,19 @@ public partial class MainWindow
             updateTimer.Start();
             await CheckForReleaseAsync(manual: false);
         };
+    }
+
+    private void LocalizeUpdates()
+    {
+        if (updatePackage?.IsSupported != true) return;
+        if (updateStatusKey is not null) UpdateStatus.Text = UpdateText(updateStatusKey, updateStatusArgs);
+        UpdateTitle.Text = UpdateText("Title");
+        InstalledVersion.Text = UpdateText("CurrentVersion", updatePackage.Version);
+        AutomaticUpdates.Content = UpdateText("Automatic");
+        CheckUpdateButton.Content = UpdateText("Check");
+        ReleaseNotesButton.Content = UpdateText("Notes");
+        GetUpdateButton.Content = UpdateText(installedUpdateRoot is null ? "Portable" : "Install");
+        CancelUpdateButton.Content = UpdateText("Cancel");
     }
 
     private static string? FindInstalledUpdateRoot()
@@ -112,7 +128,7 @@ public partial class MainWindow
         catch (Exception error) when (error is IOException or SecurityException or UnauthorizedAccessException)
         {
             AutomaticUpdates.IsChecked = !enabled;
-            UpdateStatus.Text = UpdateText("PreferenceFailed");
+            SetUpdateStatus("PreferenceFailed");
             return;
         }
         if (enabled) _ = CheckForReleaseAsync(manual: false);
@@ -130,7 +146,7 @@ public partial class MainWindow
         checkingForUpdate = true;
         lastUpdateCheck = now;
         CheckUpdateButton.IsEnabled = GetUpdateButton.IsEnabled = false;
-        if (manual) UpdateStatus.Text = UpdateText("Checking");
+        if (manual) SetUpdateStatus("Checking");
         try
         {
             using (var key = Registry.CurrentUser.CreateSubKey(UpdatePreferences))
@@ -147,7 +163,7 @@ public partial class MainWindow
                 availableUpdate is null ? Visibility.Collapsed : Visibility.Visible;
             if (availableUpdate is { } release)
             {
-                UpdateStatus.Text = UpdateText("Available", release.Version);
+                SetUpdateStatus("Available", release.Version);
                 if (!manual && AutomaticUpdates.IsChecked == true && announcedUpdate != release.Version)
                 {
                     announcedUpdate = release.Version;
@@ -155,7 +171,7 @@ public partial class MainWindow
                 }
             }
             else if (manual || !string.IsNullOrEmpty(UpdateStatus.Text))
-                UpdateStatus.Text = UpdateText("UpToDate");
+                SetUpdateStatus("UpToDate");
         }
         catch (Exception)
         {
@@ -164,7 +180,7 @@ public partial class MainWindow
             availableUpdate = null;
             GetUpdateButton.Visibility = ReleaseNotesButton.Visibility = Visibility.Collapsed;
             if (manual || !string.IsNullOrEmpty(UpdateStatus.Text))
-                UpdateStatus.Text = UpdateText("CheckFailed");
+                SetUpdateStatus("CheckFailed");
         }
         finally
         {
@@ -183,7 +199,7 @@ public partial class MainWindow
         try { using var browser = Process.Start(new ProcessStartInfo(uri.AbsoluteUri) { UseShellExecute = true }); }
         catch (Exception error) when (error is Win32Exception or InvalidOperationException)
         {
-            UpdateStatus.Text = UpdateText("BrowserFailed");
+            SetUpdateStatus("BrowserFailed");
         }
     }
 
@@ -205,7 +221,7 @@ public partial class MainWindow
         timeout.CancelAfter(TimeSpan.FromMinutes(30));
         GetUpdateButton.IsEnabled = CheckUpdateButton.IsEnabled = false;
         CancelUpdateButton.Visibility = Visibility.Visible;
-        UpdateStatus.Text = UpdateText("Downloading");
+        SetUpdateStatus("Downloading");
         DirectoryInfo? stage = null;
         bool handoff = false;
         bool applying = false;
@@ -217,7 +233,7 @@ public partial class MainWindow
             download.Token.ThrowIfCancellationRequested();
             if (busy)
             {
-                UpdateStatus.Text = UpdateText("Busy");
+                SetUpdateStatus("Busy");
                 return;
             }
             if (FindInstalledUpdateRoot() != installedUpdateRoot)
@@ -226,7 +242,7 @@ public partial class MainWindow
             applying = busy = true;
             SetBusy(true);
             CancelUpdateButton.Visibility = Visibility.Collapsed;
-            UpdateStatus.Text = UpdateText("Stopping");
+            SetUpdateStatus("Stopping");
             using var stopTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(45));
             await bridge.Run("stop", cancellationToken: stopTimeout.Token);
             StartUpdateLauncher(stage.FullName, installedUpdateRoot);
@@ -235,11 +251,11 @@ public partial class MainWindow
         }
         catch (OperationCanceledException) when (download.IsCancellationRequested)
         {
-            if (!exiting) UpdateStatus.Text = UpdateText("Canceled");
+            if (!exiting) SetUpdateStatus("Canceled");
         }
         catch (Exception)
         {
-            UpdateStatus.Text = UpdateText(applying ? "InstallFailed" : "DownloadFailed");
+            SetUpdateStatus(applying ? "InstallFailed" : "DownloadFailed");
         }
         finally
         {

@@ -5,6 +5,7 @@ from contextlib import ExitStack
 from dataclasses import replace
 from pathlib import Path
 
+from ..user_errors import UserInputError
 from .runtime import DATA, LAUNCHER, PORT, PYTHON, ROOT, QWEN, config, lock_model_use, lock_service, save_config, service_health
 
 MODELS = {
@@ -169,7 +170,7 @@ def integration_directory(player):
         return potplayer_directory()
     if player == "mpv":
         return mpv_directory()
-    raise ValueError("请选择播放器。")
+    raise UserInputError("player-required", "请选择播放器。")
 
 
 def integration_files(player, folder):
@@ -198,11 +199,11 @@ def configure_player(player, folder=None):
     if folder:
         destination = Path(folder).expanduser()
         if not destination.is_absolute() or not destination.is_dir():
-            raise ValueError("请选择存在的文件夹。")
+            raise UserInputError("folder-required", "请选择存在的文件夹。")
         if player == "mpv" and (destination / "portable_config").is_dir():
             destination /= "portable_config"
     if not player_detected(player, destination):
-        raise ValueError("找不到播放器，请手动选择安装或配置文件夹。")
+        raise UserInputError("player-missing", "找不到播放器，请手动选择安装或配置文件夹。")
     if player == "potplayer":
         install_potplayer(destination / "Extension" / "Subtitle" / "Translate")
     else:

@@ -60,8 +60,7 @@ internal static class CloudPrices
         }
         bool chinese = language.Name == "zh-CN";
         decimal conversion = chinese ? 1 : CnyPerUsd;
-        return chinese
-            ? $"约 ¥{low / conversion:F2}–{high / conversion:F2}/小时"
-            : $"~US${(low / conversion).ToString("F2", language)}–{(high / conversion).ToString("F2", language)}/hr";
+        string template = UiText.Resources.GetString(chinese ? "HourlyCny" : "HourlyUsd", language)!;
+        return string.Format(language, template, low / conversion, high / conversion);
     }
 }

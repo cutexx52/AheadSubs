@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="Tagline" xml:space="preserve"><value>Live-Untertitel und Übersetzung</value></data>
+  <data name="Connecting" xml:space="preserve"><value>Verbindung wird hergestellt</value></data>
+  <data name="RefreshStatus" xml:space="preserve"><value>Status aktualisieren</value></data>
+  <data name="LanguageDisplay" xml:space="preserve"><value>Sprache und Anzeige</value></data>
+  <data name="VideoLanguage" xml:space="preserve"><value>Videosprache</value></data>
+  <data name="TranslateTo" xml:space="preserve"><value>Übersetzen in</value></data>
+  <data name="TargetLanguage" xml:space="preserve"><value>Untertitelsprache</value></data>
+  <data name="Bilingual" xml:space="preserve"><value>Zweisprachige Untertitel · Original über der Übersetzung</value></data>
+  <data name="Models" xml:space="preserve"><value>Modelle</value></data>
+  <data name="Speech" xml:space="preserve"><value>Spracherkennung</value></data>
+  <data name="SpeechModel" xml:space="preserve"><value>Spracherkennungsmodell</value></data>
+  <data name="Translation" xml:space="preserve"><value>Untertitelübersetzung</value></data>
+  <data name="TranslationModel" xml:space="preserve"><value>Untertitel-Übersetzungsmodell</value></data>
+  <data name="CloudSettings" xml:space="preserve"><value>Cloud-Einstellungen</value></data>
+  <data name="Context" xml:space="preserve"><value>Übersetzungskontext</value></data>
+  <data name="EnableContext" xml:space="preserve"><value>Übersetzungskontext verwenden</value></data>
+  <data name="PreviousCues" xml:space="preserve"><value>Vorherige Abschnitte (0–8)</value></data>
+  <data name="MaxCues" xml:space="preserve"><value>Maximale Anzahl vorheriger Abschnitte</value></data>
+  <data name="Characters" xml:space="preserve"><value>Zeichen pro Abschnitt (20–1000)</value></data>
+  <data name="MaxCharacters" xml:space="preserve"><value>Maximale Zeichenzahl pro vorherigem Abschnitt</value></data>
+  <data name="Prompt" xml:space="preserve"><value>Übersetzungsanweisung</value></data>
+  <data name="ReadingStatus" xml:space="preserve"><value>Dienststatus wird gelesen…</value></data>
+  <data name="Players" xml:space="preserve"><value>Mediaplayer</value></data>
+  <data name="Configure" xml:space="preserve"><value>Einrichten</value></data>
+  <data name="Remove" xml:space="preserve"><value>Deinstallieren</value></data>
+  <data name="ChooseLocation" xml:space="preserve"><value>Speicherort wählen…</value></data>
+  <data name="TrayHint" xml:space="preserve"><value>Öffnen Sie „PotPlayer-Vorauslesen“ im Infobereich. Ctrl+Alt+J startet das Vorauslesen, Ctrl+Alt+K beendet es.</value></data>
+  <data name="PotHint" xml:space="preserve"><value>Setzen Sie die Echtzeit-Untertitelübersetzung in PotPlayer auf „Nicht verwenden“.</value></data>
+  <data name="MpvHint" xml:space="preserve"><value>Öffnen Sie AheadSubs über das Kontextmenü von mpv.</value></data>
+  <data name="LocalModels" xml:space="preserve"><value>Lokale Modelle</value></data>
+  <data name="CloudModels" xml:space="preserve"><value>Cloudmodelle</value></data>
+  <data name="Provider" xml:space="preserve"><value>Anbieter und Anmeldeverfahren</value></data>
+  <data name="SaveKey" xml:space="preserve"><value>Schlüssel speichern</value></data>
+  <data name="BailianKey" xml:space="preserve"><value>Bailian-API-Schlüssel</value></data>
+  <data name="BailianHint" xml:space="preserve"><value>Erkennung und Übersetzung verwenden denselben Bailian-API-Schlüssel. Bei leerer URL wird der Endpunkt in Peking verwendet.</value></data>
+  <data name="BailianUrl" xml:space="preserve"><value>Bailian-Basis-URL</value></data>
+  <data name="BailianEndpoint" xml:space="preserve"><value>Bailian-Endpunkt</value></data>
+  <data name="Asr" xml:space="preserve"><value>Spracherkennung (ASR)</value></data>
+  <data name="UseSpeech" xml:space="preserve"><value>Für Erkennung verwenden</value></data>
+  <data name="BailianSpeech" xml:space="preserve"><value>Bailian-Spracherkennungsmodell</value></data>
+  <data name="UploadSpeech" xml:space="preserve"><value>Lädt Audioabschnitte zur Erkennung hoch und verwendet die vom Dienst gelieferten Satzzeitstempel.</value></data>
+  <data name="Nmt" xml:space="preserve"><value>Maschinelle Übersetzung (NMT)</value></data>
+  <data name="UseTranslation" xml:space="preserve"><value>Für Übersetzung verwenden</value></data>
+  <data name="BailianTranslation" xml:space="preserve"><value>Bailian-Übersetzungsmodell</value></data>
+  <data name="OpenAiKey" xml:space="preserve"><value>OpenAI-API-Schlüssel</value></data>
+  <data name="Llm" xml:space="preserve"><value>Textübersetzung (LLM)</value></data>
+  <data name="UseChatGpt" xml:space="preserve"><value>ChatGPT-Abonnement verwenden</value></data>
+  <data name="SubscriptionHint" xml:space="preserve"><value>Nach der Autorisierung wird der Untertiteltext an OpenAI gesendet. Zugang, Limits und Abrechnung richten sich nach Ihrem ChatGPT-Abo oder Guthaben.</value></data>
+  <data name="SignIn" xml:space="preserve"><value>Bei ChatGPT anmelden</value></data>
+  <data name="Account" xml:space="preserve"><value>ChatGPT-Konto</value></data>
+  <data name="Reauthorize" xml:space="preserve"><value>Erneut autorisieren</value></data>
+  <data name="SignOut" xml:space="preserve"><value>Abmelden</value></data>
+  <data name="Usage" xml:space="preserve"><value>ChatGPT-Nutzung anzeigen</value></data>
+  <data name="ChatGptModel" xml:space="preserve"><value>ChatGPT-Modell für Untertitel</value></data>
+  <data name="RefreshModels" xml:space="preserve"><value>Modelle aktualisieren</value></data>
+  <data name="MinimaxKey" xml:space="preserve"><value>MiniMax-API-Schlüssel</value></data>
+  <data name="MinimaxHint" xml:space="preserve"><value>Ein M-Plan-Schlüssel nutzt das Abo, ein regulärer API-Schlüssel wird nach Verbrauch abgerechnet. Sie können auch MINIMAX_API_KEY setzen.</value></data>
+  <data name="Compatible" xml:space="preserve"><value>OpenAI-kompatibler Endpunkt</value></data>
+  <data name="AsrEndpoint" xml:space="preserve"><value>Spracherkennung · URL und Modell</value></data>
+  <data name="CustomAsrUrl" xml:space="preserve"><value>URL der eigenen Sprach-API</value></data>
+  <data name="CustomAsrModel" xml:space="preserve"><value>Name des eigenen Sprachmodells</value></data>
+  <data name="AsrKey" xml:space="preserve"><value>Schlüssel für die Sprach-API</value></data>
+  <data name="ChooseAsr" xml:space="preserve"><value>Diesen Sprachdienst verwenden</value></data>
+  <data name="TranslationEndpoint" xml:space="preserve"><value>Textübersetzung · URL und Modell</value></data>
+  <data name="CustomMtUrl" xml:space="preserve"><value>URL der eigenen Übersetzungs-API</value></data>
+  <data name="CustomMtModel" xml:space="preserve"><value>Name des eigenen Übersetzungsmodells</value></data>
+  <data name="MtKey" xml:space="preserve"><value>Schlüssel für die Übersetzungs-API</value></data>
+  <data name="ChooseMt" xml:space="preserve"><value>Diesen Übersetzungsdienst verwenden</value></data>
+  <data name="Advanced" xml:space="preserve"><value>Erweiterte Einstellungen</value></data>
+  <data name="Vad" xml:space="preserve"><value>Sprachaktivitätserkennung (VAD)</value></data>
+  <data name="VadHint" xml:space="preserve"><value>Erkennt Sprachabschnitte, bevor das Audio an das Erkennungsmodell gesendet wird.</value></data>
+  <data name="VadModel" xml:space="preserve"><value>Modell zur Sprachaktivitätserkennung</value></data>
+  <data name="Threshold" xml:space="preserve"><value>Schwellenwert für Sprache (0–1)</value></data>
+  <data name="VadThreshold" xml:space="preserve"><value>Schwellenwert der Spracherkennung</value></data>
+  <data name="ThresholdHint" xml:space="preserve"><value>Ein hoher Wert kann leise Sprache übersehen.</value></data>
+  <data name="MinimumSegment" xml:space="preserve"><value>Mindestdauer (s)</value></data>
+  <data name="MinimumSpeech" xml:space="preserve"><value>Mindestdauer eines Sprachabschnitts in Sekunden</value></data>
+  <data name="MinimumHint" xml:space="preserve"><value>Kurze Sprachabschnitte bleiben unter Berücksichtigung der Pausen möglichst zusammen.</value></data>
+  <data name="MaximumSegment" xml:space="preserve"><value>Höchstdauer (2–20 s)</value></data>
+  <data name="MaximumSpeech" xml:space="preserve"><value>Höchstdauer eines Sprachabschnitts in Sekunden</value></data>
+  <data name="MaximumHint" xml:space="preserve"><value>Teilt fortlaufende Sprache nach dieser Dauer, um die Erkennungsverzögerung zu begrenzen.</value></data>
+  <data name="VadDefaults" xml:space="preserve"><value>Standardwerte: Silero 0.50, FSMN 0.80. Jedes Modell hat eine eigene Schwellenwertskala.</value></data>
+  <data name="Pause" xml:space="preserve"><value>Satzpause (ms)</value></data>
+  <data name="PauseMs" xml:space="preserve"><value>Satzpause in Millisekunden</value></data>
+  <data name="PauseHint" xml:space="preserve"><value>Höhere Werte lassen kurze Pausen im selben Satz.</value></data>
+  <data name="Padding" xml:space="preserve"><value>Randzugabe (ms)</value></data>
+  <data name="PaddingMs" xml:space="preserve"><value>Randzugabe in Millisekunden</value></data>
+  <data name="PaddingHint" xml:space="preserve"><value>Bezieht Audio vor und nach der Sprache ein, damit Wörter vollständig bleiben.</value></data>
+  <data name="LookAhead" xml:space="preserve"><value>Vorauslesen und Springen</value></data>
+  <data name="LookAheadHint" xml:space="preserve"><value>Diese Einstellungen bestimmen den Audiobereich auf der Zeitachse. Der Modellkontext wird separat eingestellt.</value></data>
+  <data name="Chunk" xml:space="preserve"><value>Planungsabschnitt (4–20 s)</value></data>
+  <data name="ChunkSeconds" xml:space="preserve"><value>Dauer des Planungsabschnitts in Sekunden</value></data>
+  <data name="ChunkHint" xml:space="preserve"><value>Steuert die Hintergrundplanung. Die Untertitellänge richtet sich nach der Sprache.</value></data>
+  <data name="Backfill" xml:space="preserve"><value>Rückgriff nach einem Sprung (0–30 s)</value></data>
+  <data name="BackfillSeconds" xml:space="preserve"><value>Rückgriff nach einem Sprung in Sekunden</value></data>
+  <data name="BackfillHint" xml:space="preserve"><value>Erfasst den Satzanfang vor der Sprungposition und führt überlappende Untertitel zusammen.</value></data>
+  <data name="PrePause" xml:space="preserve"><value>Pausensuche rückwärts (0–5 s)</value></data>
+  <data name="PrePauseSeconds" xml:space="preserve"><value>Pausensuche rückwärts in Sekunden</value></data>
+  <data name="PostPause" xml:space="preserve"><value>Pausensuche vorwärts (0–5 s)</value></data>
+  <data name="PostPauseSeconds" xml:space="preserve"><value>Pausensuche vorwärts in Sekunden</value></data>
+  <data name="BoundaryHint" xml:space="preserve"><value>Sucht nahe Pausen außerhalb des Audiofensters, um an natürlichen Grenzen zu trennen.</value></data>
+  <data name="Diagnostics" xml:space="preserve"><value>Diagnose</value></data>
+  <data name="DiagnosticsToggle" xml:space="preserve"><value>Detaillierte Diagnoseprotokolle schreiben</value></data>
+  <data name="DiagnosticsHint" xml:space="preserve"><value>Zur Fehlersuche aktivieren. Fehlermeldungen werden auch ohne Protokoll angezeigt.</value></data>
+  <data name="OpenLogs" xml:space="preserve"><value>Protokollordner öffnen</value></data>
+  <data name="Exit" xml:space="preserve"><value>Beenden</value></data>
+  <data name="SaveStart" xml:space="preserve"><value>Speichern und starten</value></data>
+  <data name="StopService" xml:space="preserve"><value>Dienst stoppen</value></data>
+  <data name="TrayClose" xml:space="preserve"><value>Schließen minimiert in den Infobereich</value></data>
+  <data name="KeySource" xml:space="preserve"><value>Quelle des API-Schlüssels</value></data>
+  <data name="KeyEnv" xml:space="preserve"><value>Standard (Umgebungsvariable)</value></data>
+  <data name="KeyFile" xml:space="preserve"><value>Schlüsseldatei</value></data>
+  <data name="KeyDirect" xml:space="preserve"><value>Schlüssel eingeben</value></data>
+  <data name="ChooseFile" xml:space="preserve"><value>Datei wählen</value></data>
+  <data name="KeyPath" xml:space="preserve"><value>Pfad zur API-Schlüsseldatei</value></data>
+  <data name="Silero" xml:space="preserve"><value>Silero · Standard</value></data>
+  <data name="Fsmn" xml:space="preserve"><value>Alibaba FSMN · optional</value></data>
+  <data name="BailianProvider" xml:space="preserve"><value>Alibaba Cloud Model Studio · API-Schlüssel</value></data>
+  <data name="ChatGptProvider" xml:space="preserve"><value>ChatGPT-Abo · OAuth</value></data>
+  <data name="CompatibleProvider" xml:space="preserve"><value>Eigener kompatibler Endpunkt · API-Schlüssel</value></data>
+  <data name="TrayConnecting" xml:space="preserve"><value>AheadSubs · verbindet</value></data>
+  <data name="SaveApply" xml:space="preserve"><value>Speichern und anwenden</value></data>
+  <data name="OpenSettings" xml:space="preserve"><value>Einstellungen öffnen</value></data>
+  <data name="PotMenu" xml:space="preserve"><value>PotPlayer-Vorauslesen</value></data>
+  <data name="LoadingWindows" xml:space="preserve"><value>Wiedergabefenster werden ermittelt…</value></data>
+  <data name="StopSubtitles" xml:space="preserve"><value>Untertiteldienst stoppen</value></data>
+  <data name="StopExit" xml:space="preserve"><value>Stoppen und beenden</value></data>
+  <data name="NoWindows" xml:space="preserve"><value>Keine offenen PotPlayer-Fenster</value></data>
+  <data name="StartLookAhead" xml:space="preserve"><value>Vorauslesen starten</value></data>
+  <data name="StopLookAhead" xml:space="preserve"><value>Vorauslesen stoppen</value></data>
+  <data name="WindowsFailed" xml:space="preserve"><value>Wiedergabefenster nicht lesbar. Öffnen Sie dieses Menü erneut.</value></data>
+  <data name="SubtitlesReady" xml:space="preserve"><value>Untertiteldienst bereit</value></data>
+  <data name="SubtitlesStopped" xml:space="preserve"><value>Untertiteldienst gestoppt</value></data>
+  <data name="HotkeyHint" xml:space="preserve"><value>Drücken Sie im PotPlayer-Fenster Ctrl+Alt+J, um dort die Übersetzung zu starten.</value></data>
+  <data name="StartHint" xml:space="preserve"><value>Wählen Sie Modelle und starten Sie den Dienst. Aktive Wiedergabefenster verbinden sich nach dem Anwenden erneut.</value></data>
+  <data name="TrayReady" xml:space="preserve"><value>AheadSubs · bereit</value></data>
+  <data name="TrayStopped" xml:space="preserve"><value>AheadSubs · gestoppt</value></data>
+  <data name="Sessions" xml:space="preserve"><value>Verbundene Wiedergabesitzungen: {0:N0}</value></data>
+  <data name="NoSessions" xml:space="preserve"><value>Keine Wiedergabefenster verbunden.</value></data>
+  <data name="ConnectionFailed" xml:space="preserve"><value>Verbindung zum Dienst fehlgeschlagen</value></data>
+  <data name="LocalModel" xml:space="preserve"><value>[Lokal] {0}</value></data>
+  <data name="CloudWhisper" xml:space="preserve"><value>[Cloud] OpenAI Whisper</value></data>
+  <data name="ConfiguredSpeech" xml:space="preserve"><value>[Eigene API] Eingerichtete Spracherkennung</value></data>
+  <data name="LocalNllb" xml:space="preserve"><value>[Lokal] NLLB-200 600M INT8 · CPU / CUDA</value></data>
+  <data name="CloudGpt" xml:space="preserve"><value>[Cloud] OpenAI GPT-4.1 mini</value></data>
+  <data name="CloudChatGpt" xml:space="preserve"><value>[Cloud] ChatGPT-Abo</value></data>
+  <data name="CloudModel" xml:space="preserve"><value>[Cloud] {0}</value></data>
+  <data name="CloudOpenAi" xml:space="preserve"><value>[Cloud] OpenAI {0}</value></data>
+  <data name="ConfiguredTranslation" xml:space="preserve"><value>[Eigene API] Eingerichtete Übersetzung</value></data>
+  <data name="ContextHint" xml:space="preserve"><value>Vorherige Abschnitte helfen bei Bezügen und Fachbegriffen, können aber Tokenverbrauch und Latenz erhöhen. Bei 0 wird nur die Anweisung verwendet.</value></data>
+  <data name="PromptHint" xml:space="preserve"><value>Beschreiben Sie Fachgebiet oder Untertitelstil in einer englischen Anweisung.</value></data>
+  <data name="SubscriptionUsage" xml:space="preserve"><value>Nutzt Ihr ChatGPT-Abo · {0}</value></data>
+  <data name="ChooseModel" xml:space="preserve"><value>Anmelden und Modell wählen</value></data>
+  <data name="MinimaxUsage" xml:space="preserve"><value>Die Abrechnung richtet sich nach dem Typ Ihres MiniMax-Schlüssels.</value></data>
+  <data name="RunsLocally" xml:space="preserve"><value>Lokale Ausführung</value></data>
+  <data name="MissingModels" xml:space="preserve"><value>Wählen Sie ein installiertes lokales Modell oder verwenden Sie Ihr Cloud-API-Konto.</value></data>
+  <data name="InvalidCues" xml:space="preserve"><value>Geben Sie für vorherige Abschnitte eine ganze Zahl von 0 bis 8 ein.</value></data>
+  <data name="InvalidChars" xml:space="preserve"><value>Geben Sie für Zeichen pro Abschnitt eine ganze Zahl von 20 bis 1000 ein.</value></data>
+  <data name="SelectModels" xml:space="preserve"><value>Wählen Sie Erkennungs- und Übersetzungsmodelle. Installieren Sie lokale Modelle zuerst unter „Lokale Modelle“.</value></data>
+  <data name="InvalidChunk" xml:space="preserve"><value>Geben Sie für den Planungsabschnitt 4 bis 20 ganze Sekunden ein.</value></data>
+  <data name="InvalidMaximum" xml:space="preserve"><value>Geben Sie eine maximale Sprachdauer von 2 bis 20 Sekunden ein.</value></data>
+  <data name="TimedOut" xml:space="preserve"><value>Zeitüberschreitung beim Dienst. Versuchen Sie es später erneut und aktivieren Sie bei anhaltenden Problemen die Diagnoseprotokolle.</value></data>
+  <data name="Applying" xml:space="preserve"><value>Einstellungen werden angewendet und Fenster neu verbunden…</value></data>
+  <data name="Applied" xml:space="preserve"><value>Einstellungen übernommen. Starten Sie die Übersetzung im Player mit Ctrl+Alt+J.</value></data>
+  <data name="Stopping" xml:space="preserve"><value>Dienst wird gestoppt, Ressourcen werden freigegeben…</value></data>
+  <data name="Stopped" xml:space="preserve"><value>Dienst gestoppt und Ressourcen freigegeben.</value></data>
+  <data name="Configured" xml:space="preserve"><value>Eingerichtet</value></data>
+  <data name="PartiallyConfigured" xml:space="preserve"><value>Teilweise eingerichtet</value></data>
+  <data name="NotConfigured" xml:space="preserve"><value>Nicht eingerichtet</value></data>
+  <data name="MissingLocation" xml:space="preserve"><value>Pfad nicht gefunden</value></data>
+  <data name="ChoosePot" xml:space="preserve"><value>PotPlayer-Installationsordner wählen</value></data>
+  <data name="ChooseMpv" xml:space="preserve"><value>mpv-Konfigurationsordner wählen</value></data>
+  <data name="Configuring" xml:space="preserve"><value>Wird eingerichtet…</value></data>
+  <data name="PlayerConfigured" xml:space="preserve"><value>Eingerichtet. Starten Sie den Player neu.</value></data>
+  <data name="Uninstalling" xml:space="preserve"><value>Wird deinstalliert…</value></data>
+  <data name="PlayerRemoved" xml:space="preserve"><value>Deinstalliert. Starten Sie den Player neu.</value></data>
+  <data name="SavingKey" xml:space="preserve"><value>Schlüssel wird gespeichert…</value></data>
+  <data name="CustomSpeech" xml:space="preserve"><value>[Eigene API] Spracherkennung</value></data>
+  <data name="CustomTranslation" xml:space="preserve"><value>[Eigene API] Übersetzung</value></data>
+  <data name="Authorized" xml:space="preserve"><value>ChatGPT-Abonnement autorisiert.</value></data>
+  <data name="AuthorizedRefresh" xml:space="preserve"><value>ChatGPT-Abonnement autorisiert. Aktualisieren Sie die Modellliste.</value></data>
+  <data name="AuthorizeAgain" xml:space="preserve"><value>Autorisieren Sie Ihr ChatGPT-Abonnement erneut.</value></data>
+  <data name="BrowserSignIn" xml:space="preserve"><value>Melden Sie sich im Browser an, um Ihr Abonnement zu autorisieren.</value></data>
+  <data name="SignedOut" xml:space="preserve"><value>Von ChatGPT abgemeldet.</value></data>
+  <data name="SignedOutLocal" xml:space="preserve"><value>Lokal abgemeldet. Prüfen Sie in ChatGPT, ob der Zugriff widerrufen wurde.</value></data>
+  <data name="SigningIn" xml:space="preserve"><value>Schließen Sie ChatGPT-Anmeldung und Autorisierung im Browser ab…</value></data>
+  <data name="SigningOut" xml:space="preserve"><value>Abmeldung von ChatGPT…</value></data>
+  <data name="LoadingModels" xml:space="preserve"><value>ChatGPT-Modelle werden geladen…</value></data>
+  <data name="OpeningLogs" xml:space="preserve"><value>Protokollordner wird geöffnet…</value></data>
+  <data name="NoLogs" xml:space="preserve"><value>Der Protokollordner wurde noch nicht erstellt.</value></data>
+  <data name="LogsOpened" xml:space="preserve"><value>Protokollordner geöffnet.</value></data>
+  <data name="TrayTitle" xml:space="preserve"><value>Untertitelübersetzung läuft im Hintergrund</value></data>
+  <data name="TrayBody" xml:space="preserve"><value>Öffnen Sie die Einstellungen per Doppelklick auf das Symbol im Infobereich. „Stoppen und beenden“ im Menü gibt die Ressourcen frei.</value></data>
+  <data name="WaitExit" xml:space="preserve"><value>Warten Sie vor dem Beenden auf den Abschluss des Vorgangs.</value></data>
+  <data name="Exiting" xml:space="preserve"><value>Dienst wird gestoppt und Anwendung beendet…</value></data>
+  <data name="ExitFailed" xml:space="preserve"><value>Beenden fehlgeschlagen: {0}</value></data>
+  <data name="ConfirmExit" xml:space="preserve"><value>Das Beenden des Dienstes konnte nicht bestätigt werden. Einstellungen trotzdem schließen? Hintergrundprozesse laufen möglicherweise weiter.</value></data>
+  <data name="ExitTitle" xml:space="preserve"><value>Untertitelübersetzung beenden</value></data>
+  <data name="MissingRuntime" xml:space="preserve"><value>Mitgelieferte Laufzeitumgebung fehlt. Entpacken Sie das gesamte Paket und lassen Sie den UI-Ordner an seinem Platz.</value></data>
+  <data name="LaunchFailed" xml:space="preserve"><value>Untertiteldienst konnte nicht gestartet werden.</value></data>
+  <data name="InvalidResponse" xml:space="preserve"><value>Ungültige Dienstantwort. Aktivieren Sie die Diagnoseprotokolle unter „Erweiterte Einstellungen“ und versuchen Sie es erneut.</value></data>
+  <data name="BackendFailed" xml:space="preserve"><value>Vorgang fehlgeschlagen. Prüfen Sie die Diagnoseprotokolle.</value></data>
+  <data name="ReplaceKey" xml:space="preserve"><value>Schlüssel verschlüsselt gespeichert. Geben Sie zum Ersetzen einen neuen Schlüssel ein.</value></data>
+  <data name="EncryptedKey" xml:space="preserve"><value>Wird für Ihr Windows-Benutzerkonto verschlüsselt gespeichert.</value></data>
+  <data name="ChooseKey" xml:space="preserve"><value>API-Schlüsseldatei wählen</value></data>
+  <data name="InterfaceLanguage" xml:space="preserve"><value>Oberflächensprache</value></data>
+  <data name="FollowSystem" xml:space="preserve"><value>Windows-Sprache verwenden</value></data>
+  <data name="PreferenceFailed" xml:space="preserve"><value>Oberflächensprache konnte nicht gespeichert werden.</value></data>
+  <data name="HourlyUsd" xml:space="preserve"><value>≈ {0:F2}–{1:F2} USD/h</value></data>
+  <data name="HourlyCny" xml:space="preserve"><value>≈ {0:F2}–{1:F2} CNY/h</value></data>
+  <data name="Error_invalid-setting" xml:space="preserve"><value>Prüfen Sie den Wert für {0}.</value></data>
+  <data name="Error_unknown-settings" xml:space="preserve"><value>Die Einstellungen enthalten eine unbekannte Option.</value></data>
+  <data name="Error_target-required" xml:space="preserve"><value>Wählen Sie eine Untertitelsprache.</value></data>
+  <data name="Error_timeline-number" xml:space="preserve"><value>Geben Sie für Zeiteinstellungen Zahlen mit Punkt als Dezimaltrennzeichen ein.</value></data>
+  <data name="Error_timeline-range" xml:space="preserve"><value>Ein oder mehrere Zeiteinstellungen liegen außerhalb des zulässigen Bereichs.</value></data>
+  <data name="Error_integer-setting" xml:space="preserve"><value>Geben Sie für {0} eine ganze Zahl ein.</value></data>
+  <data name="Error_bad-enhancements" xml:space="preserve"><value>Prüfen Sie die Einstellungen für den Übersetzungskontext.</value></data>
+  <data name="Error_account-model" xml:space="preserve"><value>Wählen Sie unter „Cloudmodelle“ ein für dieses ChatGPT-Konto verfügbares Modell.</value></data>
+  <data name="Error_model-unsupported" xml:space="preserve"><value>Wählen Sie ein unterstütztes lokales Modell.</value></data>
+  <data name="Error_window-closed" xml:space="preserve"><value>Das gewählte PotPlayer-Fenster wurde geschlossen.</value></data>
+  <data name="Error_player-required" xml:space="preserve"><value>Wählen Sie einen Player.</value></data>
+  <data name="Error_folder-required" xml:space="preserve"><value>Wählen Sie einen vorhandenen Ordner.</value></data>
+  <data name="Error_player-missing" xml:space="preserve"><value>Player nicht gefunden. Wählen Sie seinen Installations- oder Konfigurationsordner.</value></data>
+  <data name="Error_key-protection" xml:space="preserve"><value>Windows konnte den API-Schlüssel nicht lesen oder schützen. Geben Sie ihn erneut ein und speichern Sie ihn.</value></data>
+  <data name="Error_key-settings" xml:space="preserve"><value>Prüfen Sie die API-Schlüsseleinstellungen.</value></data>
+  <data name="Error_key-single-line" xml:space="preserve"><value>Geben Sie den API-Schlüssel für {0} in einer Zeile ohne Leerzeichen ein.</value></data>
+  <data name="Error_key-required" xml:space="preserve"><value>Geben Sie unter „Cloudmodelle“ den API-Schlüssel für {0} ein.</value></data>
+  <data name="Error_key-file-required" xml:space="preserve"><value>Wählen Sie eine API-Schlüsseldatei für {0}.</value></data>
+  <data name="Error_key-file-invalid" xml:space="preserve"><value>Kein gültiger API-Schlüssel für {0} lesbar. Wählen Sie die Schlüsseldatei erneut.</value></data>
+  <data name="Error_key-decryption" xml:space="preserve"><value>API-Schlüssel für {0} nicht entschlüsselbar. Geben Sie ihn unter „Cloudmodelle“ erneut ein.</value></data>
+  <data name="Error_key-https" xml:space="preserve"><value>Verwenden Sie für API-Schlüssel am entfernten Endpunkt {0} HTTPS.</value></data>
+  <data name="Error_bailian-url" xml:space="preserve"><value>Geben Sie die Basis-URL aus der Bailian-Konsole mit der Endung /compatible-mode/v1 ein.</value></data>
+  <data name="Error_browser-unavailable" xml:space="preserve"><value>Standardbrowser konnte nicht geöffnet werden.</value></data>
+  <data name="Error_auth-timeout" xml:space="preserve"><value>Zeitüberschreitung bei der ChatGPT-Anmeldung. Versuchen Sie es erneut.</value></data>
+  <data name="Error_auth-invalid" xml:space="preserve"><value>ChatGPT-Autorisierung konnte nicht geprüft werden. Melden Sie sich erneut an.</value></data>
+  <data name="Error_auth-account" xml:space="preserve"><value>Das autorisierte Konto entspricht nicht dem gewählten ChatGPT-Konto.</value></data>
+  <data name="Error_auth-models" xml:space="preserve"><value>ChatGPT-Modellliste konnte nicht gelesen werden. Aktualisieren Sie sie.</value></data>
+  <data name="Error_service-owned" xml:space="preserve"><value>Dieser Untertiteldienst wurde von einem anderen Programm gestartet. Stoppen Sie ihn zuerst dort.</value></data>
+  <data name="Error_service-busy" xml:space="preserve"><value>Der vorherige Dienstvorgang ist noch nicht fertig. Versuchen Sie es gleich erneut.</value></data>
+  <data name="Error_service-start" xml:space="preserve"><value>Untertiteldienst konnte nicht starten. Aktivieren Sie die Diagnoseprotokolle und versuchen Sie es erneut.</value></data>
+  <data name="Chinese" xml:space="preserve"><value>Chinesisch</value></data>
+</root>

@@ -1,6 +1,6 @@
 <Window x:Class="AheadSubs.MainWindow"
  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:AheadSubs"
- Title="AheadSubs" Language="zh-CN" Icon="/Assets/AheadSubs.ico" Width="1040" Height="820" MinWidth="880" MinHeight="650"
+ Title="AheadSubs" Icon="/Assets/AheadSubs.ico" Width="1040" Height="820" MinWidth="880" MinHeight="650"
  FontFamily="Microsoft YaHei UI, Segoe UI" FontSize="14" Background="#F5F6F8" Foreground="#242A35"
  WindowStartupLocation="CenterScreen" Closing="OnClosing" UseLayoutRounding="True">
  <Window.Resources>
@@ -30,20 +30,20 @@
    </ControlTemplate></Setter.Value></Setter>
   </Style>
   <Style TargetType="TabItem"><Setter Property="Foreground" Value="#596273"/><Setter Property="FontWeight" Value="Medium"/><Setter Property="Margin" Value="10,3"/>
-   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="TabItem"><Border x:Name="NavBorder" Background="Transparent" CornerRadius="7" Padding="18,13"><ContentPresenter ContentSource="Header"/></Border><ControlTemplate.Triggers><Trigger Property="IsSelected" Value="True"><Setter TargetName="NavBorder" Property="Background" Value="#E8EDF9"/><Setter Property="Foreground" Value="#234CA0"/><Setter Property="FontWeight" Value="SemiBold"/></Trigger><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="NavBorder" Property="Background" Value="#EAF0F6"/></Trigger><Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="NavBorder" Property="BorderBrush" Value="#547BC1"/><Setter TargetName="NavBorder" Property="BorderThickness" Value="1"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="TabItem"><Border x:Name="NavBorder" Background="Transparent" CornerRadius="7" Padding="12,9"><TextBlock Text="{TemplateBinding Header}" TextWrapping="Wrap"/></Border><ControlTemplate.Triggers><Trigger Property="IsSelected" Value="True"><Setter TargetName="NavBorder" Property="Background" Value="#E8EDF9"/><Setter Property="Foreground" Value="#234CA0"/><Setter Property="FontWeight" Value="SemiBold"/></Trigger><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="NavBorder" Property="Background" Value="#EAF0F6"/></Trigger><Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="NavBorder" Property="BorderBrush" Value="#547BC1"/><Setter TargetName="NavBorder" Property="BorderThickness" Value="1"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter>
   </Style>
   <Style x:Key="PageScroll" TargetType="ScrollViewer"><Setter Property="VerticalScrollBarVisibility" Value="Auto"/><Setter Property="Padding" Value="32,28,32,16"/><Setter Property="HorizontalScrollBarVisibility" Value="Disabled"/><Setter Property="Foreground" Value="#242A35"/><Setter Property="FontWeight" Value="Normal"/></Style>
  </Window.Resources>
  <Grid x:Name="RootLayout" Background="#F5F6F8">
   <Grid.RowDefinitions><RowDefinition Height="82"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <Border Background="White" BorderBrush="#E3E7ED" BorderThickness="0,0,0,1"><Grid Margin="28,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-   <StackPanel Orientation="Horizontal" VerticalAlignment="Center"><Image Source="/Assets/AheadSubs.png" Width="44" Height="44" Margin="0,0,10,0" RenderOptions.BitmapScalingMode="HighQuality"/><StackPanel VerticalAlignment="Center"><TextBlock Text="AheadSubs" FontSize="22" FontWeight="SemiBold"/><TextBlock Text="实时字幕与翻译" FontSize="11" Foreground="#6A7484" Margin="0,4,0,0"/></StackPanel></StackPanel>
-   <StackPanel x:Name="ServiceStrip" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"><Border Background="#EDF3EF" CornerRadius="16" Padding="12,6" VerticalAlignment="Center"><TextBlock x:Name="ServiceStatus" Text="正在连接" FontSize="12" Foreground="#326B4F" AutomationProperties.LiveSetting="Polite"/></Border><Button Content="刷新状态" Click="RefreshStatus" Margin="10,0,0,0" Padding="10,6" MinHeight="30" FontSize="12"/></StackPanel>
+   <StackPanel Orientation="Horizontal" VerticalAlignment="Center"><Image Source="/Assets/AheadSubs.png" Width="44" Height="44" Margin="0,0,10,0" RenderOptions.BitmapScalingMode="HighQuality"/><StackPanel VerticalAlignment="Center"><TextBlock Text="AheadSubs" FontSize="22" FontWeight="SemiBold"/><TextBlock Text="{DynamicResource Desktop.Tagline}" FontSize="11" Foreground="#6A7484" Margin="0,4,0,0"/></StackPanel></StackPanel>
+   <StackPanel x:Name="ServiceStrip" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"><Border Background="#EDF3EF" CornerRadius="16" Padding="12,6" VerticalAlignment="Center"><TextBlock x:Name="ServiceStatus" Text="{DynamicResource Desktop.Connecting}" FontSize="12" Foreground="#326B4F" AutomationProperties.LiveSetting="Polite"/></Border><Button Content="{DynamicResource Desktop.RefreshStatus}" Click="RefreshStatus" Margin="10,0,0,0" Padding="10,6" MinHeight="30" FontSize="12"/></StackPanel>
   </Grid></Border>
   <TabControl x:Name="SettingsPanel" Grid.Row="1" TabStripPlacement="Left" BorderThickness="0" Background="#F5F6F8" SelectionChanged="PageChanged">
-   <TabControl.Template><ControlTemplate TargetType="TabControl"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="176"/><ColumnDefinition/></Grid.ColumnDefinitions><Border Background="#F0F2F5" BorderBrush="#E3E7ED" BorderThickness="0,0,1,0"><StackPanel Margin="0,22,0,0"><TabPanel IsItemsHost="True"/></StackPanel></Border><ContentPresenter Grid.Column="1" ContentSource="SelectedContent"/></Grid></ControlTemplate></TabControl.Template>
-   <TabItem Header="{local:TaskText SubtitleTab}" x:Name="TranslationTab"><ScrollViewer x:Name="TranslationScroll" Style="{StaticResource PageScroll}"><StackPanel>
-    <TextBlock x:Name="TranslationTitle" Text="{local:TaskText SubtitleSettings}" Style="{StaticResource PageTitle}"/>
+   <TabControl.Template><ControlTemplate TargetType="TabControl"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="192"/><ColumnDefinition/></Grid.ColumnDefinitions><Border Background="#F0F2F5" BorderBrush="#E3E7ED" BorderThickness="0,0,1,0"><ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel Margin="0,22,0,0" IsItemsHost="True"/></ScrollViewer></Border><ContentPresenter Grid.Column="1" ContentSource="SelectedContent"/></Grid></ControlTemplate></TabControl.Template>
+   <TabItem Header="{DynamicResource Automation.SubtitleTab}" x:Name="TranslationTab"><ScrollViewer x:Name="TranslationScroll" Style="{StaticResource PageScroll}"><StackPanel>
+    <TextBlock x:Name="TranslationTitle" Text="{DynamicResource Automation.SubtitleSettings}" Style="{StaticResource PageTitle}"/>
     <Expander x:Name="PresetDisclosure" Margin="0,0,0,12" Style="{StaticResource SettingsExpander}" Expanded="PresetOpened">
      <StackPanel Margin="10,8,10,4">
       <ComboBox x:Name="PresetChoice" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="PresetChanged"/>
@@ -58,28 +58,30 @@
       </WrapPanel>
      </StackPanel>
     </Expander>
-    <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="语言与显示" Style="{StaticResource Section}"/>
-     <Grid Margin="0,10,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="24"/><ColumnDefinition/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="视频语言" Margin="0,0,0,8" Foreground="#596273"/><ComboBox x:Name="SourceLanguage" DisplayMemberPath="Label" SelectedValuePath="Value" AutomationProperties.Name="视频语言"/></StackPanel><StackPanel Grid.Column="2"><TextBlock Text="翻译为" Margin="0,0,0,8" Foreground="#596273"/><ComboBox x:Name="TargetLanguage" DisplayMemberPath="Label" SelectedValuePath="Value" AutomationProperties.Name="目标字幕语言"/></StackPanel></Grid>
-     <CheckBox x:Name="Bilingual" Content="双语字幕 · 原文在上，译文在下" Margin="0,20,0,0"/>
+    <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="{DynamicResource Desktop.LanguageDisplay}" Style="{StaticResource Section}"/>
+     <Label Target="{Binding ElementName=InterfaceLanguage}" Content="{DynamicResource Desktop.InterfaceLanguage}" Padding="0,4,0,4"/>
+     <ComboBox x:Name="InterfaceLanguage" SelectedValuePath="Tag"/>
+     <Grid Margin="0,10,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="24"/><ColumnDefinition/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="{DynamicResource Desktop.VideoLanguage}" Margin="0,0,0,8" Foreground="#596273"/><ComboBox x:Name="SourceLanguage" DisplayMemberPath="Label" SelectedValuePath="Value" AutomationProperties.Name="{DynamicResource Desktop.VideoLanguage}"/></StackPanel><StackPanel Grid.Column="2"><TextBlock Text="{DynamicResource Desktop.TranslateTo}" Margin="0,0,0,8" Foreground="#596273"/><ComboBox x:Name="TargetLanguage" DisplayMemberPath="Label" SelectedValuePath="Value" AutomationProperties.Name="{DynamicResource Desktop.TargetLanguage}"/></StackPanel></Grid>
+     <CheckBox x:Name="Bilingual" Content="{DynamicResource Desktop.Bilingual}" Margin="0,20,0,0"/>
     </StackPanel></Border>
-    <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="使用的模型" Style="{StaticResource Section}"/><TextBlock Text="语音识别" Margin="0,10,0,8" Foreground="#596273"/><ComboBox x:Name="SpeechModel" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="SelectionChanged" AutomationProperties.Name="语音识别模型"/><TextBlock x:Name="SpeechCost" Style="{StaticResource Hint}" Margin="0,6,0,0"/><TextBlock Text="字幕翻译" Margin="0,18,0,8" Foreground="#596273"/><ComboBox x:Name="TranslationModel" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="SelectionChanged" AutomationProperties.Name="字幕翻译模型"/><TextBlock x:Name="TranslationCost" Style="{StaticResource Hint}" Margin="0,6,0,0"/>
-     <DockPanel Margin="0,12,0,0"><Button x:Name="CloudKeysButton" Content="云端配置" Click="GoKeys" DockPanel.Dock="Right" FontSize="12" Padding="10,5" MinHeight="28" Margin="12,0,0,0"/><TextBlock x:Name="TranslationHint" Style="{StaticResource Hint}" VerticalAlignment="Center"/></DockPanel>
-     <Expander x:Name="TranslationEnhancement" Header="上下文增强" Margin="0,14,0,0" Visibility="Collapsed">
+    <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="{DynamicResource Desktop.Models}" Style="{StaticResource Section}"/><TextBlock Text="{DynamicResource Desktop.Speech}" Margin="0,10,0,8" Foreground="#596273"/><ComboBox x:Name="SpeechModel" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="SelectionChanged" AutomationProperties.Name="{DynamicResource Desktop.SpeechModel}"/><TextBlock x:Name="SpeechCost" Style="{StaticResource Hint}" Margin="0,6,0,0"/><TextBlock Text="{DynamicResource Desktop.Translation}" Margin="0,18,0,8" Foreground="#596273"/><ComboBox x:Name="TranslationModel" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="SelectionChanged" AutomationProperties.Name="{DynamicResource Desktop.TranslationModel}"/><TextBlock x:Name="TranslationCost" Style="{StaticResource Hint}" Margin="0,6,0,0"/>
+     <DockPanel Margin="0,12,0,0"><Button x:Name="CloudKeysButton" Content="{DynamicResource Desktop.CloudSettings}" Click="GoKeys" DockPanel.Dock="Right" FontSize="12" Padding="10,5" MinHeight="28" Margin="12,0,0,0"/><TextBlock x:Name="TranslationHint" Style="{StaticResource Hint}" VerticalAlignment="Center"/></DockPanel>
+     <Expander x:Name="TranslationEnhancement" Header="{DynamicResource Desktop.Context}" Margin="0,14,0,0" Visibility="Collapsed">
       <StackPanel Margin="0,10,0,0">
-       <CheckBox x:Name="EnhancementEnabled" Content="启用上下文增强"/>
+       <CheckBox x:Name="EnhancementEnabled" Content="{DynamicResource Desktop.EnableContext}"/>
        <TextBlock x:Name="TranslationCapabilityHint" Style="{StaticResource Hint}" Margin="0,10,0,0"/>
        <StackPanel IsEnabled="{Binding IsChecked, ElementName=EnhancementEnabled}">
         <Grid x:Name="PreviousCuesPanel"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="20"/><ColumnDefinition/></Grid.ColumnDefinitions>
-         <StackPanel><TextBlock Text="最多前文片段数（0–8）" Style="{StaticResource Label}"/><TextBox x:Name="PreviousCues" Width="100" HorizontalAlignment="Left" MaxLength="1" AutomationProperties.Name="最多前文片段数"/></StackPanel>
-         <StackPanel Grid.Column="2"><TextBlock Text="每段最多字符（20–1000）" Style="{StaticResource Label}"/><TextBox x:Name="ContextChars" Width="100" HorizontalAlignment="Left" MaxLength="4" AutomationProperties.Name="每段前文最多字符"/></StackPanel>
+         <StackPanel><TextBlock Text="{DynamicResource Desktop.PreviousCues}" Style="{StaticResource Label}"/><TextBox x:Name="PreviousCues" Width="100" HorizontalAlignment="Left" MaxLength="1" AutomationProperties.Name="{DynamicResource Desktop.MaxCues}"/></StackPanel>
+         <StackPanel Grid.Column="2"><TextBlock Text="{DynamicResource Desktop.Characters}" Style="{StaticResource Label}"/><TextBox x:Name="ContextChars" Width="100" HorizontalAlignment="Left" MaxLength="4" AutomationProperties.Name="{DynamicResource Desktop.MaxCharacters}"/></StackPanel>
         </Grid>
-        <TextBlock Text="翻译提示词" Style="{StaticResource Label}"/><TextBox x:Name="TranslationPrompt" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" MaxHeight="144" MaxLength="1000" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="翻译提示词"/>
+        <TextBlock Text="{DynamicResource Desktop.Prompt}" Style="{StaticResource Label}"/><TextBox x:Name="TranslationPrompt" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" MaxHeight="144" MaxLength="1000" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="{DynamicResource Desktop.Prompt}"/>
        </StackPanel>
       </StackPanel>
      </Expander>
      <TextBlock x:Name="ComputeSummary" Style="{StaticResource Hint}" Margin="0,12,0,0" Visibility="Collapsed"/>
     </StackPanel></Border>
-    <TextBlock x:Name="ServiceDetail" Text="正在读取服务状态。" Style="{StaticResource Hint}"/><TextBlock x:Name="SessionStatus" Style="{StaticResource Hint}" Margin="0,6,0,0" Visibility="Collapsed"/>
+    <TextBlock x:Name="ServiceDetail" Text="{DynamicResource Desktop.ReadingStatus}" Style="{StaticResource Hint}"/><TextBlock x:Name="SessionStatus" Style="{StaticResource Hint}" Margin="0,6,0,0" Visibility="Collapsed"/>
    </StackPanel></ScrollViewer></TabItem>
    <TabItem x:Name="InspectTab">
     <Grid Margin="28,24,28,20" TextElement.Foreground="#242A35" TextElement.FontWeight="Normal">
@@ -144,23 +146,23 @@
      <TextBlock x:Name="InspectStatus" Grid.Row="2" Style="{StaticResource Hint}" Margin="0,10,0,0" AutomationProperties.LiveSetting="Polite"/>
     </Grid>
    </TabItem>
-   <TabItem Header="播放器" x:Name="PlayersTab"><ScrollViewer Style="{StaticResource PageScroll}"><StackPanel>
-    <TextBlock Text="播放器" Style="{StaticResource PageTitle}"/>
+   <TabItem Header="{DynamicResource Desktop.Players}" x:Name="PlayersTab"><ScrollViewer Style="{StaticResource PageScroll}"><StackPanel>
+    <TextBlock Text="{DynamicResource Desktop.Players}" Style="{StaticResource PageTitle}"/>
     <Border Style="{StaticResource Card}"><StackPanel>
      <DockPanel><TextBlock x:Name="PlayerDetection" Style="{StaticResource Hint}" DockPanel.Dock="Right"/><TextBlock Text="PotPlayer" Style="{StaticResource Section}"/></DockPanel>
-     <WrapPanel Margin="0,6,0,14"><Button x:Name="ConfigurePotPlayer" Content="一键配置" Tag="potplayer" Click="ConfigurePlayer"/><Button x:Name="RemovePotPlayer" Content="一键卸载" Tag="potplayer" Click="RemovePlayer" Visibility="Collapsed"/><Button x:Name="PickPotPlayer" Content="选择位置…" Tag="potplayer" Click="PickPlayerFolder"/></WrapPanel>
+     <WrapPanel Margin="0,6,0,14"><Button x:Name="ConfigurePotPlayer" Content="{DynamicResource Desktop.Configure}" Tag="potplayer" Click="ConfigurePlayer"/><Button x:Name="RemovePotPlayer" Content="{DynamicResource Desktop.Remove}" Tag="potplayer" Click="RemovePlayer" Visibility="Collapsed"/><Button x:Name="PickPotPlayer" Content="{DynamicResource Desktop.ChooseLocation}" Tag="potplayer" Click="PickPlayerFolder"/></WrapPanel>
      <TextBlock x:Name="PotPlayerFolder" Style="{StaticResource Hint}" Margin="0,0,0,8"/>
-     <TextBlock Text="托盘右键 → PotPlayer 预读。快捷键 Ctrl+Alt+J 开启，Ctrl+Alt+K 关闭。" Style="{StaticResource Hint}"/>
-     <TextBlock Text="PotPlayer 的「实时字幕翻译」设为「不使用」。" Style="{StaticResource Hint}"/>
+     <TextBlock Text="{DynamicResource Desktop.TrayHint}" Style="{StaticResource Hint}"/>
+     <TextBlock Text="{DynamicResource Desktop.PotHint}" Style="{StaticResource Hint}"/>
     </StackPanel></Border>
     <Border Style="{StaticResource Card}"><StackPanel>
      <DockPanel><TextBlock x:Name="MpvIntegration" Style="{StaticResource Hint}" DockPanel.Dock="Right"/><TextBlock Text="mpv" Style="{StaticResource Section}"/></DockPanel>
-     <WrapPanel Margin="0,6,0,14"><Button x:Name="ConfigureMpv" Content="一键配置" Tag="mpv" Click="ConfigurePlayer"/><Button x:Name="RemoveMpv" Content="一键卸载" Tag="mpv" Click="RemovePlayer" Visibility="Collapsed"/><Button x:Name="PickMpv" Content="选择位置…" Tag="mpv" Click="PickPlayerFolder"/></WrapPanel>
+     <WrapPanel Margin="0,6,0,14"><Button x:Name="ConfigureMpv" Content="{DynamicResource Desktop.Configure}" Tag="mpv" Click="ConfigurePlayer"/><Button x:Name="RemoveMpv" Content="{DynamicResource Desktop.Remove}" Tag="mpv" Click="RemovePlayer" Visibility="Collapsed"/><Button x:Name="PickMpv" Content="{DynamicResource Desktop.ChooseLocation}" Tag="mpv" Click="PickPlayerFolder"/></WrapPanel>
      <TextBlock x:Name="MpvFolder" Style="{StaticResource Hint}" Margin="0,0,0,8"/>
-     <TextBlock Text="mpv 右键菜单 → AheadSubs。" Style="{StaticResource Hint}"/>
+     <TextBlock Text="{DynamicResource Desktop.MpvHint}" Style="{StaticResource Hint}"/>
     </StackPanel></Border>
    </StackPanel></ScrollViewer></TabItem>
-   <TabItem Header="本地模型" x:Name="ModelsTab"><ScrollViewer Style="{StaticResource PageScroll}"><StackPanel>
+   <TabItem Header="{DynamicResource Desktop.LocalModels}" x:Name="ModelsTab"><ScrollViewer Style="{StaticResource PageScroll}"><StackPanel>
     <StackPanel.Resources>
      <DataTemplate x:Key="ModelRow">
       <Border Padding="0,8" BorderBrush="#E3E7ED" BorderThickness="0,0,0,1">
@@ -194,72 +196,72 @@
      <TextBlock x:Name="VadModelHint" Style="{StaticResource Hint}"/>
     </StackPanel></Border>
    </StackPanel></ScrollViewer></TabItem>
-   <TabItem Header="云端模型" x:Name="KeysTab"><ScrollViewer Style="{StaticResource PageScroll}"><StackPanel>
-    <TextBlock Text="云端模型" Style="{StaticResource PageTitle}"/>
-    <TextBlock Text="供应商与授权方式" Style="{StaticResource Label}"/><ComboBox x:Name="CloudProvider" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="CloudProviderChanged" AutomationProperties.Name="供应商与授权方式" Margin="0,0,0,16"/>
+   <TabItem Header="{DynamicResource Desktop.CloudModels}" x:Name="KeysTab"><ScrollViewer Style="{StaticResource PageScroll}"><StackPanel>
+    <TextBlock Text="{DynamicResource Desktop.CloudModels}" Style="{StaticResource PageTitle}"/>
+    <TextBlock Text="{DynamicResource Desktop.Provider}" Style="{StaticResource Label}"/><ComboBox x:Name="CloudProvider" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="CloudProviderChanged" AutomationProperties.Name="{DynamicResource Desktop.Provider}" Margin="0,0,0,16"/>
     <Border Style="{StaticResource Card}" x:Name="QwenMtPanel"><StackPanel>
-     <DockPanel Margin="0,0,0,8"><Button Content="保存密钥" Click="SaveKeys" DockPanel.Dock="Right" MinHeight="28" Padding="10,5" FontSize="12"/><TextBlock Text="百炼 API Key" Style="{StaticResource Section}"/></DockPanel><local:ApiKeyEditor x:Name="QwenKey"/>
-     <TextBlock Text="识别和翻译共用百炼 API Key。留空的地址使用北京公共入口。" Style="{StaticResource Hint}" Margin="0,8,0,0"/>
-     <TextBlock Text="百炼 Base URL" Style="{StaticResource Label}"/><TextBox x:Name="QwenUrl" TextChanged="PriceChanged" AutomationProperties.Name="百炼服务地址"/>
-     <TextBlock Text="语音识别（ASR）" Style="{StaticResource Label}"/>
-     <DockPanel><Button Content="用于识别" Click="ChooseDashScopeSpeech" DockPanel.Dock="Right" Margin="12,0,0,0"/><ComboBox x:Name="DashScopeSpeech" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="PriceChanged" AutomationProperties.Name="百炼识别模型"/></DockPanel>
+     <DockPanel Margin="0,0,0,8"><Button Content="{DynamicResource Desktop.SaveKey}" Click="SaveKeys" DockPanel.Dock="Right" MinHeight="28" Padding="10,5" FontSize="12"/><TextBlock Text="{DynamicResource Desktop.BailianKey}" Style="{StaticResource Section}"/></DockPanel><local:ApiKeyEditor x:Name="QwenKey"/>
+     <TextBlock Text="{DynamicResource Desktop.BailianHint}" Style="{StaticResource Hint}" Margin="0,8,0,0"/>
+     <TextBlock Text="{DynamicResource Desktop.BailianUrl}" Style="{StaticResource Label}"/><TextBox x:Name="QwenUrl" TextChanged="PriceChanged" AutomationProperties.Name="{DynamicResource Desktop.BailianEndpoint}"/>
+     <TextBlock Text="{DynamicResource Desktop.Asr}" Style="{StaticResource Label}"/>
+     <DockPanel><Button Content="{DynamicResource Desktop.UseSpeech}" Click="ChooseDashScopeSpeech" DockPanel.Dock="Right" Margin="12,0,0,0"/><ComboBox x:Name="DashScopeSpeech" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="PriceChanged" AutomationProperties.Name="{DynamicResource Desktop.BailianSpeech}"/></DockPanel>
      <TextBlock x:Name="CloudAsrCost" Style="{StaticResource Hint}" Margin="0,6,0,0"/>
-     <TextBlock Text="上传待识别音频片段，并使用服务返回的句子时间戳。" Style="{StaticResource Hint}" Margin="0,8,0,0"/>
-     <TextBlock Text="专用机器翻译（NMT）" Style="{StaticResource Label}"/>
-     <DockPanel><Button Content="用于翻译" Click="ChooseDashScopeTranslation" DockPanel.Dock="Right" Margin="12,0,0,0"/><ComboBox x:Name="DashScopeTranslation" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="PriceChanged" AutomationProperties.Name="百炼翻译模型"/></DockPanel>
+     <TextBlock Text="{DynamicResource Desktop.UploadSpeech}" Style="{StaticResource Hint}" Margin="0,8,0,0"/>
+     <TextBlock Text="{DynamicResource Desktop.Nmt}" Style="{StaticResource Label}"/>
+     <DockPanel><Button Content="{DynamicResource Desktop.UseTranslation}" Click="ChooseDashScopeTranslation" DockPanel.Dock="Right" Margin="12,0,0,0"/><ComboBox x:Name="DashScopeTranslation" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="PriceChanged" AutomationProperties.Name="{DynamicResource Desktop.BailianTranslation}"/></DockPanel>
      <TextBlock x:Name="CloudNmtCost" Style="{StaticResource Hint}" Margin="0,6,0,0"/>
     </StackPanel></Border>
     <Border Style="{StaticResource Card}" x:Name="OpenAiPanel" Visibility="Collapsed"><StackPanel>
-     <DockPanel Margin="0,0,0,8"><Button Content="保存密钥" Click="SaveKeys" DockPanel.Dock="Right" MinHeight="28" Padding="10,5" FontSize="12"/><TextBlock Text="OpenAI API Key" Style="{StaticResource Section}"/></DockPanel><local:ApiKeyEditor x:Name="OpenAiKey"/>
-     <TextBlock Text="语音识别（ASR）" Style="{StaticResource Label}"/><DockPanel><Button Content="用于识别" Click="ChooseOpenAiSpeech" DockPanel.Dock="Right" Margin="12,0,0,0"/><TextBlock Text="Whisper · whisper-1" VerticalAlignment="Center"/></DockPanel>
+     <DockPanel Margin="0,0,0,8"><Button Content="{DynamicResource Desktop.SaveKey}" Click="SaveKeys" DockPanel.Dock="Right" MinHeight="28" Padding="10,5" FontSize="12"/><TextBlock Text="{DynamicResource Desktop.OpenAiKey}" Style="{StaticResource Section}"/></DockPanel><local:ApiKeyEditor x:Name="OpenAiKey"/>
+     <TextBlock Text="{DynamicResource Desktop.Asr}" Style="{StaticResource Label}"/><DockPanel><Button Content="{DynamicResource Desktop.UseSpeech}" Click="ChooseOpenAiSpeech" DockPanel.Dock="Right" Margin="12,0,0,0"/><TextBlock Text="Whisper · whisper-1" VerticalAlignment="Center"/></DockPanel>
      <TextBlock x:Name="OpenAiAsrCost" Style="{StaticResource Hint}" Margin="0,6,0,0"/>
-     <TextBlock Text="文本翻译（LLM）" Style="{StaticResource Label}"/><DockPanel><Button Content="用于翻译" Click="ChooseOpenAiTranslation" DockPanel.Dock="Right" Margin="12,0,0,0"/><TextBlock Text="GPT-4.1 mini · gpt-4.1-mini" VerticalAlignment="Center"/></DockPanel>
+     <TextBlock Text="{DynamicResource Desktop.Llm}" Style="{StaticResource Label}"/><DockPanel><Button Content="{DynamicResource Desktop.UseTranslation}" Click="ChooseOpenAiTranslation" DockPanel.Dock="Right" Margin="12,0,0,0"/><TextBlock Text="GPT-4.1 mini · gpt-4.1-mini" VerticalAlignment="Center"/></DockPanel>
      <TextBlock x:Name="OpenAiMtCost" Style="{StaticResource Hint}" Margin="0,6,0,0"/>
     </StackPanel></Border>
     <Border Style="{StaticResource Card}" x:Name="ChatGptPanel" Visibility="Collapsed"><StackPanel>
-     <TextBlock Text="使用 ChatGPT 订阅" Style="{StaticResource Section}"/>
-     <TextBlock Text="授权后将待翻译的字幕文本发送给 OpenAI。合资格的请求使用 ChatGPT 订阅额度或积分。" Style="{StaticResource Hint}" Margin="0,0,0,10"/>
-     <Button Content="使用 ChatGPT 继续" Click="ChatGptLogin" HorizontalAlignment="Left"/>
-     <TextBlock Text="ChatGPT 账号" Style="{StaticResource Label}"/>
-     <ComboBox x:Name="ChatGptAccount" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="ChatGptAccountChanged" AutomationProperties.Name="ChatGPT 账号"/>
+     <TextBlock Text="{DynamicResource Desktop.UseChatGpt}" Style="{StaticResource Section}"/>
+     <TextBlock Text="{DynamicResource Desktop.SubscriptionHint}" Style="{StaticResource Hint}" Margin="0,0,0,10"/>
+     <Button Content="{DynamicResource Desktop.SignIn}" Click="ChatGptLogin" HorizontalAlignment="Left"/>
+     <TextBlock Text="{DynamicResource Desktop.Account}" Style="{StaticResource Label}"/>
+     <ComboBox x:Name="ChatGptAccount" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="ChatGptAccountChanged" AutomationProperties.Name="{DynamicResource Desktop.Account}"/>
      <TextBlock x:Name="ChatGptStatus" Style="{StaticResource Hint}" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite"/>
      <WrapPanel Margin="0,8,0,0">
-      <Button x:Name="ChatGptReauthorize" Content="重新授权" Click="ChatGptLogin" Margin="0,0,8,6"/>
-      <Button x:Name="ChatGptSignOut" Content="退出登录" Click="ChatGptLogout" Margin="0,0,8,6"/>
-      <Button Content="管理 ChatGPT 用量" Click="ChatGptUsage" Margin="0,0,0,6"/>
+      <Button x:Name="ChatGptReauthorize" Content="{DynamicResource Desktop.Reauthorize}" Click="ChatGptLogin" Margin="0,0,8,6"/>
+      <Button x:Name="ChatGptSignOut" Content="{DynamicResource Desktop.SignOut}" Click="ChatGptLogout" Margin="0,0,8,6"/>
+      <Button Content="{DynamicResource Desktop.Usage}" Click="ChatGptUsage" Margin="0,0,0,6"/>
      </WrapPanel>
-     <TextBlock Text="字幕翻译模型" Style="{StaticResource Label}"/>
-     <ComboBox x:Name="ChatGptModel" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="SelectionChanged" AutomationProperties.Name="ChatGPT 字幕翻译模型"/>
+     <TextBlock Text="{DynamicResource Desktop.TranslationModel}" Style="{StaticResource Label}"/>
+     <ComboBox x:Name="ChatGptModel" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="SelectionChanged" AutomationProperties.Name="{DynamicResource Desktop.ChatGptModel}"/>
      <WrapPanel Margin="0,8,0,0">
-      <Button x:Name="ChatGptReloadModels" Content="刷新模型" Click="ChatGptRefreshModels" Margin="0,0,8,6"/>
-      <Button x:Name="ChatGptUse" Content="用于翻译" Click="ChooseChatGptTranslation" Margin="0,0,0,6"/>
+      <Button x:Name="ChatGptReloadModels" Content="{DynamicResource Desktop.RefreshModels}" Click="ChatGptRefreshModels" Margin="0,0,8,6"/>
+      <Button x:Name="ChatGptUse" Content="{DynamicResource Desktop.UseTranslation}" Click="ChooseChatGptTranslation" Margin="0,0,0,6"/>
      </WrapPanel>
     </StackPanel></Border>
     <Border Style="{StaticResource Card}" x:Name="MiniMaxPanel" Visibility="Collapsed"><StackPanel>
-     <DockPanel Margin="0,0,0,8"><Button Content="保存密钥" Click="SaveKeys" DockPanel.Dock="Right" MinHeight="28" Padding="10,5" FontSize="12"/><TextBlock Text="MiniMax API Key" Style="{StaticResource Section}"/></DockPanel>
-     <TextBlock Text="使用 MiniMax M Plan 专用 Key 消耗套餐额度，或用通用 API Key 按量计费。也可设置 MINIMAX_API_KEY 环境变量。" Style="{StaticResource Hint}" Margin="0,0,0,10"/>
+     <DockPanel Margin="0,0,0,8"><Button Content="{DynamicResource Desktop.SaveKey}" Click="SaveKeys" DockPanel.Dock="Right" MinHeight="28" Padding="10,5" FontSize="12"/><TextBlock Text="{DynamicResource Desktop.MinimaxKey}" Style="{StaticResource Section}"/></DockPanel>
+     <TextBlock Text="{DynamicResource Desktop.MinimaxHint}" Style="{StaticResource Hint}" Margin="0,0,0,10"/>
      <local:ApiKeyEditor x:Name="MiniMaxKey"/>
-     <Button Content="用于翻译" Click="ChooseMiniMaxTranslation" Margin="0,12,0,0" HorizontalAlignment="Left"/>
+     <Button Content="{DynamicResource Desktop.UseTranslation}" Click="ChooseMiniMaxTranslation" Margin="0,12,0,0" HorizontalAlignment="Left"/>
     </StackPanel></Border>
     <Border Style="{StaticResource Card}" x:Name="CustomCloudPanel" Visibility="Collapsed"><StackPanel>
-     <DockPanel Margin="0,0,0,8"><Button Content="保存密钥" Click="SaveKeys" DockPanel.Dock="Right" MinHeight="28" Padding="10,5" FontSize="12"/><TextBlock Text="OpenAI 兼容接口" Style="{StaticResource Section}"/></DockPanel>
-     <TextBlock Text="语音识别 · 地址和模型" Style="{StaticResource Label}"/><TextBox x:Name="AsrUrl" AutomationProperties.Name="自定义识别 API 地址"/><TextBox x:Name="AsrModel" AutomationProperties.Name="自定义识别模型名称" Margin="0,8,0,12"/><TextBlock Text="识别 API Key" Style="{StaticResource Label}"/><local:ApiKeyEditor x:Name="CustomAsrKey"/><Button Content="选用此识别服务" HorizontalAlignment="Left" Click="ChooseCustomSpeech"/>
-     <TextBlock Text="文本翻译 · 地址和模型" Style="{StaticResource Label}"/><TextBox x:Name="LlmUrl" AutomationProperties.Name="自定义翻译 API 地址"/><TextBox x:Name="LlmModel" AutomationProperties.Name="自定义翻译模型名称" Margin="0,8,0,12"/><TextBlock Text="翻译 API Key" Style="{StaticResource Label}"/><local:ApiKeyEditor x:Name="CustomMtKey"/><Button Content="选用此翻译服务" HorizontalAlignment="Left" Click="ChooseCustomTranslation"/>
+     <DockPanel Margin="0,0,0,8"><Button Content="{DynamicResource Desktop.SaveKey}" Click="SaveKeys" DockPanel.Dock="Right" MinHeight="28" Padding="10,5" FontSize="12"/><TextBlock Text="{DynamicResource Desktop.Compatible}" Style="{StaticResource Section}"/></DockPanel>
+     <TextBlock Text="{DynamicResource Desktop.AsrEndpoint}" Style="{StaticResource Label}"/><TextBox x:Name="AsrUrl" AutomationProperties.Name="{DynamicResource Desktop.CustomAsrUrl}"/><TextBox x:Name="AsrModel" AutomationProperties.Name="{DynamicResource Desktop.CustomAsrModel}" Margin="0,8,0,12"/><TextBlock Text="{DynamicResource Desktop.AsrKey}" Style="{StaticResource Label}"/><local:ApiKeyEditor x:Name="CustomAsrKey"/><Button Content="{DynamicResource Desktop.ChooseAsr}" HorizontalAlignment="Left" Click="ChooseCustomSpeech"/>
+     <TextBlock Text="{DynamicResource Desktop.TranslationEndpoint}" Style="{StaticResource Label}"/><TextBox x:Name="LlmUrl" AutomationProperties.Name="{DynamicResource Desktop.CustomMtUrl}"/><TextBox x:Name="LlmModel" AutomationProperties.Name="{DynamicResource Desktop.CustomMtModel}" Margin="0,8,0,12"/><TextBlock Text="{DynamicResource Desktop.MtKey}" Style="{StaticResource Label}"/><local:ApiKeyEditor x:Name="CustomMtKey"/><Button Content="{DynamicResource Desktop.ChooseMt}" HorizontalAlignment="Left" Click="ChooseCustomTranslation"/>
     </StackPanel></Border>
    </StackPanel></ScrollViewer></TabItem>
-   <TabItem Header="高级设置" x:Name="AdvancedTab"><ScrollViewer Style="{StaticResource PageScroll}"><StackPanel>
-    <TextBlock Text="高级设置" Style="{StaticResource PageTitle}"/>
-    <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="语音检测（VAD）" Style="{StaticResource Section}"/><TextBlock Text="先判断哪里有人说话，再把这些音频交给识别模型。" Style="{StaticResource Hint}"/><ComboBox x:Name="Vad" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="VadChanged" AutomationProperties.Name="语音活动检测模型" Margin="0,16,0,0"/>
-     <TextBlock Text="语音门槛（0–1）" Style="{StaticResource Label}"/><TextBox x:Name="VadThreshold" AutomationProperties.Name="语音检测门槛"/><TextBlock Text="越高越严格，可能漏掉轻声。" Style="{StaticResource Hint}" Margin="0,6,0,0"/>
-     <Grid Margin="0,16,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="20"/><ColumnDefinition/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="最短片段（秒）" Margin="0,0,0,8"/><TextBox x:Name="MinSpeech" AutomationProperties.Name="最短语音片段秒数"/><TextBlock Text="优先避免过碎的短段，仍会考虑实际停顿。" Style="{StaticResource Hint}" Margin="0,6,0,0"/></StackPanel><StackPanel Grid.Column="2"><TextBlock Text="单段最长（2–20 秒）" Margin="0,0,0,8"/><TextBox x:Name="MaxSpeech" AutomationProperties.Name="最长语音段秒数"/><TextBlock Text="连续讲话过长时分段，限制单次识别。" Style="{StaticResource Hint}" Margin="0,6,0,0"/></StackPanel></Grid>
-     <TextBlock Text="Silero 默认 0.50，FSMN 默认 0.80；不同模型的数值不可直接比较。" Style="{StaticResource Hint}" Margin="0,12,0,0"/>
-     <Grid Margin="0,16,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="20"/><ColumnDefinition/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="断句停顿（毫秒）" Margin="0,0,0,8"/><TextBox x:Name="MinSilence" AutomationProperties.Name="断句停顿毫秒数"/><TextBlock Text="越长越不容易把短暂停顿切开。" Style="{StaticResource Hint}" Margin="0,6,0,0"/></StackPanel><StackPanel Grid.Column="2"><TextBlock Text="句边留白（毫秒）" Margin="0,0,0,8"/><TextBox x:Name="PaddingMs" AutomationProperties.Name="句边留白毫秒数"/><TextBlock Text="保留句子两端的音频，减少截断。" Style="{StaticResource Hint}" Margin="0,6,0,0"/></StackPanel></Grid>
+   <TabItem Header="{DynamicResource Desktop.Advanced}" x:Name="AdvancedTab"><ScrollViewer Style="{StaticResource PageScroll}"><StackPanel>
+    <TextBlock Text="{DynamicResource Desktop.Advanced}" Style="{StaticResource PageTitle}"/>
+    <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="{DynamicResource Desktop.Vad}" Style="{StaticResource Section}"/><TextBlock Text="{DynamicResource Desktop.VadHint}" Style="{StaticResource Hint}"/><ComboBox x:Name="Vad" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="VadChanged" AutomationProperties.Name="{DynamicResource Desktop.VadModel}" Margin="0,16,0,0"/>
+     <TextBlock Text="{DynamicResource Desktop.Threshold}" Style="{StaticResource Label}"/><TextBox x:Name="VadThreshold" AutomationProperties.Name="{DynamicResource Desktop.VadThreshold}"/><TextBlock Text="{DynamicResource Desktop.ThresholdHint}" Style="{StaticResource Hint}" Margin="0,6,0,0"/>
+     <Grid Margin="0,16,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="20"/><ColumnDefinition/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="{DynamicResource Desktop.MinimumSegment}" Margin="0,0,0,8"/><TextBox x:Name="MinSpeech" AutomationProperties.Name="{DynamicResource Desktop.MinimumSpeech}"/><TextBlock Text="{DynamicResource Desktop.MinimumHint}" Style="{StaticResource Hint}" Margin="0,6,0,0"/></StackPanel><StackPanel Grid.Column="2"><TextBlock Text="{DynamicResource Desktop.MaximumSegment}" Margin="0,0,0,8"/><TextBox x:Name="MaxSpeech" AutomationProperties.Name="{DynamicResource Desktop.MaximumSpeech}"/><TextBlock Text="{DynamicResource Desktop.MaximumHint}" Style="{StaticResource Hint}" Margin="0,6,0,0"/></StackPanel></Grid>
+     <TextBlock Text="{DynamicResource Desktop.VadDefaults}" Style="{StaticResource Hint}" Margin="0,12,0,0"/>
+     <Grid Margin="0,16,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="20"/><ColumnDefinition/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="{DynamicResource Desktop.Pause}" Margin="0,0,0,8"/><TextBox x:Name="MinSilence" AutomationProperties.Name="{DynamicResource Desktop.PauseMs}"/><TextBlock Text="{DynamicResource Desktop.PauseHint}" Style="{StaticResource Hint}" Margin="0,6,0,0"/></StackPanel><StackPanel Grid.Column="2"><TextBlock Text="{DynamicResource Desktop.Padding}" Margin="0,0,0,8"/><TextBox x:Name="PaddingMs" AutomationProperties.Name="{DynamicResource Desktop.PaddingMs}"/><TextBlock Text="{DynamicResource Desktop.PaddingHint}" Style="{StaticResource Hint}" Margin="0,6,0,0"/></StackPanel></Grid>
     </StackPanel></Border>
-    <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="预读与跳转" Style="{StaticResource Section}"/><TextBlock Text="决定从视频的什么位置取音频，不等同于翻译模型的文字上下文。" Style="{StaticResource Hint}"/>
-     <Grid Margin="0,16,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="20"/><ColumnDefinition/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="缓存任务块（4–20 秒）" Margin="0,0,0,8"/><TextBox x:Name="ChunkSeconds" AutomationProperties.Name="缓存任务块秒数"/><TextBlock Text="只控制后台任务调度，不规定字幕句长。" Style="{StaticResource Hint}" Margin="0,6,0,0"/></StackPanel><StackPanel Grid.Column="2"><TextBlock Text="跳转最少回补（0–30 秒）" Margin="0,0,0,8"/><TextBox x:Name="Backfill" AutomationProperties.Name="跳转最少回补秒数"/><TextBlock Text="补找跳转前的句首；长句时会自动增加。" Style="{StaticResource Hint}" Margin="0,6,0,0"/></StackPanel></Grid>
-     <Grid Margin="0,16,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="20"/><ColumnDefinition/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="向前额外找停顿（0–5 秒）" Margin="0,0,0,8"/><TextBox x:Name="BeforeSeconds" AutomationProperties.Name="向前额外找停顿秒数"/></StackPanel><StackPanel Grid.Column="2"><TextBlock Text="向后额外找停顿（0–5 秒）" Margin="0,0,0,8"/><TextBox x:Name="AfterSeconds" AutomationProperties.Name="向后额外找停顿秒数"/></StackPanel></Grid><TextBlock Text="在候选音频范围之外额外搜索停顿，优先沿自然边界切分。" Style="{StaticResource Hint}" Margin="0,10,0,0"/>
+    <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="{DynamicResource Desktop.LookAhead}" Style="{StaticResource Section}"/><TextBlock Text="{DynamicResource Desktop.LookAheadHint}" Style="{StaticResource Hint}"/>
+     <Grid Margin="0,16,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="20"/><ColumnDefinition/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="{DynamicResource Desktop.Chunk}" Margin="0,0,0,8"/><TextBox x:Name="ChunkSeconds" AutomationProperties.Name="{DynamicResource Desktop.ChunkSeconds}"/><TextBlock Text="{DynamicResource Desktop.ChunkHint}" Style="{StaticResource Hint}" Margin="0,6,0,0"/></StackPanel><StackPanel Grid.Column="2"><TextBlock Text="{DynamicResource Desktop.Backfill}" Margin="0,0,0,8"/><TextBox x:Name="Backfill" AutomationProperties.Name="{DynamicResource Desktop.BackfillSeconds}"/><TextBlock Text="{DynamicResource Desktop.BackfillHint}" Style="{StaticResource Hint}" Margin="0,6,0,0"/></StackPanel></Grid>
+     <Grid Margin="0,16,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="20"/><ColumnDefinition/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="{DynamicResource Desktop.PrePause}" Margin="0,0,0,8"/><TextBox x:Name="BeforeSeconds" AutomationProperties.Name="{DynamicResource Desktop.PrePauseSeconds}"/></StackPanel><StackPanel Grid.Column="2"><TextBlock Text="{DynamicResource Desktop.PostPause}" Margin="0,0,0,8"/><TextBox x:Name="AfterSeconds" AutomationProperties.Name="{DynamicResource Desktop.PostPauseSeconds}"/></StackPanel></Grid><TextBlock Text="{DynamicResource Desktop.BoundaryHint}" Style="{StaticResource Hint}" Margin="0,10,0,0"/>
     </StackPanel></Border>
-    <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="诊断" Style="{StaticResource Section}"/><CheckBox x:Name="Diagnostics" Content="记录详细诊断日志" Margin="0,8,0,10"/><TextBlock Text="仅排查问题时开启。关闭诊断不会隐藏必要的错误提示。" Style="{StaticResource Hint}"/><Button Content="打开日志目录" Click="OpenLogs" HorizontalAlignment="Left" Margin="0,18,0,0"/></StackPanel></Border>
+    <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="{DynamicResource Desktop.Diagnostics}" Style="{StaticResource Section}"/><CheckBox x:Name="Diagnostics" Content="{DynamicResource Desktop.DiagnosticsToggle}" Margin="0,8,0,10"/><TextBlock Text="{DynamicResource Desktop.DiagnosticsHint}" Style="{StaticResource Hint}"/><Button Content="{DynamicResource Desktop.OpenLogs}" Click="OpenLogs" HorizontalAlignment="Left" Margin="0,18,0,0"/></StackPanel></Border>
     <Border x:Name="UpdateCard" Style="{StaticResource Card}" Visibility="Collapsed"><StackPanel>
      <TextBlock x:Name="UpdateTitle" Style="{StaticResource Section}"/>
      <TextBlock x:Name="InstalledVersion" Style="{StaticResource Hint}"/>
@@ -289,13 +291,13 @@
     </StackPanel></Border>
     <TextBlock x:Name="AutomationStatus" Style="{StaticResource Hint}" AutomationProperties.LiveSetting="Polite"/>
    </StackPanel></ScrollViewer></TabItem>
-   <TabItem x:Name="FolderTasksTab" Header="{local:TaskText FolderTitle}">
+   <TabItem x:Name="FolderTasksTab" Header="{DynamicResource Automation.FolderTitle}">
     <ScrollViewer Style="{StaticResource PageScroll}"><StackPanel>
-     <TextBlock Text="{local:TaskText FolderTitle}" Style="{StaticResource PageTitle}"/>
-     <TextBlock Text="{local:TaskText FolderIntro}" Style="{StaticResource Hint}" Margin="0,0,0,16"/>
+     <TextBlock Text="{DynamicResource Automation.FolderTitle}" Style="{StaticResource PageTitle}"/>
+     <TextBlock Text="{DynamicResource Automation.FolderIntro}" Style="{StaticResource Hint}" Margin="0,0,0,16"/>
      <DockPanel Margin="0,0,0,12">
-      <Button x:Name="NewFolderRuleButton" Content="{local:TaskText FolderNew}" Click="NewFolderRule" DockPanel.Dock="Right" Margin="12,0,0,0"/>
-      <ComboBox x:Name="FolderRuleChoice" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="FolderRuleChanged" AutomationProperties.Name="{local:TaskText FolderRules}"/>
+      <Button x:Name="NewFolderRuleButton" Content="{DynamicResource Automation.FolderNew}" Click="NewFolderRule" DockPanel.Dock="Right" Margin="12,0,0,0"/>
+      <ComboBox x:Name="FolderRuleChoice" DisplayMemberPath="Label" SelectedValuePath="Value" SelectionChanged="FolderRuleChanged" AutomationProperties.Name="{DynamicResource Automation.FolderRules}"/>
      </DockPanel>
      <Border x:Name="FolderRuleDetails" Style="{StaticResource Card}"><StackPanel>
       <TextBlock x:Name="FolderQueueStatus" Style="{StaticResource Hint}" AutomationProperties.LiveSetting="Polite"/>
@@ -305,69 +307,69 @@
         <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Foreground="#596273" FontSize="12"/>
        </StackPanel></DataTemplate></ItemsControl.ItemTemplate>
       </ItemsControl></ScrollViewer>
-      <Button x:Name="FolderRetryButton" Content="{local:TaskText FolderRetry}" Click="RetryFolderJobs" HorizontalAlignment="Left" Visibility="Collapsed"/>
+      <Button x:Name="FolderRetryButton" Content="{DynamicResource Automation.FolderRetry}" Click="RetryFolderJobs" HorizontalAlignment="Left" Visibility="Collapsed"/>
      </StackPanel></Border>
      <TextBlock x:Name="FolderActionStatus" Style="{StaticResource Hint}" AutomationProperties.LiveSetting="Polite"/>
      <Border x:Name="FolderRuleEditor" Style="{StaticResource Card}" Visibility="Collapsed"><StackPanel>
-      <TextBlock Text="{local:TaskText FolderRuleName}" Style="{StaticResource Label}"/>
-      <TextBox x:Name="FolderRuleName" MaxLength="80" AutomationProperties.Name="{local:TaskText FolderRuleName}"/>
-      <TextBlock Text="{local:TaskText FolderPath}" Style="{StaticResource Label}" Margin="0,12,0,6"/>
+      <TextBlock Text="{DynamicResource Automation.FolderRuleName}" Style="{StaticResource Label}"/>
+      <TextBox x:Name="FolderRuleName" MaxLength="80" AutomationProperties.Name="{DynamicResource Automation.FolderRuleName}"/>
+      <TextBlock Text="{DynamicResource Automation.FolderPath}" Style="{StaticResource Label}" Margin="0,12,0,6"/>
       <DockPanel>
-       <Button Content="{local:TaskText FolderBrowse}" Click="BrowseWatchFolder" DockPanel.Dock="Right" Margin="12,0,0,0"/>
-       <TextBox x:Name="FolderRulePath" AutomationProperties.Name="{local:TaskText FolderPath}"/>
+       <Button Content="{DynamicResource Automation.FolderBrowse}" Click="BrowseWatchFolder" DockPanel.Dock="Right" Margin="12,0,0,0"/>
+       <TextBox x:Name="FolderRulePath" AutomationProperties.Name="{DynamicResource Automation.FolderPath}"/>
       </DockPanel>
       <WrapPanel Margin="0,12,0,0">
-       <CheckBox x:Name="FolderRuleEnabled" Content="{local:TaskText FolderEnabled}" Margin="0,0,18,8"/>
-       <CheckBox x:Name="FolderRuleRecursive" Content="{local:TaskText FolderRecursive}" Margin="0,0,18,8"/>
-       <CheckBox x:Name="FolderRuleExisting" Content="{local:TaskText FolderExisting}" Margin="0,0,0,8"/>
+       <CheckBox x:Name="FolderRuleEnabled" Content="{DynamicResource Automation.FolderEnabled}" Margin="0,0,18,8"/>
+       <CheckBox x:Name="FolderRuleRecursive" Content="{DynamicResource Automation.FolderRecursive}" Margin="0,0,18,8"/>
+       <CheckBox x:Name="FolderRuleExisting" Content="{DynamicResource Automation.FolderExisting}" Margin="0,0,0,8"/>
       </WrapPanel>
-      <Expander Header="{local:TaskText FolderFilters}" Style="{StaticResource SettingsExpander}" Margin="0,8,0,8"><StackPanel Margin="12,10,12,12">
-       <TextBlock Text="{local:TaskText FolderRegex}" Style="{StaticResource Label}"/>
-       <TextBox x:Name="FolderRuleRegex" MaxLength="512" AutomationProperties.Name="{local:TaskText FolderRegex}"/>
-       <TextBlock Text="{local:TaskText FolderTypes}" Style="{StaticResource Label}" Margin="0,10,0,6"/>
-       <TextBox x:Name="FolderRuleTypes" MaxLength="300" AutomationProperties.Name="{local:TaskText FolderTypes}"/>
+      <Expander Header="{DynamicResource Automation.FolderFilters}" Style="{StaticResource SettingsExpander}" Margin="0,8,0,8"><StackPanel Margin="12,10,12,12">
+       <TextBlock Text="{DynamicResource Automation.FolderRegex}" Style="{StaticResource Label}"/>
+       <TextBox x:Name="FolderRuleRegex" MaxLength="512" AutomationProperties.Name="{DynamicResource Automation.FolderRegex}"/>
+       <TextBlock Text="{DynamicResource Automation.FolderTypes}" Style="{StaticResource Label}" Margin="0,10,0,6"/>
+       <TextBox x:Name="FolderRuleTypes" MaxLength="300" AutomationProperties.Name="{DynamicResource Automation.FolderTypes}"/>
        <Grid Margin="0,10,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/></Grid.ColumnDefinitions>
-        <StackPanel><TextBlock Text="{local:TaskText FolderMin}" Style="{StaticResource Label}"/><TextBox x:Name="FolderRuleMin" AutomationProperties.Name="{local:TaskText FolderMin}"/></StackPanel>
-        <StackPanel Grid.Column="2"><TextBlock Text="{local:TaskText FolderMax}" Style="{StaticResource Label}"/><TextBox x:Name="FolderRuleMax" AutomationProperties.Name="{local:TaskText FolderMax}"/></StackPanel>
+        <StackPanel><TextBlock Text="{DynamicResource Automation.FolderMin}" Style="{StaticResource Label}"/><TextBox x:Name="FolderRuleMin" AutomationProperties.Name="{DynamicResource Automation.FolderMin}"/></StackPanel>
+        <StackPanel Grid.Column="2"><TextBlock Text="{DynamicResource Automation.FolderMax}" Style="{StaticResource Label}"/><TextBox x:Name="FolderRuleMax" AutomationProperties.Name="{DynamicResource Automation.FolderMax}"/></StackPanel>
        </Grid>
       </StackPanel></Expander>
-      <Expander x:Name="FolderSubtitleOptions" Header="{local:TaskText FolderSubtitle}" Style="{StaticResource SettingsExpander}" Margin="0,0,0,8"><StackPanel Margin="12,10,12,12">
-       <TextBlock Text="{local:TaskText FolderModels}" Style="{StaticResource Hint}" Margin="0,0,0,10"/>
+      <Expander x:Name="FolderSubtitleOptions" Header="{DynamicResource Automation.FolderSubtitle}" Style="{StaticResource SettingsExpander}" Margin="0,0,0,8"><StackPanel Margin="12,10,12,12">
+       <TextBlock Text="{DynamicResource Automation.FolderModels}" Style="{StaticResource Hint}" Margin="0,0,0,10"/>
        <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/></Grid.ColumnDefinitions>
-        <StackPanel><TextBlock Text="{local:TaskText FolderSpeechModel}" Style="{StaticResource Label}"/><ComboBox x:Name="FolderRuleSpeechModel" DisplayMemberPath="Label" SelectedValuePath="Value" AutomationProperties.Name="{local:TaskText FolderSpeechModel}"/></StackPanel>
-        <StackPanel Grid.Column="2"><TextBlock Text="{local:TaskText FolderTranslationModel}" Style="{StaticResource Label}"/><ComboBox x:Name="FolderRuleTranslationModel" DisplayMemberPath="Label" SelectedValuePath="Value" AutomationProperties.Name="{local:TaskText FolderTranslationModel}"/></StackPanel>
+        <StackPanel><TextBlock Text="{DynamicResource Automation.FolderSpeechModel}" Style="{StaticResource Label}"/><ComboBox x:Name="FolderRuleSpeechModel" DisplayMemberPath="Label" SelectedValuePath="Value" AutomationProperties.Name="{DynamicResource Automation.FolderSpeechModel}"/></StackPanel>
+        <StackPanel Grid.Column="2"><TextBlock Text="{DynamicResource Automation.FolderTranslationModel}" Style="{StaticResource Label}"/><ComboBox x:Name="FolderRuleTranslationModel" DisplayMemberPath="Label" SelectedValuePath="Value" AutomationProperties.Name="{DynamicResource Automation.FolderTranslationModel}"/></StackPanel>
        </Grid>
        <Grid Margin="0,10,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/></Grid.ColumnDefinitions>
-        <StackPanel><TextBlock Text="{local:TaskText FolderSource}" Style="{StaticResource Label}"/><ComboBox x:Name="FolderRuleSource" DisplayMemberPath="Label" SelectedValuePath="Value" AutomationProperties.Name="{local:TaskText FolderSource}"/></StackPanel>
-        <StackPanel Grid.Column="2"><TextBlock Text="{local:TaskText FolderTarget}" Style="{StaticResource Label}"/><ComboBox x:Name="FolderRuleTarget" DisplayMemberPath="Label" SelectedValuePath="Value" AutomationProperties.Name="{local:TaskText FolderTarget}"/></StackPanel>
+        <StackPanel><TextBlock Text="{DynamicResource Automation.FolderSource}" Style="{StaticResource Label}"/><ComboBox x:Name="FolderRuleSource" DisplayMemberPath="Label" SelectedValuePath="Value" AutomationProperties.Name="{DynamicResource Automation.FolderSource}"/></StackPanel>
+        <StackPanel Grid.Column="2"><TextBlock Text="{DynamicResource Automation.FolderTarget}" Style="{StaticResource Label}"/><ComboBox x:Name="FolderRuleTarget" DisplayMemberPath="Label" SelectedValuePath="Value" AutomationProperties.Name="{DynamicResource Automation.FolderTarget}"/></StackPanel>
        </Grid>
        <Grid Margin="0,10,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/></Grid.ColumnDefinitions>
-        <StackPanel><TextBlock Text="{local:TaskText FolderAudio}" Style="{StaticResource Label}"/><TextBox x:Name="FolderRuleAudio" AutomationProperties.Name="{local:TaskText FolderAudio}"/></StackPanel>
-        <StackPanel Grid.Column="2"><TextBlock Text="{local:TaskText FolderStyle}" Style="{StaticResource Label}"/><ComboBox x:Name="FolderRuleStyle" DisplayMemberPath="Label" SelectedValuePath="Value" AutomationProperties.Name="{local:TaskText FolderStyle}"/></StackPanel>
+        <StackPanel><TextBlock Text="{DynamicResource Automation.FolderAudio}" Style="{StaticResource Label}"/><TextBox x:Name="FolderRuleAudio" AutomationProperties.Name="{DynamicResource Automation.FolderAudio}"/></StackPanel>
+        <StackPanel Grid.Column="2"><TextBlock Text="{DynamicResource Automation.FolderStyle}" Style="{StaticResource Label}"/><ComboBox x:Name="FolderRuleStyle" DisplayMemberPath="Label" SelectedValuePath="Value" AutomationProperties.Name="{DynamicResource Automation.FolderStyle}"/></StackPanel>
        </Grid>
-       <TextBlock Text="{local:TaskText FolderDestination}" Style="{StaticResource Label}" Margin="0,10,0,6"/>
-       <DockPanel><Button Content="{local:TaskText FolderBrowse}" Click="BrowseSubtitleFolder" DockPanel.Dock="Right" Margin="12,0,0,0"/>
-        <TextBox x:Name="FolderRuleDestination" AutomationProperties.Name="{local:TaskText FolderDestination}"/>
+       <TextBlock Text="{DynamicResource Automation.FolderDestination}" Style="{StaticResource Label}" Margin="0,10,0,6"/>
+       <DockPanel><Button Content="{DynamicResource Automation.FolderBrowse}" Click="BrowseSubtitleFolder" DockPanel.Dock="Right" Margin="12,0,0,0"/>
+        <TextBox x:Name="FolderRuleDestination" AutomationProperties.Name="{DynamicResource Automation.FolderDestination}"/>
        </DockPanel>
-       <TextBlock Text="{local:TaskText FolderSuffix}" Style="{StaticResource Label}" Margin="0,10,0,6"/>
-       <TextBox x:Name="FolderRuleSuffix" MaxLength="64" AutomationProperties.Name="{local:TaskText FolderSuffix}"/>
+       <TextBlock Text="{DynamicResource Automation.FolderSuffix}" Style="{StaticResource Label}" Margin="0,10,0,6"/>
+       <TextBox x:Name="FolderRuleSuffix" MaxLength="64" AutomationProperties.Name="{DynamicResource Automation.FolderSuffix}"/>
       </StackPanel></Expander>
-      <TextBlock Text="{local:TaskText FolderIdle}" Style="{StaticResource Label}" Margin="0,2,0,6"/>
-      <TextBox x:Name="FolderRuleIdle" AutomationProperties.Name="{local:TaskText FolderIdle}" Width="100" HorizontalAlignment="Left"/>
+      <TextBlock Text="{DynamicResource Automation.FolderIdle}" Style="{StaticResource Label}" Margin="0,2,0,6"/>
+      <TextBox x:Name="FolderRuleIdle" AutomationProperties.Name="{DynamicResource Automation.FolderIdle}" Width="100" HorizontalAlignment="Left"/>
       <WrapPanel Margin="0,14,0,0">
-       <Button x:Name="SaveFolderRuleButton" Content="{local:TaskText FolderSave}" Click="SaveFolderRule" Background="#2E59AE" Foreground="White" BorderBrush="#2E59AE"/>
-       <Button x:Name="DeleteFolderRuleButton" Content="{local:TaskText FolderDelete}" Click="DeleteFolderRule"/>
+       <Button x:Name="SaveFolderRuleButton" Content="{DynamicResource Automation.FolderSave}" Click="SaveFolderRule" Background="#2E59AE" Foreground="White" BorderBrush="#2E59AE"/>
+       <Button x:Name="DeleteFolderRuleButton" Content="{DynamicResource Automation.FolderDelete}" Click="DeleteFolderRule"/>
       </WrapPanel>
      </StackPanel></Border>
     </StackPanel></ScrollViewer>
    </TabItem>
-   <TabItem Header="{local:StatusText Title}" x:Name="StatusTab">
+   <TabItem Header="{DynamicResource Status.Title}" x:Name="StatusTab">
     <local:StatusPage x:Name="StatusDashboard"/>
    </TabItem>
   </TabControl>
   <Border Grid.Row="2" Background="White" BorderBrush="#E3E7ED" BorderThickness="0,1,0,0" Padding="28,14"><StackPanel>
-   <TextBlock x:Name="ActionStatus" TextWrapping="Wrap" Margin="176,0,0,8" Visibility="Collapsed" AutomationProperties.LiveSetting="Assertive"/><ProgressBar x:Name="Progress" Height="3" IsIndeterminate="True" Visibility="Collapsed" Margin="176,0,0,10"/>
-   <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="176"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><Button x:Name="ExitButton" Content="退出" Click="Exit" HorizontalAlignment="Left"/><StackPanel Grid.Column="1" Orientation="Horizontal"><Button x:Name="ApplyButton" Content="保存并启动" Click="Apply" Background="#2E59AE" Foreground="White" BorderBrush="#2E59AE" FontWeight="SemiBold"/><Button x:Name="StopButton" Content="停止服务" Click="Stop"/></StackPanel><TextBlock Grid.Column="2" Text="关闭窗口后留在托盘" Style="{StaticResource Hint}" VerticalAlignment="Center"/></Grid>
+   <TextBlock x:Name="ActionStatus" TextWrapping="Wrap" Margin="192,0,0,8" Visibility="Collapsed" AutomationProperties.LiveSetting="Assertive"/><ProgressBar x:Name="Progress" Height="3" IsIndeterminate="True" Visibility="Collapsed" Margin="192,0,0,10"/>
+   <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="192"/><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions><Button x:Name="ExitButton" Content="{DynamicResource Desktop.Exit}" Click="Exit" HorizontalAlignment="Left"/><StackPanel Grid.Column="1" Orientation="Horizontal"><Button x:Name="ApplyButton" Content="{DynamicResource Desktop.SaveStart}" Click="Apply" Background="#2E59AE" Foreground="White" BorderBrush="#2E59AE" FontWeight="SemiBold"/><Button x:Name="StopButton" Content="{DynamicResource Desktop.StopService}" Click="Stop"/></StackPanel><TextBlock Grid.Column="2" Text="{DynamicResource Desktop.TrayClose}" HorizontalAlignment="Right" TextAlignment="Right" Style="{StaticResource Hint}" VerticalAlignment="Center"/></Grid>
   </StackPanel></Border>
  </Grid>
 </Window>

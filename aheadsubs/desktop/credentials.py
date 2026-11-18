@@ -8,6 +8,7 @@ from ctypes import wintypes
 from pathlib import Path
 from urllib.parse import urlsplit
 
+from ..user_errors import UserInputError
 from ..inference.providers import provider_key
 
 
@@ -40,7 +41,7 @@ def dpapi(value, *, decrypt=False):
     source, result = DataBlob(len(value), buffer), DataBlob()
     try:
         if not operation(ctypes.byref(source), None, None, None, None, 1, ctypes.byref(result)):
-            raise ValueError("Windows 无法读取或保护 API Key，请重新输入后保存。")
+            raise UserInputError("key-protection", "Windows 无法读取或保护 API Key，请重新输入后保存。")
         return ctypes.string_at(result.data, result.size)
     finally:
         ctypes.memset(buffer, 0, len(value))
@@ -58,33 +59,33 @@ def public_state(settings):
 
 def update(settings, changes):
     if not isinstance(changes, dict) or not changes.keys() <= SOURCES.keys():
-        raise ValueError("密钥设置格式无效。")
+        raise UserInputError("key-settings", "密钥设置格式无效。")
     protected = dict(settings.get(PRIVATE_FIELD, {}))
     for provider, change in changes.items():
         if not isinstance(change, dict) or not change.keys() <= {"mode", "value"}:
-            raise ValueError("密钥设置格式无效。")
+            raise UserInputError("key-settings", "密钥设置格式无效。")
         mode, value = change.get("mode"), change.get("value", "")
         if not isinstance(value, str):
-            raise ValueError("密钥设置格式无效。")
+            raise UserInputError("key-settings", "密钥设置格式无效。")
         value = value.strip()
         field, _, label = SOURCES[provider]
         if mode == "direct":
             if value:
                 if any(char.isspace() or ord(char) < 32 for char in value):
-                    raise ValueError(f"{label} API Key 应为一行，且不含空格。")
+                    raise UserInputError("key-single-line", f"{label} API Key 应为一行，且不含空格。", provider)
                 protected[provider] = PREFIX + base64.b64encode(dpapi(value.encode())).decode("ascii")
             elif not protected.get(provider):
-                raise ValueError(f"请输入 {label} API Key。")
+                raise UserInputError("key-required", f"请输入 {label} API Key。", provider)
             settings[field] = ""
         elif mode in {"file", "default"}:
             if mode == "file":
                 if not value:
-                    raise ValueError(f"请选择 {label} API Key 文件。")
+                    raise UserInputError("key-file-required", f"请选择 {label} API Key 文件。", provider)
                 read_file(provider, value)
             settings[field] = value if mode == "file" else ""
             protected.pop(provider, None)
         else:
-            raise ValueError("密钥设置格式无效。")
+            raise UserInputError("key-settings", "密钥设置格式无效。")
     settings[PRIVATE_FIELD] = protected
 
 
@@ -95,11 +96,11 @@ def read_file(provider, path):
     try:
         value = Path(path).read_text(encoding="utf-8-sig").strip()
     except (OSError, UnicodeError):
-        raise ValueError(f"无法读取 {label} API Key 文件。") from None
+        raise UserInputError("key-file-invalid", f"无法读取 {label} API Key 文件。", provider) from None
     if value.startswith(f"{variable}="):
         value = value.partition("=")[2].strip().strip("\"'")
     if not value or any(char.isspace() or ord(char) < 32 for char in value):
-        raise ValueError(f"{label} API Key 文件应包含一行有效的密钥。")
+        raise UserInputError("key-file-invalid", f"{label} API Key 文件应包含一行有效的密钥。", provider)
     return value
 
 
@@ -115,13 +116,13 @@ def resolve(settings, provider, endpoint=None):
             if not value:
                 raise ValueError
         except (AttributeError, ValueError, OSError):
-            raise ValueError(f"无法解密 {label} API Key，请在云端模型页重新输入。") from None
+            raise UserInputError("key-decryption", f"无法解密 {label} API Key，请在云端模型页重新输入。", provider) from None
     elif path:
         value = read_file(provider, path)
     else:
         value = os.getenv(variable, "").strip()
         if not value and not provider.startswith("compatible-"):
-            raise ValueError(f"请在云端模型页配置 {label} API Key。")
+            raise UserInputError("key-required", f"请在云端模型页配置 {label} API Key。", provider)
     if value and provider.startswith("compatible-"):
         url = urlsplit(endpoint or "")
         local = url.hostname == "localhost"
@@ -132,5 +133,5 @@ def resolve(settings, provider, endpoint=None):
                 pass
         if not url.hostname or url.username is not None or url.password is not None or (
                 url.scheme != "https" and not (local and url.scheme == "http")):
-            raise ValueError(f"{label}的远程地址需要使用 HTTPS 才能发送 API Key。")
+            raise UserInputError("key-https", f"{label}的远程地址需要使用 HTTPS 才能发送 API Key。", provider)
     return value or None

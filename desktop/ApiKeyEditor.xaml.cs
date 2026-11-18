@@ -38,16 +38,16 @@ public partial class ApiKeyEditor : System.Windows.Controls.UserControl
         UpdateMode();
     }
 
-    private void UpdateMode()
+    internal void UpdateMode()
     {
         FileRow.Visibility = SelectedMode == "file" ? Visibility.Visible : Visibility.Collapsed;
         DirectRow.Visibility = SelectedMode == "direct" ? Visibility.Visible : Visibility.Collapsed;
-        DirectHint.Text = hasSavedKey ? "已加密保存。输入新密钥可替换。" : "保存在当前 Windows 用户下，加密存储。";
+        DirectHint.Text = hasSavedKey ? UiText.Get("ReplaceKey") : UiText.Get("EncryptedKey");
     }
 
     private void Browse(object sender, RoutedEventArgs e)
     {
-        var dialog = new Microsoft.Win32.OpenFileDialog { Title = "选择 API Key 文件", CheckFileExists = true };
+        var dialog = new Microsoft.Win32.OpenFileDialog { Title = UiText.Get("ChooseKey"), CheckFileExists = true };
         if (dialog.ShowDialog(Window.GetWindow(this)) == true) KeyPath.Text = dialog.FileName;
     }
 }

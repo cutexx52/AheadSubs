@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="heading" xml:space="preserve"><value>快速預設</value></data>
+  <data name="active" xml:space="preserve"><value>快速預設 · {0}</value></data>
+  <data name="custom" xml:space="preserve"><value>自定義</value></data>
+  <data name="cpu" xml:space="preserve"><value>純本機 · CPU</value></data>
+  <data name="gpu" xml:space="preserve"><value>純本機 · 獨顯入門</value></data>
+  <data name="high-gpu" xml:space="preserve"><value>純本機 · 高效能 GPU</value></data>
+  <data name="recommended" xml:space="preserve"><value>作者推薦 · 本地識別 + 雲端翻譯</value></data>
+  <data name="detail-cpu" xml:space="preserve"><value>Whisper Small + NLLB · CPU</value></data>
+  <data name="detail-gpu" xml:space="preserve"><value>Qwen3-ASR 0.6B · Vulkan / NLLB · CPU</value></data>
+  <data name="detail-high-gpu" xml:space="preserve"><value>Qwen3-ASR 1.7B · Vulkan / NLLB · NVIDIA CUDA</value></data>
+  <data name="detail-recommended" xml:space="preserve"><value>Qwen3-ASR 1.7B · Vulkan / Qwen-MT Flash · 需百鍊 API Key</value></data>
+  <data name="missing" xml:space="preserve"><value>待下載：{0}</value></data>
+  <data name="checking" xml:space="preserve"><value>正在檢查執行條件…</value></data>
+  <data name="ready" xml:space="preserve"><value>已就緒，可以應用。</value></data>
+  <data name="retry" xml:space="preserve"><value>重新檢查</value></data>
+  <data name="check-failed" xml:space="preserve"><value>暫時無法檢查這套方案，請重試。</value></data>
+  <data name="ffmpeg" xml:space="preserve"><value>需要 FFmpeg 和 FFprobe，請使用完整的 Windows 安裝包。</value></data>
+  <data name="vulkan" xml:space="preserve"><value>未檢測到 Vulkan 裝置。請檢查顯示卡驅動，或選擇純本機 CPU 方案。</value></data>
+  <data name="cuda" xml:space="preserve"><value>CUDA 不可用。請檢查 NVIDIA 驅動和 CUDA 安裝包，或選擇純本機獨顯入門方案。</value></data>
+  <data name="dashscope" xml:space="preserve"><value>請儲存百鍊 API Key，並檢查服務地址。</value></data>
+  <data name="models" xml:space="preserve"><value>管理模型</value></data>
+  <data name="download" xml:space="preserve"><value>立即下載</value></data>
+  <data name="keys" xml:space="preserve"><value>配置百鍊</value></data>
+  <data name="apply" xml:space="preserve"><value>應用方案</value></data>
+  <data name="applying" xml:space="preserve"><value>正在應用方案…</value></data>
+  <data name="restart-models" xml:space="preserve"><value>正在等候目前的工作完成，隨後會重新載入本機模型…</value></data>
+  <data name="restart" xml:space="preserve"><value>正在重新啟動字幕服務，等候目前的工作完成…</value></data>
+  <data name="load-models" xml:space="preserve"><value>正在載入本機模型，可能需要一些時間…</value></data>
+  <data name="start" xml:space="preserve"><value>正在啟動字幕服務…</value></data>
+  <data name="applied" xml:space="preserve"><value>已應用方案。</value></data>
+  <data name="downloading" xml:space="preserve"><value>正在下載 {0}…</value></data>
+  <data name="downloaded" xml:space="preserve"><value>下載完成。</value></data>
+  <data name="download-failed" xml:space="preserve"><value>下載失敗。請檢查網路連線和剩餘磁碟空間，再重試。</value></data>
+  <data name="needed" xml:space="preserve"><value>所選方案需要</value></data>
+  <data name="model-page" xml:space="preserve"><value>本機模型</value></data>
+  <data name="model-asr" xml:space="preserve"><value>語音辨識</value></data>
+  <data name="model-mt" xml:space="preserve"><value>字幕翻譯</value></data>
+  <data name="model-vad" xml:space="preserve"><value>語音檢測</value></data>
+  <data name="managed-vad" xml:space="preserve"><value>Silero 隨執行環境提供，FSMN 在高階設定中選用後準備。</value></data>
+  <data name="installed-model" xml:space="preserve"><value>已下載</value></data>
+  <data name="active-model" xml:space="preserve"><value>已下載 · 使用中</value></data>
+  <data name="download-model" xml:space="preserve"><value>下載</value></data>
+  <data name="remove-model" xml:space="preserve"><value>解除安裝</value></data>
+  <data name="uninstall-ask" xml:space="preserve"><value>解除安裝 {0}？其他應用也可能在使用 Hugging Face 共享快取裡的模型。</value></data>
+  <data name="uninstall-ask-local" xml:space="preserve"><value>解除安裝 {0}？</value></data>
+  <data name="uninstall-active" xml:space="preserve"><value>請先切換模型或停止字幕服務，再解除安裝這個模型。</value></data>
+  <data name="uninstall-incomplete" xml:space="preserve"><value>快取不完整，無法解除安裝這個模型。</value></data>
+  <data name="uninstall-location" xml:space="preserve"><value>快取位置不屬於這個模型，無法解除安裝。</value></data>
+  <data name="uninstall-failed" xml:space="preserve"><value>模型快取未能完全刪除，請關閉其他正在使用它的應用後重試。</value></data>
+  <data name="uninstalling" xml:space="preserve"><value>正在解除安裝 {0}…</value></data>
+  <data name="uninstalled" xml:space="preserve"><value>已解除安裝模型。</value></data>
+  <data name="model-info" xml:space="preserve"><value>{0} · 約 {1:0.00} GB</value></data>
+  <data name="shared-info" xml:space="preserve"><value>兩款 Qwen3-ASR 共用約 0.71 GB 的對齊模型、自動語言偵測模型和執行階段檔案。</value></data>
+  <data name="whisper-device" xml:space="preserve"><value>Whisper Small 運算裝置</value></data>
+  <data name="nllb-device" xml:space="preserve"><value>NLLB 運算裝置</value></data>
+  <data name="cpu-device" xml:space="preserve"><value>CPU</value></data>
+  <data name="cuda-device" xml:space="preserve"><value>NVIDIA CUDA</value></data>
+  <data name="asr-device" xml:space="preserve"><value>識別：{0}</value></data>
+  <data name="mt-device" xml:space="preserve"><value>翻譯：{0}</value></data>
+</root>

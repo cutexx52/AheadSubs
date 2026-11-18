@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="Tab" xml:space="preserve"><value>字幕ライブラリ</value></data>
+  <data name="Title" xml:space="preserve"><value>字幕ライブラリ</value></data>
+  <data name="Search" xml:space="preserve"><value>名前またはパスで検索</value></data>
+  <data name="Filter" xml:space="preserve"><value>主な元言語で絞り込み</value></data>
+  <data name="Files" xml:space="preserve"><value>メディアファイル</value></data>
+  <data name="AllSources" xml:space="preserve"><value>すべての元言語</value></data>
+  <data name="Version" xml:space="preserve"><value>バージョン</value></data>
+  <data name="VersionChoice" xml:space="preserve"><value>{0} · {1} · トラック {2}</value></data>
+  <data name="PathUnknown" xml:space="preserve"><value>パス不明</value></data>
+  <data name="Refresh" xml:space="preserve"><value>更新</value></data>
+  <data name="Regenerate" xml:space="preserve"><value>再生成</value></data>
+  <data name="RegenerateHint" xml:space="preserve"><value>再生していないときに、現在のモデルで別のバージョンを生成します。</value></data>
+  <data name="Open" xml:space="preserve"><value>SRT を開く</value></data>
+  <data name="Save" xml:space="preserve"><value>SRT を保存…</value></data>
+  <data name="SrtFilter" xml:space="preserve"><value>SubRip 字幕 (*.srt)|*.srt</value></data>
+  <data name="Saved" xml:space="preserve"><value>字幕を {0} に保存しました</value></data>
+  <data name="Time" xml:space="preserve"><value>時刻</value></data>
+  <data name="Original" xml:space="preserve"><value>原文</value></data>
+  <data name="Translation" xml:space="preserve"><value>字幕</value></data>
+  <data name="PrimarySource" xml:space="preserve"><value>主な元言語　{0}</value></data>
+  <data name="Coverage" xml:space="preserve"><value>処理済み　{0}</value></data>
+  <data name="Targets" xml:space="preserve"><value>利用可能な字幕言語　{0}</value></data>
+  <data name="NoTargets" xml:space="preserve"><value>まだありません</value></data>
+  <data name="Unknown" xml:space="preserve"><value>不明</value></data>
+  <data name="Queued" xml:space="preserve"><value>キューに追加しました。再生していないときに生成を開始します。</value></data>
+  <data name="Running" xml:space="preserve"><value>バックグラウンドで生成中です。再生中は一時停止します。</value></data>
+  <data name="Complete" xml:space="preserve"><value>バックグラウンド生成が完了しました。</value></data>
+  <data name="Failed" xml:space="preserve"><value>生成が停止しました。{0}</value></data>
+  <data name="Interrupted" xml:space="preserve"><value>生成が中断されました。もう一度生成できます。</value></data>
+  <data name="ReadFailed" xml:space="preserve"><value>字幕キャッシュを読み取れません。更新してください。</value></data>
+  <data name="ActionFailed" xml:space="preserve"><value>字幕の操作に失敗しました。</value></data>
+  <data name="Loading" xml:space="preserve"><value>字幕を読み込み中…</value></data>
+  <data name="EmptyLibrary" xml:space="preserve"><value>再生中に字幕を生成してから、このライブラリを更新してください。</value></data>
+  <data name="NoMatches" xml:space="preserve"><value>検索条件と言語に一致するファイルはありません。</value></data>
+  <data name="EmptyVersion" xml:space="preserve"><value>このバージョンにはまだ字幕がありません。</value></data>
+  <data name="PreviewRows" xml:space="preserve"><value>最近の字幕を表示しています。SRT にはこのバージョンで生成したすべての字幕が含まれます。</value></data>
+  <data name="Language_ja" xml:space="preserve"><value>日本語</value></data>
+  <data name="Language_en" xml:space="preserve"><value>英語</value></data>
+  <data name="Language_zh" xml:space="preserve"><value>中国語（簡体字）</value></data>
+  <data name="Language_zh-cn" xml:space="preserve"><value>中国語（簡体字）</value></data>
+  <data name="Language_zh-tw" xml:space="preserve"><value>中国語（繁体字）</value></data>
+  <data name="Language_zh-hant" xml:space="preserve"><value>中国語（繁体字）</value></data>
+  <data name="Language_zh-hans" xml:space="preserve"><value>中国語（簡体字）</value></data>
+  <data name="Language_ko" xml:space="preserve"><value>韓国語</value></data>
+  <data name="Language_fr" xml:space="preserve"><value>フランス語</value></data>
+  <data name="Language_de" xml:space="preserve"><value>ドイツ語</value></data>
+  <data name="Language_es" xml:space="preserve"><value>スペイン語</value></data>
+  <data name="Language_ru" xml:space="preserve"><value>ロシア語</value></data>
+  <data name="Language_pt" xml:space="preserve"><value>ポルトガル語</value></data>
+  <data name="Language_it" xml:space="preserve"><value>イタリア語</value></data>
+  <data name="Error_inspection_no_subtitles" xml:space="preserve"><value>このバージョンには書き出せる SRT 字幕がまだありません。</value></data>
+  <data name="Error_inspection_invalid_output" xml:space="preserve"><value>キャッシュフォルダーの外に SRT ファイルを指定してください。</value></data>
+  <data name="Error_inspection_path_unknown" xml:space="preserve"><value>再生成する前にメディアを再生してパスを記録してください。</value></data>
+  <data name="Error_inspection_busy" xml:space="preserve"><value>別の再生成が待機中または実行中です。</value></data>
+  <data name="Error_inspection_media_changed" xml:space="preserve"><value>メディアが移動または置換されたか、アクセスできません。</value></data>
+  <data name="Error_inspection_probe_failed" xml:space="preserve"><value>メディアの長さまたは音声トラックを読み取れません。</value></data>
+  <data name="Error_inspection_service_required" xml:space="preserve"><value>再生成する前に AheadSubs の字幕サービスを起動してください。</value></data>
+  <data name="Error_inspection_write_failed" xml:space="preserve"><value>SRT を書き込めません。フォルダーを確認し、ファイルを使用中のアプリを閉じてください。</value></data>
+  <data name="Error_content_blocked" xml:space="preserve"><value>プロバイダーがこの内容をブロックしました。</value></data>
+  <data name="Error_moderation_unavailable" xml:space="preserve"><value>プロバイダーのコンテンツ審査を一時的に利用できません。</value></data>
+  <data name="Error_authentication_failed" xml:space="preserve"><value>プロバイダーの API キーを確認してください。</value></data>
+  <data name="Error_chatgpt_sign_in_required" xml:space="preserve"><value>クラウド設定で ChatGPT に再度ログインしてください。</value></data>
+  <data name="Error_permission_denied" xml:space="preserve"><value>API がアクセスを拒否しました。アカウントまたはモデルの権限を確認してください。</value></data>
+  <data name="Error_not_found" xml:space="preserve"><value>API のモデルまたはエンドポイントが見つかりません。</value></data>
+  <data name="Error_rate_limited" xml:space="preserve"><value>API の上限に達しました。利用枠、残高、リクエスト頻度を確認してください。</value></data>
+  <data name="Error_provider_unavailable" xml:space="preserve"><value>プロバイダーを一時的に利用できません。</value></data>
+  <data name="Error_invalid_request" xml:space="preserve"><value>プロバイダーがリクエストを拒否しました。</value></data>
+  <data name="Error_request_timeout" xml:space="preserve"><value>プロバイダーへのリクエストがタイムアウトしました。</value></data>
+  <data name="Error_translation_failed" xml:space="preserve"><value>翻訳に失敗しました。</value></data>
+  <data name="Error_processing_failed" xml:space="preserve"><value>字幕処理に失敗しました。</value></data>
+</root>
