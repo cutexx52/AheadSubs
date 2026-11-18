@@ -1,8 +1,8 @@
 import unittest
 from struct import pack
 
-from subtitle_relay.inference.audio import Segmentation, Segmenter, make_wav
-from subtitle_relay.inference.segmentation import SAMPLE_RATE, plan_spans
+from aheadsubs.inference.audio import Segmentation, Segmenter, make_wav
+from aheadsubs.inference.segmentation import SAMPLE_RATE, plan_spans
 
 
 def samples(seconds):

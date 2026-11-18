@@ -6,7 +6,7 @@ using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
-namespace LocalVideoSubtitleTranslator;
+namespace AheadSubs;
 
 internal sealed record ReleasePackage(string Version, string Flavor)
 {

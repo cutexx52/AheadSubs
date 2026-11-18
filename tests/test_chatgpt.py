@@ -11,9 +11,9 @@ from urllib.error import HTTPError
 from urllib.parse import parse_qs, urlencode, urlsplit
 from urllib.request import urlopen
 
-from subtitle_relay.inference import chatgpt_auth as auth
-from subtitle_relay.inference.chatgpt import completed_text
-from subtitle_relay.inference.errors import ProviderError
+from aheadsubs.inference import chatgpt_auth as auth
+from aheadsubs.inference.chatgpt import completed_text
+from aheadsubs.inference.errors import ProviderError
 
 
 class ChatGPTTest(unittest.TestCase):

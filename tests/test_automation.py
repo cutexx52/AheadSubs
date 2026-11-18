@@ -13,10 +13,10 @@ import anyio
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-from subtitle_relay.automation import invoke
-from subtitle_relay.automation_text import MESSAGES
-from subtitle_relay.cli import main
-from subtitle_relay.client import RelayHTTPError
+from aheadsubs.automation import invoke
+from aheadsubs.automation_text import MESSAGES
+from aheadsubs.cli import main
+from aheadsubs.client import RelayHTTPError
 
 
 class AutomationTest(unittest.TestCase):
@@ -36,7 +36,7 @@ class AutomationTest(unittest.TestCase):
 
     def test_mcp_discovers_localized_schema_and_returns_shared_error(self):
         async def check():
-            params = StdioServerParameters(command=sys.executable, args=["-m", "subtitle_relay.cli", "mcp"],
+            params = StdioServerParameters(command=sys.executable, args=["-m", "aheadsubs.cli", "mcp"],
                                            cwd=Path(__file__).resolve().parents[1],
                                            env={"AHEADSUBS_UI_LOCALE": "zh-CN"})
             with anyio.fail_after(20):
@@ -55,8 +55,8 @@ class AutomationTest(unittest.TestCase):
 
     @unittest.skipUnless(os.name == "nt", "Windows user PATH registration")
     def test_desktop_bridge_registers_cli_without_changing_other_path_entries(self):
-        from subtitle_relay.desktop import automation
-        from subtitle_relay.desktop.bridge import run_command
+        from aheadsubs.desktop import automation
+        from aheadsubs.desktop.bridge import run_command
 
         with tempfile.TemporaryDirectory(prefix="接入 ") as directory:
             root = Path(directory)
@@ -90,7 +90,7 @@ class AutomationTest(unittest.TestCase):
     def test_cli_and_shared_operation_preserve_provider_error_code(self):
         client = Mock()
         client.translate_text.side_effect = RelayHTTPError(502, "Provider denied this request", "content_blocked")
-        with patch("subtitle_relay.automation.RelayClient", return_value=client) as factory:
+        with patch("aheadsubs.automation.RelayClient", return_value=client) as factory:
             expected = invoke("translate_text", {"text": "こんにちは", "source": "ja", "target": "zh"}, 9001)
             with redirect_stdout(StringIO()) as output:
                 code = main(["translate-text", "こんにちは", "ja", "zh", "--port", "9001"])
@@ -111,8 +111,8 @@ class AutomationTest(unittest.TestCase):
                  "subtitle_has_cues": True} for ready in (64, 64, 2)
             ] + [{}]
             args = {"path": str(media), "output": str(output), "source": "auto"}
-            with patch("subtitle_relay.automation.RelayClient", return_value=client), \
-                 patch("subtitle_relay.automation.media_duration", return_value=130):
+            with patch("aheadsubs.automation.RelayClient", return_value=client), \
+                 patch("aheadsubs.automation.media_duration", return_value=130):
                 result = invoke("generate_subtitles", args)
                 duplicate = invoke("generate_subtitles", args)
             self.assertEqual(result, {"ok": True, "subtitle": str(output.resolve()), "duration": 130, "has_cues": True})
@@ -138,8 +138,8 @@ class AutomationTest(unittest.TestCase):
                 {"ready_ahead": 8, "subtitle_generation": "new"},
                 {},
             ]
-            with patch("subtitle_relay.automation.RelayClient", return_value=client), \
-                 patch("subtitle_relay.automation.media_duration", return_value=72):
+            with patch("aheadsubs.automation.RelayClient", return_value=client), \
+                 patch("aheadsubs.automation.media_duration", return_value=72):
                 result = invoke("generate_subtitles", {"path": str(media), "output": str(output), "overwrite": True})
             self.assertEqual(result["error_code"], "generation_changed")
             self.assertEqual(output.read_bytes(), b"existing subtitle")

@@ -63,13 +63,13 @@
 
 ## 诊断模式
 
-正常模式关闭诊断日志。遇到问题时，在 **高级设置** 勾选 **启用诊断日志** 并应用，再复现问题。若需要诊断整段播放器会话，可以停一次预读再开启。用 **打开日志目录** 查看结果。命令行可用 `python -m subtitle_relay serve --diagnostics`。
+正常模式关闭诊断日志。遇到问题时，在 **高级设置** 勾选 **启用诊断日志** 并应用，再复现问题。若需要诊断整段播放器会话，可以停一次预读再开启。用 **打开日志目录** 查看结果。命令行可用 `python -m aheadsubs serve --diagnostics`。
 
-源代码助手把服务和播放器日志保存在 `%LOCALAPPDATA%\Subtitle Relay`。分享诊断前，检查记录中的本地文件路径、主机名和 URL。定位结束后可以关闭诊断模式。
+源代码助手把服务和播放器日志保存在 [Windows 用户数据目录](windows.zh-CN.md)。分享诊断前，检查记录中的本地文件路径、主机名和 URL。定位结束后可以关闭诊断模式。
 
 ## 模块接口
 
-打包启动器运行 `UI/AheadSubs.exe`。WPF 界面使用 `python -m subtitle_relay.desktop.bridge` 管理后台。该入口与播放器使用的 [HTTP 会话接口](server.zh-CN.md) 各自独立。
+打包启动器运行 `UI/AheadSubs.exe`。WPF 界面使用 `python -m aheadsubs.desktop.bridge` 管理后台。该入口与播放器使用的 [HTTP 会话接口](server.zh-CN.md) 各自独立。
 
 | 命令 | 输入与行为 |
 | --- | --- |
@@ -98,6 +98,6 @@
 
 每次调用向 stdout 输出一个 JSON 对象，带 `ok` 布尔值。失败时带 `error` 并返回非零退出码。它是项目内的桌面控制接口，外部适配器应以公开的 HTTP v1 合约为准。
 
-运行时使用 `%LOCALAPPDATA%\Subtitle Relay\settings.json` 保存设置，模型、缓存及控制令牌也留在用户数据目录。独立启动并使用不同控制令牌的服务由其启动方管理。源码入口 `Subtitle Relay.pyw` 仍可用；它也承担播放器回调和 Windows 反馈工具的兼容入口。
+[Windows 用户数据目录](windows.zh-CN.md)保存 `settings.json`、模型、缓存和控制令牌。独立启动并使用不同控制令牌的服务由其启动方管理。源码入口是 `AheadSubs.pyw`。`Subtitle Relay.pyw` 继续接收已安装的播放器扩展发来的回调。
 
 ChatGPT 账号凭据保存在用户数据目录的 `chatgpt.sqlite3` 中，由当前 Windows 用户的 DPAPI 加密。桌面桥接只返回账号概要、授权状态和模型目录。设置保存选中的账号及模型标识。

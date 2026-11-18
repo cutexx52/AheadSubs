@@ -20,7 +20,7 @@ internal static class Launcher
         }
         string desktop = Path.Combine(root, "UI", "AheadSubs.exe");
         string python = Path.Combine(root, "runtime", "pythonw.exe");
-        string settings = Path.Combine(root, "Subtitle Relay.pyw");
+        string settings = Path.Combine(root, "AheadSubs.pyw");
 
         try
         {

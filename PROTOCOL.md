@@ -1,4 +1,4 @@
-# Subtitle Relay local protocol v1
+# AheadSubs local protocol v1 (early reference)
 
 [English](PROTOCOL.md) | [简体中文](PROTOCOL.zh-CN.md)
 

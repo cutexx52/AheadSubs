@@ -44,8 +44,8 @@ CPU 可运行 faster-whisper 与本地 NLLB。Qwen3-ASR 依赖当前 Vulkan 运�
 
 ## 源码备用入口
 
-使用开发环境启动时，先准备 Python 3.11+、FFmpeg 和 ffprobe，运行源码目录的 `Subtitle Relay.pyw`。详细命令见[开发与贡献](contributing.zh-CN.md)。
+使用开发环境启动时，先准备 Python 3.11+、FFmpeg 和 ffprobe，运行源码目录的 `AheadSubs.pyw`。详细命令见[开发与贡献](contributing.zh-CN.md)。
 
-安装版和便携版均使用当前 Windows 用户的数据目录 `%LOCALAPPDATA%\Subtitle Relay`，其中保存设置、模型和字幕缓存。升级时从托盘退出常驻助手再更换程序目录。
+安装版和便携版在干净的 Windows 用户环境中使用 `%LOCALAPPDATA%\AheadSubs` 保存设置、模型和字幕缓存。如果 AheadSubs 数据目录尚未创建，已有安装继续使用 `%LOCALAPPDATA%\Subtitle Relay`。升级时从托盘退出常驻助手再更换程序文件。
 
 两版均包含 `cli/aheadsubs.exe`，可在桌面接入页安装 CLI 或复制 MCP 配置，见[Agent 接入](automation.zh-CN.md)。

@@ -36,7 +36,7 @@ def model_hub():
 
 
 def model_ready(label):
-    from subtitle_relay.inference.qwen import installed
+    from aheadsubs.inference.qwen import installed
 
     if label in QWEN_LABELS:
         return installed(QWEN, QWEN_LABELS[label])
@@ -49,7 +49,7 @@ def model_ready(label):
 
 def install_model(label):
     if label in QWEN_LABELS:
-        from subtitle_relay.inference.qwen import install
+        from aheadsubs.inference.qwen import install
 
         install(QWEN, QWEN_LABELS[label])
     else:
@@ -114,13 +114,19 @@ def mpv_directory():
     return Path(os.environ["APPDATA"]) / "mpv"
 
 
+def mpv_files(folder):
+    scripts = folder / "scripts"
+    legacy = scripts / "subtitle_relay.lua"
+    script = legacy if legacy.is_file() else scripts / "aheadsubs.lua"
+    return script, folder / "script-opts" / f"{script.stem}.conf"
+
+
 def install_mpv(destination):
-    scripts = destination / "scripts"
-    opts = destination / "script-opts"
-    scripts.mkdir(parents=True, exist_ok=True)
-    opts.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(ROOT / "integrations/mpv/subtitle_relay.lua", scripts)
-    (opts / "subtitle_relay.conf").write_text(
+    script, options = mpv_files(destination)
+    script.parent.mkdir(parents=True, exist_ok=True)
+    options.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(ROOT / "integrations/mpv/aheadsubs.lua", script)
+    options.write_text(
         f"pythonw={PYTHON.as_posix()}\nlauncher={LAUNCHER.as_posix()}\nport={PORT}\n",
         encoding="utf-8",
     )
@@ -136,12 +142,24 @@ def potplayer_directory():
         return Path(os.environ["ProgramFiles"]) / "DAUM" / "PotPlayer"
 
 
+def potplayer_files(destination):
+    legacy = {
+        "SubtitleTranslate - AheadSubs.as": "SubtitleTranslate - Subtitle Relay.as",
+        "SubtitleTranslate - AheadSubs Audio.as": "SubtitleTranslate - Subtitle Relay Audio.as",
+    }
+    for source in (ROOT / "integrations/potplayer").glob("*.as"):
+        name = legacy.get(source.name)
+        previous = destination / name if name else None
+        target = previous if previous and previous.is_file() else destination / source.name
+        yield source, target
+
+
 def install_potplayer(destination):
     destination.mkdir(parents=True, exist_ok=True)
-    for path in (ROOT / "integrations/potplayer").glob("*.as"):
-        script = path.read_text(encoding="utf-8").replace("@RELAY_PYTHONW@", PYTHON.as_posix())
+    for source, target in potplayer_files(destination):
+        script = source.read_text(encoding="utf-8").replace("@RELAY_PYTHONW@", PYTHON.as_posix())
         script = script.replace("@RELAY_LAUNCHER@", LAUNCHER.as_posix())
-        (destination / path.name).write_text(script, encoding="utf-8")
+        target.write_text(script, encoding="utf-8")
 
 
 def integration_directory(player):
@@ -155,8 +173,8 @@ def integration_directory(player):
 def integration_files(player, folder):
     if player == "potplayer":
         destination = folder / "Extension" / "Subtitle" / "Translate"
-        return [destination / source.name for source in (ROOT / "integrations/potplayer").glob("*.as")]
-    return [folder / "scripts/subtitle_relay.lua", folder / "script-opts/subtitle_relay.conf"]
+        return [target for _, target in potplayer_files(destination)]
+    return mpv_files(folder)
 
 
 def player_detected(player, folder):

@@ -1,4 +1,4 @@
-# Subtitle Relay 本地协议 v1（早期参考）
+# AheadSubs 本地协议 v1（早期参考）
 
 [English](PROTOCOL.md) | [简体中文](PROTOCOL.zh-CN.md)
 

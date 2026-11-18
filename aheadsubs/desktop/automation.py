@@ -63,7 +63,7 @@ def integration_status():
     return {"mcp_enabled": mcp_enabled(), "cli_available": (cli_directory() / "aheadsubs.exe").is_file(),
             "cli_installed": any(map(is_app_directory, entries)),
             "mcp_config": {"mcpServers": {"aheadsubs": {"command": str(Path(sys.executable)),
-                           "args": ["-P", "-m", "subtitle_relay.cli", "mcp", "--desktop"],
+                           "args": ["-P", "-m", "aheadsubs.cli", "mcp", "--desktop"],
                            "env": {"PYTHONPATH": str(runtime.ROOT)}}}}}
 
 

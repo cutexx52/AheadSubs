@@ -7,9 +7,9 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
-from subtitle_relay.inference.audio import Segmentation, make_wav
-from subtitle_relay.inference.providers import ChatTranslation, Cue, QwenMtTranslation
-from subtitle_relay.server.engine import Playback, Relay, TranslationFailure, TranslationSettings, translate_chunk
+from aheadsubs.inference.audio import Segmentation, make_wav
+from aheadsubs.inference.providers import ChatTranslation, Cue, QwenMtTranslation
+from aheadsubs.server.engine import Playback, Relay, TranslationFailure, TranslationSettings, translate_chunk
 
 
 def chat_response(content):
@@ -35,7 +35,7 @@ class TranslationContextTest(unittest.TestCase):
         client = Mock()
         client.chat.completions.create.return_value = chat_response('{"1":"二","0":"一"}')
         translator = ChatTranslation(client, "gpt-test")
-        with patch("subtitle_relay.server.engine.extract_audio", return_value=silence(20)) as extract:
+        with patch("aheadsubs.server.engine.extract_audio", return_value=silence(20)) as extract:
             result = translate_chunk(Playback(media, 22, source="ja"), 2, 10, recognizer, translator,
                                      segmenter=segmenter,
                                      translation_settings=TranslationSettings(1, "Use casual wording", 20))
@@ -56,7 +56,7 @@ class TranslationContextTest(unittest.TestCase):
         recognizer.recognize.return_value = "ja", [Cue(0.25, 1.5, "始まり")]
         translator = Mock()
         translator.translate.return_value = ["开头"]
-        with patch("subtitle_relay.server.engine.extract_audio", return_value=silence(22)):
+        with patch("aheadsubs.server.engine.extract_audio", return_value=silence(22)):
             playback = Playback(Path("movie.mp4"), 7.5, source="ja")
             self.assertEqual(translate_chunk(playback, 0, 8, recognizer, translator, segmenter=segmenter), [])
             actual = translate_chunk(playback, 1, 8, recognizer, translator, segmenter=segmenter)
@@ -79,7 +79,7 @@ class TranslationContextTest(unittest.TestCase):
         translator = ChatTranslation(client, "test-chat")
         recognizer = Mock()
         recognizer.recognize.return_value = "ja", [Cue(2, 3, "recognized line")]
-        with patch("subtitle_relay.server.engine.extract_audio", return_value=silence(8)):
+        with patch("aheadsubs.server.engine.extract_audio", return_value=silence(8)):
             result = translate_chunk(Playback(Path("movie.mp4"), 0, source="ja"),
                                      0, 8, recognizer, translator)
         self.assertEqual(result, [Cue(2, 3, "", "recognized line", "content_blocked", "ja")])
@@ -90,7 +90,7 @@ class TranslationContextTest(unittest.TestCase):
         provider_error = RuntimeError("upstream failed")
         translator = Mock()
         translator.translate.side_effect = provider_error
-        with patch("subtitle_relay.server.engine.extract_audio", return_value=silence(12)), \
+        with patch("aheadsubs.server.engine.extract_audio", return_value=silence(12)), \
              self.assertRaises(TranslationFailure) as failure:
             translate_chunk(Playback(Path("movie.mp4"), 9, source="ja"), 1, 8, recognizer, translator)
         self.assertIs(failure.exception.__cause__, provider_error)

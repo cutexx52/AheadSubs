@@ -8,9 +8,9 @@ from dataclasses import asdict, replace
 from pathlib import Path
 from unittest.mock import patch
 
-from subtitle_relay.inference.providers import Cue
-from subtitle_relay.server.engine import Playback, Relay, TranslationFailure
-from subtitle_relay.server.history import InspectionError, inspect_cache, inspection_subtitle
+from aheadsubs.inference.providers import Cue
+from aheadsubs.server.engine import Playback, Relay, TranslationFailure
+from aheadsubs.server.history import InspectionError, inspect_cache, inspection_subtitle
 
 
 class InspectionTest(unittest.TestCase):
@@ -143,7 +143,7 @@ class InspectionTest(unittest.TestCase):
         self.publish(relay, old_key, 0, [Cue(1, 2, "old")])
         self.publish(relay, old_key, 1, [])
 
-        with patch("subtitle_relay.automation.media_duration", return_value=12):
+        with patch("aheadsubs.automation.media_duration", return_value=12):
             new_key = relay.queue_regeneration(old_key)["key"]
             with self.assertRaisesRegex(InspectionError, "inspection_busy"):
                 relay.queue_regeneration(old_key)
@@ -156,7 +156,7 @@ class InspectionTest(unittest.TestCase):
             return future
 
         with patch.object(relay.pool, "submit", side_effect=submit), patch(
-            "subtitle_relay.server.engine.translate_chunk",
+            "aheadsubs.server.engine.translate_chunk",
             side_effect=[[Cue(1, 2, "new", source_language="ja")], []],
         ) as translate:
             relay._schedule()
@@ -189,7 +189,7 @@ class InspectionTest(unittest.TestCase):
         playback = Playback(self.video, 0, duration=8)
         old_key = relay._identity(playback)
         relay.update("viewer", playback)
-        with patch("subtitle_relay.automation.media_duration", return_value=8):
+        with patch("aheadsubs.automation.media_duration", return_value=8):
             new_key = relay.queue_regeneration(old_key)["key"]
         relay.drop("viewer")
 
@@ -206,7 +206,7 @@ class InspectionTest(unittest.TestCase):
             return future
 
         with patch.object(relay.pool, "submit", side_effect=submit), patch(
-            "subtitle_relay.server.engine.translate_chunk", side_effect=replace_input,
+            "aheadsubs.server.engine.translate_chunk", side_effect=replace_input,
         ):
             relay._schedule()
         version = self.files()[0]["versions"][0]

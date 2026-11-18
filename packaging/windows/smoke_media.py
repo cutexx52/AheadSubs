@@ -9,9 +9,9 @@ import wave
 
 import numpy as np
 
-from subtitle_relay.automation import media_duration
-from subtitle_relay.inference.providers import Cue, FasterWhisper
-from subtitle_relay.server.engine import extract_audio
+from aheadsubs.automation import media_duration
+from aheadsubs.inference.providers import Cue, FasterWhisper
+from aheadsubs.server.engine import extract_audio
 
 
 def main(folder):

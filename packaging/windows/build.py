@@ -53,7 +53,7 @@ LICENSE_FILES = (
 INNO_URL = "https://github.com/jrsoftware/issrc/releases/download/is-7_1_1/innosetup-7.1.1-x64.exe"
 INNO_SHA256 = "8a5a6711c3766a6e5fb74f280ba0e3551e719ce94538d901fdbd1f8f9920b3f0"
 CUDA_PACKAGES = ["nvidia-cublas-cu12==12.8.4.1", "nvidia-cudnn-cu12==9.10.2.21"]
-WPF_PROJECT = ROOT / "desktop" / "LocalVideoSubtitleTranslator.csproj"
+WPF_PROJECT = ROOT / "desktop" / "AheadSubs.csproj"
 
 
 def run(*arguments, **kwargs):
@@ -260,13 +260,14 @@ def stage_dotnet_notices(stage):
 
 
 def stage_app(stage, dotnet, version, cuda):
-    for directory, extensions in {"subtitle_relay": {".py"}, "integrations": {".as", ".lua"}, "docs": {".md"}}.items():
+    for directory, extensions in {"aheadsubs": {".py"}, "subtitle_relay": {".py"},
+                                  "integrations": {".as", ".lua"}, "docs": {".md"}}.items():
         for source in (ROOT / directory).rglob("*"):
             if source.is_file() and source.suffix in extensions:
                 destination = stage / source.relative_to(ROOT)
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(source, destination)
-    for filename in ("Subtitle Relay.pyw", "README.md", "LICENSE", "NOTICE"):
+    for filename in ("AheadSubs.pyw", "Subtitle Relay.pyw", "README.md", "LICENSE", "NOTICE"):
         source = ROOT / filename
         if source.is_file():
             shutil.copy2(source, stage)
@@ -307,32 +308,37 @@ def smoke_test(stage, cuda):
         raise RuntimeError("The bundled FFmpeg build must use the expected LGPL configuration")
     code = (
         "from pathlib import Path; import shutil, tkinter, _tkinter, _ssl, sqlite3, "
-        "ctranslate2, faster_whisper, kaldi_native_fbank, onnxruntime, openai, jwt, psutil, pystray, subtitle_relay; "
+        "ctranslate2, faster_whisper, kaldi_native_fbank, onnxruntime, openai, jwt, psutil, pystray, aheadsubs; "
         "from importlib.util import find_spec; from faster_whisper.vad import get_vad_model; "
         "assert find_spec('av') is None and get_vad_model(); "
-        "from subtitle_relay.inference.chatgpt_auth import _dpapi; "
+        "from aheadsubs.inference.chatgpt_auth import _dpapi; "
         "assert 'RS256' in jwt.algorithms.get_default_algorithms() and _dpapi(_dpapi(b'check'), decrypt=True) == b'check'; "
         "root=Path(__import__('sys').base_prefix).parent; "
         "assert Path(shutil.which('ffmpeg')).parent == root / 'bin'; "
-        "assert Path(subtitle_relay.__file__).resolve().is_relative_to(root); "
+        "assert Path(aheadsubs.__file__).resolve().is_relative_to(root); "
         f"assert (root / 'runtime/Lib/site-packages/nvidia/cublas/bin').is_dir() == {cuda!r}; "
         "assert tkinter.Tcl().eval('info patchlevel')"
     )
     run(python, "-c", code, env=env, cwd=stage.parent)
+    run(python, "-m", "aheadsubs", "--help", env=env, cwd=stage.parent)
     run(python, "-m", "subtitle_relay", "--help", env=env, cwd=stage.parent)
     run(stage / "cli" / "aheadsubs.exe", "--help", env=env, cwd=stage.parent)
     with tempfile.TemporaryDirectory(dir=stage.parent) as data:
         env["LOCALAPPDATA"] = data
-        reply = subprocess.check_output([python, "-m", "subtitle_relay.desktop.bridge", "status"],
+        reply = subprocess.check_output([python, "-m", "aheadsubs.desktop.bridge", "status"],
                                         env=env, cwd=stage.parent)
         state = json.loads(reply)
         if not state.get("ok") or not state.get("ffmpeg_detected") or "credentials" not in state:
             raise RuntimeError("Bundled desktop control bridge failed its smoke check")
-        reply = subprocess.check_output([python, "-m", "subtitle_relay.desktop.bridge", "folder-tasks"],
+        reply = subprocess.check_output([python, "-m", "subtitle_relay.desktop.bridge", "status"],
+                                        env=env, cwd=stage.parent)
+        if not json.loads(reply).get("ok"):
+            raise RuntimeError("Legacy desktop control bridge failed its smoke check")
+        reply = subprocess.check_output([python, "-m", "aheadsubs.desktop.bridge", "folder-tasks"],
                                         env=env, cwd=stage.parent)
         if json.loads(reply).get("rules") != []:
             raise RuntimeError("Bundled folder task bridge failed its smoke check")
-        reply = subprocess.check_output([python, "-m", "subtitle_relay.desktop.bridge", "automation", "mcp-enable"],
+        reply = subprocess.check_output([python, "-m", "aheadsubs.desktop.bridge", "automation", "mcp-enable"],
                                         env=env, cwd=stage.parent)
         config = json.loads(reply)["mcp_config"]["mcpServers"]["aheadsubs"]
         check_mcp = (
@@ -350,6 +356,9 @@ def smoke_test(stage, cuda):
             "anyio.run(check)"
         )
         run(config["command"], "-c", check_mcp, *config["args"], env={**env, **config["env"]},
+            cwd=stage.parent, timeout=30)
+        old_args = ["subtitle_relay.cli" if arg == "aheadsubs.cli" else arg for arg in config["args"]]
+        run(config["command"], "-c", check_mcp, *old_args, env={**env, **config["env"]},
             cwd=stage.parent, timeout=30)
         run(python, SCRIPTS / "smoke_media.py", data, env=env, cwd=stage.parent, timeout=45)
 
@@ -372,7 +381,12 @@ def smoke_installer(installer, directory, cuda, version, native):
             path = target / "runtime/Lib/site-packages" / relative
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text("obsolete", encoding="ascii")
+        legacy_module = target / "subtitle_relay" / "obsolete.py"
+        legacy_module.parent.mkdir(parents=True, exist_ok=True)
+        legacy_module.touch()
         run(installer, *silent, "/NOICONS", f"/DIR={target}")
+        if legacy_module.exists():
+            raise RuntimeError("Installer retained the obsolete Python package")
         smoke_test(target, cuda)
         if native:
             with winreg.OpenKey(winreg.HKEY_CURRENT_USER, uninstall_key, access=winreg.KEY_READ | winreg.KEY_WOW64_64KEY) as key:
@@ -383,7 +397,7 @@ def smoke_installer(installer, directory, cuda, version, native):
             if metadata != {"Version": version, "Flavor": "cuda" if cuda else "standard"}:
                 raise RuntimeError("Installed update metadata does not match the bundle")
         reply = subprocess.check_output([target / "runtime" / "python.exe", "-m",
-                                         "subtitle_relay.desktop.bridge", "automation", "cli-install"], cwd=target)
+                                         "aheadsubs.desktop.bridge", "automation", "cli-install"], cwd=target)
         if not json.loads(reply).get("cli_installed"):
             raise RuntimeError("Installer smoke could not register the bundled CLI on the user PATH")
     finally:
@@ -463,7 +477,9 @@ def build(args):
 if __name__ == "__main__":
     project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--version", default=os.getenv("SUBTITLE_RELAY_RELEASE_VERSION") or project["version"])
+    parser.add_argument("--version", default=(os.getenv("AHEADSUBS_RELEASE_VERSION")
+                                              or os.getenv("SUBTITLE_RELAY_RELEASE_VERSION")
+                                              or project["version"]))
     parser.add_argument("--output", type=Path, default=ROOT / "dist")
     parser.add_argument("--download-cache", type=Path, default=ROOT / ".relay" / "packaging-tools")
     parser.add_argument("--cuda", action="store_true", help="include optional NVIDIA CUDA wheel libraries")

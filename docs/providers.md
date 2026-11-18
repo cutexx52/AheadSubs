@@ -22,10 +22,10 @@ Choose speech recognition and text translation independently. Fully local proces
 Save credentials in the desktop or supply environment variables / files outside the installation: `OPENAI_API_KEY`, `DASHSCOPE_API_KEY`, `RELAY_ASR_API_KEY`, `RELAY_LLM_API_KEY`. Install local models before using them.
 
 ```cmd
-python -m subtitle_relay serve --asr local --whisper-model small --mt local --device cpu
-python -m subtitle_relay serve --asr qwen --qwen-size 1.7b --mt local --device cuda
-python -m subtitle_relay serve --asr qwen --qwen-size 0.6b --mt qwen-mt --qwen-mt-model qwen-mt-flash --qwen-mt-url https://dashscope.aliyuncs.com/compatible-mode/v1
-python -m subtitle_relay serve --asr dashscope --dashscope-asr-model qwen-audio-3.1-asr-flash --mt qwen-mt --default-source ja
+python -m aheadsubs serve --asr local --whisper-model small --mt local --device cpu
+python -m aheadsubs serve --asr qwen --qwen-size 1.7b --mt local --device cuda
+python -m aheadsubs serve --asr qwen --qwen-size 0.6b --mt qwen-mt --qwen-mt-model qwen-mt-flash --qwen-mt-url https://dashscope.aliyuncs.com/compatible-mode/v1
+python -m aheadsubs serve --asr dashscope --dashscope-asr-model qwen-audio-3.1-asr-flash --mt qwen-mt --default-source ja
 ```
 
 The third command is hybrid; the fourth uses cloud recognition and translation with `DASHSCOPE_API_KEY`. Set the regional endpoint appropriate to your key; do not put keys in commands or Git. Qwen3-ASR runs in a shared service-managed process using its own Vulkan runtime; `--device` sets the CTranslate2 fallback device; `--asr-device` overrides it for local Whisper and `--mt-device` for NLLB. [CrispASR](https://github.com/CrispStrobe/CrispASR) · [NLLB model card](https://huggingface.co/facebook/nllb-200-distilled-600M) · [Qwen-MT API](https://www.alibabacloud.com/help/en/model-studio/qwen-mt-api).
@@ -69,7 +69,7 @@ Compare missed speech, false detections and boundaries on the same track/time ra
 
 ## Provider interfaces
 
-Defined in `subtitle_relay/inference/providers.py`. Input is 16 kHz mono WAV.
+Defined in `aheadsubs/inference/providers.py`. Input is 16 kHz mono WAV.
 
 | Interface | Contract |
 | --- | --- |

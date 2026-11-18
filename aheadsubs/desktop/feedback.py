@@ -33,7 +33,7 @@ class PotFeedback:
         if state not in {"on", "off", "already-active", "already-off"} or state == self.latest:
             return
         self.latest = state
-        self.text.configure(text=f"Subtitle Relay · {message}")
+        self.text.configure(text=f"AheadSubs · {message}")
         self.root.update_idletasks()
         rect = win.RECT()
         self.user.GetWindowRect(self.player, ct.byref(rect))

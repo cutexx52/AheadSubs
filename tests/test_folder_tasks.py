@@ -10,8 +10,8 @@ from uuid import uuid4
 
 from pydantic import ValidationError
 
-from subtitle_relay.folder_tasks import FolderWorker, RuleSet, TaskFiles, WatchRule
-from subtitle_relay.server.engine import Playback, Relay
+from aheadsubs.folder_tasks import FolderWorker, RuleSet, TaskFiles, WatchRule
+from aheadsubs.server.engine import Playback, Relay
 
 
 class FolderTaskTest(unittest.TestCase):
@@ -30,7 +30,7 @@ class FolderTaskTest(unittest.TestCase):
         self.cache.write_text("1\n00:00:00,000 --> 00:00:01,000\n字幕\n", encoding="utf-8")
         self.relay.update_background.return_value = {"ready_ahead": 9, "subtitle": str(self.cache),
             "subtitle_generation": "cache", "subtitle_has_cues": True}
-        probe = patch("subtitle_relay.automation.media_duration", return_value=9)
+        probe = patch("aheadsubs.automation.media_duration", return_value=9)
         probe.start()
         self.addCleanup(probe.stop)
         self.worker = FolderWorker(self.files, self.relay, {"target": "zh", "source": "ja"}, self.idle)
@@ -155,7 +155,7 @@ class FolderTaskTest(unittest.TestCase):
         with self.files.connect() as db:
             self.worker.scan(db, rule, 0)
             self.worker.scan(db, rule, 10)
-            with patch("subtitle_relay.automation.shutil.copyfile", side_effect=modify_media_after_staging):
+            with patch("aheadsubs.automation.shutil.copyfile", side_effect=modify_media_after_staging):
                 self.assertTrue(self.worker.next_job(db, [rule]))
             self.assertEqual(self.states(rule), {"waiting": 1})
             self.assertFalse(output.exists())
@@ -225,9 +225,9 @@ class FolderTaskTest(unittest.TestCase):
 
     @unittest.skipUnless(os.name == "nt", "Windows desktop bridge")
     def test_bridge_saves_only_valid_rules_and_round_trips_unicode(self):
-        from subtitle_relay.desktop import runtime
-        from subtitle_relay.desktop.bridge import run_command
-        from subtitle_relay.automation import OperationError
+        from aheadsubs.desktop import runtime
+        from aheadsubs.desktop.bridge import run_command
+        from aheadsubs.automation import OperationError
 
         with patch.object(runtime, "DATA", self.files.directory), patch.object(runtime, "healthy", return_value=False):
             data = {"rules": [self.rule.model_dump()]}

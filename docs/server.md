@@ -4,7 +4,7 @@
 
 The service binds to `127.0.0.1:8769` for local clients by default. Service and player must share media access. All times are seconds on the original media timeline.
 
-Start with `python -m subtitle_relay serve --asr local --mt local --device cpu`. Clients must match any custom `--port`.
+Start with `python -m aheadsubs serve --asr local --mt local --device cpu`. Clients must match any custom `--port`.
 
 ## Update playback
 
@@ -94,4 +94,4 @@ Cloud usage starts with this version. The model request boundary counts attempts
 
 `Relay.update(identifier, Playback)` accepts state and returns subtitle metadata. `Relay.drop(identifier)` releases a session; `Relay.close()` closes scheduling/persistence. Tasks read the selected track and retain its offset, mapping ASR-relative times back to video time. Overlapping adjacent cues preserve the next cue's start and end the preceding cue there.
 
-SQLite stores completed chunks. Identity includes media and modification time, track, languages and processing settings. Matching windows share completed chunks. SRT uses batched atomic replacement. CLI cache defaults to `.relay`; desktop uses `%LOCALAPPDATA%\Subtitle Relay\cache`.
+SQLite stores completed chunks. Identity includes media and modification time, track, languages and processing settings. Matching windows share completed chunks. SRT uses batched atomic replacement. CLI cache defaults to `.relay`. The desktop service uses the `cache` subdirectory of the [Windows user data directory](windows.md).

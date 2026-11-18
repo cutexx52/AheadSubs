@@ -2,7 +2,7 @@ using System.Text.Json.Nodes;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace LocalVideoSubtitleTranslator;
+namespace AheadSubs;
 
 public partial class ApiKeyEditor : System.Windows.Controls.UserControl
 {

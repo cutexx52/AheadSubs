@@ -1,1 +1,0 @@
-"""Subtitle Relay adapters modules."""

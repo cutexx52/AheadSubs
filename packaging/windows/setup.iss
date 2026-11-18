@@ -34,6 +34,8 @@ Type: dirifempty; Name: "{userprograms}\Local Video Subtitle Translator"
 Type: files; Name: "{userdesktop}\Local Video Subtitle Translator.lnk"
 Type: files; Name: "{app}\Local Video Subtitle Translator.exe"
 Type: files; Name: "{app}\UI\LocalVideoSubtitleTranslator.exe"
+; The installer restores the legacy command shims after removing the old app-owned package.
+Type: filesandordirs; Name: "{app}\subtitle_relay"
 ; Upgrades remove the older PyAV payload and its native FFmpeg build.
 Type: filesandordirs; Name: "{app}\runtime\Lib\site-packages\av"
 Type: filesandordirs; Name: "{app}\runtime\Lib\site-packages\av.libs"
@@ -59,4 +61,4 @@ Name: desktopicon; Description: "Create a desktop shortcut"; Flags: unchecked
 Filename: "{app}\AheadSubs.exe"; Description: "Open AheadSubs"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
-Filename: "{app}\runtime\python.exe"; Parameters: "-m subtitle_relay.desktop.bridge automation cli-remove"; WorkingDir: "{app}"; Flags: runhidden skipifdoesntexist; RunOnceId: "RemoveAheadSubsFromPath"
+Filename: "{app}\runtime\python.exe"; Parameters: "-m aheadsubs.desktop.bridge automation cli-remove"; WorkingDir: "{app}"; Flags: runhidden skipifdoesntexist; RunOnceId: "RemoveAheadSubsFromPath"

@@ -57,6 +57,6 @@ Generation uses FFprobe to check media duration and available audio, advances th
 
 ## Source installation and extension
 
-Run `python -m pip install .` from the source checkout to install `aheadsubs`. You can also run `python -m subtitle_relay.cli --help`. For a standalone MCP connection, set the client command to `aheadsubs` with `["mcp"]` as its arguments. Use the installed command's absolute path if your client cannot find it. Use `--desktop` on Windows to honor the desktop access switch.
+Run `python -m pip install .` from the source checkout to install `aheadsubs`. You can also run `python -m aheadsubs.cli --help`. For a standalone MCP connection, set the client command to `aheadsubs` with `["mcp"]` as its arguments. Use the installed command's absolute path if your client cannot find it. Use `--desktop` on Windows to honor the desktop access switch.
 
-To add an operation, define its argument model and handler in `subtitle_relay/automation.py`, register it in `OPERATIONS`, and add localized strings in `automation_text.py`. Both transports derive their arguments from the shared models. See [HTTP v1](server.md) for direct integrations.
+To add an operation, define its argument model and handler in `aheadsubs/automation.py`, register it in `OPERATIONS`, and add localized strings in `automation_text.py`. Both transports derive their arguments from the shared models. See [HTTP v1](server.md) for direct integrations.

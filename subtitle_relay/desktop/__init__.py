@@ -1,1 +1,1 @@
-"""Subtitle Relay desktop modules."""
+"""Compatibility entry point for the desktop bridge."""

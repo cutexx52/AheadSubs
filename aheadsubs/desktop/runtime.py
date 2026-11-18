@@ -11,10 +11,11 @@ from urllib.error import URLError
 from urllib.request import ProxyHandler, build_opener
 
 from ..inference.providers import MINIMAX_MODEL
+from ..paths import user_data_directory
 
 ROOT = Path(__file__).resolve().parents[2]
-LAUNCHER = ROOT / "Subtitle Relay.pyw"
-DATA = Path(os.environ["LOCALAPPDATA"]) / "Subtitle Relay"
+LAUNCHER = ROOT / "AheadSubs.pyw"
+DATA = user_data_directory()
 QWEN = DATA / "qwen"
 CONFIG = DATA / "settings.json"
 PORTABLE_PYTHON = ROOT / "runtime" / "pythonw.exe"
@@ -121,7 +122,7 @@ def spawn(arguments, log=LOG):
         raise RuntimeError("Install Python dependencies in the project .venv first.")
     DATA.mkdir(parents=True, exist_ok=True)
     with log_output(log) as output:
-        return subprocess.Popen([str(PYTHON), "-m", "subtitle_relay", *arguments],
+        return subprocess.Popen([str(PYTHON), "-m", "aheadsubs", *arguments],
                                 cwd=ROOT, stdout=output or subprocess.DEVNULL, stderr=subprocess.STDOUT,
                                 stdin=subprocess.DEVNULL, creationflags=subprocess.CREATE_NO_WINDOW)
 
@@ -141,7 +142,7 @@ def lock_service(stream, wait=False):
 
 
 def background_stop():
-    from subtitle_relay.client import RelayClient
+    from aheadsubs.client import RelayClient
 
     DATA.mkdir(parents=True, exist_ok=True)
     PAUSED.touch()
@@ -187,7 +188,7 @@ def background_start(on_wait=None, restart=False):
         if health:
             if not restart:
                 return
-            from subtitle_relay.client import RelayClient
+            from aheadsubs.client import RelayClient
 
             if not CONTROL.is_file():
                 raise RuntimeError("当前字幕服务由另一个程序启动，请先关闭该服务。")

@@ -159,5 +159,5 @@ def serve(relay, port, control_token=None, playback_defaults=None, *, local_mode
             pass
 
     with ThreadingHTTPServer(("127.0.0.1", port), Handler) as server:
-        print(f"Subtitle Relay listening on 127.0.0.1:{port}", flush=True)
+        print(f"AheadSubs listening on 127.0.0.1:{port}", flush=True)
         server.serve_forever()

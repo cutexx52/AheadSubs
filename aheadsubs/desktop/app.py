@@ -16,11 +16,11 @@ from .runtime import (DATA, DEFAULTS, LAUNCHER, LOG, PAUSED, PYTHON, ROOT,
 def gui(initial_media=None, show_request=None):
     from queue import Empty
 
-    from subtitle_relay.adapters.potplayer import list_windows
-    from subtitle_relay.desktop.tray import SettingsTray
-    from subtitle_relay.desktop.bridge import validate_chatgpt
-    from subtitle_relay.desktop.credentials import public_state, resolve
-    from subtitle_relay.inference.providers import MINIMAX_MODEL, QWEN_MT_MODELS, openai_key, qwen_mt_credentials
+    from aheadsubs.adapters.potplayer import list_windows
+    from aheadsubs.desktop.tray import SettingsTray
+    from aheadsubs.desktop.bridge import validate_chatgpt
+    from aheadsubs.desktop.credentials import public_state, resolve
+    from aheadsubs.inference.providers import MINIMAX_MODEL, QWEN_MT_MODELS, openai_key, qwen_mt_credentials
 
     root = tk.Tk()
     root.title(f"AheadSubs — {Path(initial_media).name}" if initial_media else "AheadSubs")
@@ -171,7 +171,7 @@ def gui(initial_media=None, show_request=None):
     vad_box.grid(row=17, column=1, sticky="ew")
 
     def choose_vad(_):
-        from subtitle_relay.inference.audio import VAD_THRESHOLDS
+        from aheadsubs.inference.audio import VAD_THRESHOLDS
 
         selected = tuple(vad_names)[vad_box.current()]
         previous = settings["vad_model"].get()
@@ -337,7 +337,7 @@ def gui(initial_media=None, show_request=None):
         if not selected:
             return
         hwnd = window.get().split()[0]
-        from subtitle_relay.adapters.potplayer import find_reload_command
+        from aheadsubs.adapters.potplayer import find_reload_command
 
         reload_command = find_reload_command(potplayer_directory() / "PotPlayerMini64.exe")
         arguments = ["potplayer", hwnd, selected, "--target", target.get(),

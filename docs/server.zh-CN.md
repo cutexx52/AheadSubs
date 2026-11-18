@@ -4,7 +4,7 @@
 
 服务默认绑定 `127.0.0.1:8769`，用于本机客户端。服务和播放器共享文件访问权限。所有 API 时间均使用原媒体时间，单位秒。
 
-可用 `python -m subtitle_relay serve --asr local --mt local --device cpu` 独立启动服务。使用 `--port` 设置端口时，调用者也需配置相同端口。
+可用 `python -m aheadsubs serve --asr local --mt local --device cpu` 独立启动服务。使用 `--port` 设置端口时，调用者也需配置相同端口。
 
 ## 更新播放状态
 
@@ -92,4 +92,4 @@ RTF 用成功处理的片段耗时除以该片段所属窗口的实际音频时�
 
 `Relay.update(identifier, Playback)` 接收播放状态并返回字幕元数据。`Relay.drop(identifier)` 释放会话。`Relay.close()` 关闭调度和持久化资源。工作单元读取指定音轨，保留其在媒体时间轴上的开头偏移，并在 ASR 后换算回原视频时间。输出相邻字幕若重叠，保留下一句的起始时间，并在该点结束前一句。
 
-SQLite 保存已完成的块，缓存身份包含媒体文件及其更新时间、音轨、语言和处理配置。相同身份的窗口共享已完成的块。SRT 批量原子替换。CLI 的默认缓存目录为 `.relay`，桌面启动的服务使用 `%LOCALAPPDATA%\Subtitle Relay\cache`。
+SQLite 保存已完成的块，缓存身份包含媒体文件及其更新时间、音轨、语言和处理配置。相同身份的窗口共享已完成的块。SRT 批量原子替换。CLI 的默认缓存目录为 `.relay`，桌面启动的服务使用 [Windows 用户数据目录](windows.zh-CN.md)下的 `cache` 子目录。
