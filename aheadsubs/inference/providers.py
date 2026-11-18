@@ -61,7 +61,7 @@ class FasterWhisper:
             if (audio.getnchannels(), audio.getsampwidth(), audio.getframerate()) != (1, 2, SAMPLE_RATE):
                 raise wave.Error("Expected 16 kHz mono PCM with 16-bit samples")
             samples = pcm16_samples(audio.readframes(audio.getnframes()))
-        segments, info = self.model.transcribe(samples, language=source,
+        segments, info = self.model.transcribe(samples, language=source, task="transcribe",
                                                vad_filter=False, beam_size=1,
                                                condition_on_previous_text=False)
         return info.language, [Cue(s.start, s.end, s.text.strip()) for s in segments if s.text.strip()]

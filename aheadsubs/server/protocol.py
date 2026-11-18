@@ -12,6 +12,7 @@ from ..inference.errors import provider_error
 from .engine import Playback
 from .history import InspectionError
 from .metrics import SOURCES
+from .transcription_http import TranscriptionHTTP
 
 
 def playback_from_json(data, defaults=None):
@@ -43,11 +44,14 @@ def playback_from_json(data, defaults=None):
                     source or None, target, ahead, bilingual)
 
 
-def serve(relay, port, control_token=None, playback_defaults=None, *, local_models=None):
+def create_server(relay, port, control_token=None, playback_defaults=None, *, local_models=None):
     text_slots = BoundedSemaphore(2)
+    transcription = TranscriptionHTTP(relay)
 
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
+            if transcription.handle(self):
+                return
             if self.path == "/v1/health":
                 self.reply(200, {"service": "subtitle-relay", "pid": os.getpid(),
                                  "active_sessions": relay.active_sessions(), "local_models": local_models})
@@ -70,6 +74,8 @@ def serve(relay, port, control_token=None, playback_defaults=None, *, local_mode
             return "http"
 
         def do_POST(self):
+            if transcription.handle(self):
+                return
             try:
                 expected = ("application/x-subtitle-relay" if self.path == "/v1/text"
                             else "application/json")
@@ -121,6 +127,10 @@ def serve(relay, port, control_token=None, playback_defaults=None, *, local_mode
             except PermissionError:
                 self.reply(503, {"error": "subtitle file temporarily in use"})
 
+        def do_DELETE(self):
+            if not transcription.handle(self):
+                self.send_error(501, "Unsupported method ('DELETE')")
+
         def translate_text(self, body):
             if not relay.translator:
                 self.reply(409, {"error": "this profile does not include text translation"})
@@ -145,19 +155,27 @@ def serve(relay, port, control_token=None, playback_defaults=None, *, local_mode
                 relay.text_activity(source_app, -1)
                 text_slots.release()
 
-        def reply(self, code, data):
-            body = json.dumps(data).encode()
-            self.send_response(code)
-            self.send_header("Content-Type", "application/json")
+        def reply(self, code, data, *, headers=None):
             if self.path == "/v1/status":
-                self.send_header("Cache-Control", "no-store")
+                headers = {"Cache-Control": "no-store", **(headers or {})}
+            self.respond_bytes(code, json.dumps(data).encode(), "application/json", headers=headers)
+
+        def respond_bytes(self, code, body, content_type, *, headers=None):
+            self.send_response(code)
+            self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(len(body)))
+            for name, value in (headers or {}).items():
+                self.send_header(name, value)
             self.end_headers()
             self.wfile.write(body)
 
         def log_message(self, *_):
             pass
 
-    with ThreadingHTTPServer(("127.0.0.1", port), Handler) as server:
-        print(f"AheadSubs listening on 127.0.0.1:{port}", flush=True)
+    return ThreadingHTTPServer(("127.0.0.1", port), Handler)
+
+
+def serve(relay, port, control_token=None, playback_defaults=None, *, local_models=None):
+    with create_server(relay, port, control_token, playback_defaults, local_models=local_models) as server:
+        print(f"AheadSubs listening on 127.0.0.1:{server.server_port}", flush=True)
         server.serve_forever()

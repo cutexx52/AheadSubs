@@ -18,7 +18,7 @@ class InspectionError(ValueError):
 MEDIA_COLUMNS = {
     "path": "TEXT", "path_key": "TEXT", "size": "INTEGER", "mtime_ns": "INTEGER",
     "audio": "INTEGER", "duration": "REAL", "chunk": "REAL", "created": "REAL",
-    "state": "TEXT", "error_code": "TEXT",
+    "state": "TEXT", "error_code": "TEXT", "translation_available": "INTEGER",
 }
 
 
@@ -32,19 +32,20 @@ def create_history(db):
     db.execute("CREATE TABLE IF NOT EXISTS failed_cues (key TEXT, idx INTEGER, cues TEXT, PRIMARY KEY (key, idx))")
 
 
-def remember_media(db, key, playback, original_available, info, chunk, *, state=None):
+def remember_media(db, key, playback, original_available, info, chunk, *, state=None, translation_available=True):
     now = time.time()
     db.execute("""
         INSERT INTO media (key, display_name, source, target, original_available, updated,
-                           path, path_key, size, mtime_ns, audio, duration, chunk, created, state)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                           path, path_key, size, mtime_ns, audio, duration, chunk, created, state, translation_available)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(key) DO UPDATE SET updated=excluded.updated, path=excluded.path,
             path_key=excluded.path_key, size=excluded.size, mtime_ns=excluded.mtime_ns,
             audio=excluded.audio, duration=COALESCE(excluded.duration, media.duration),
-            chunk=excluded.chunk, created=COALESCE(media.created, media.updated)
+            chunk=excluded.chunk, created=COALESCE(media.created, media.updated),
+            translation_available=excluded.translation_available
         """, (key, playback.path.name, playback.source, playback.target, original_available, now,
               str(playback.path), os.path.normcase(str(playback.path)), info.st_size, info.st_mtime_ns,
-              playback.audio, playback.duration, chunk, now, state))
+              playback.audio, playback.duration, chunk, now, state, translation_available))
     db.commit()
 
 
@@ -76,7 +77,7 @@ def catalog(db):
         GROUP BY c.key
         """))
     subtitles = {row[0] for row in db.execute("""
-        SELECT DISTINCT chunks.key FROM chunks, json_each(chunks.cues) AS cue
+        SELECT DISTINCT chunks.key FROM media JOIN chunks ON chunks.key=media.key, json_each(chunks.cues) AS cue
         WHERE json_extract(cue.value, '$.status') IS NULL
             AND trim(json_extract(cue.value, '$.text')) <> ''
         """)}
@@ -84,7 +85,8 @@ def catalog(db):
     for key, language, _ in db.execute("""
         SELECT history.key, lower(replace(json_extract(cue.value, '$.source_language'), '_', '-')) AS lang,
             SUM(json_extract(cue.value, '$.end') - json_extract(cue.value, '$.start')) AS seconds
-        FROM (SELECT key, cues FROM chunks UNION ALL SELECT key, cues FROM failed_cues) AS history,
+        FROM (SELECT key, cues FROM chunks UNION ALL SELECT key, cues FROM failed_cues) AS history
+        JOIN media ON media.key=history.key,
             json_each(history.cues) AS cue
         WHERE lang IS NOT NULL AND lang NOT IN ('', 'auto', 'und')
         GROUP BY history.key, lang ORDER BY seconds DESC, lang
@@ -106,9 +108,11 @@ def catalog(db):
         version["primary_source"] = sources.get(key)
         version["has_subtitles"] = key in subtitles
         version["can_regenerate"] = version["path"] is not None
+        if version["translation_available"] == 0:
+            version["target"] = ""
         del version["size"], version["mtime_ns"], version["path_key"]
         group["versions"].append(version)
-        if key in subtitles and version["target"] not in group["target_languages"]:
+        if key in subtitles and version["target"] and version["target"] not in group["target_languages"]:
             group["target_languages"].append(version["target"])
     for group in groups.values():
         group["primary_source"] = next((v["primary_source"] for v in group["versions"] if v["primary_source"]), None)
@@ -121,7 +125,8 @@ def inspect_rows(db, active):
 
     chunks = db.execute("SELECT cues FROM chunks WHERE key=? ORDER BY idx DESC LIMIT 100", (active["key"],))
     recent = [Cue(**cue) for (encoded,) in chunks for cue in json.loads(encoded)]
-    rows = [{"start": cue.start, "end": cue.end, "translation": cue.text,
+    rows = [{"start": cue.start, "end": cue.end,
+             "translation": cue.text if active["translation_available"] != 0 else None,
              "original": (cue.original or cue.text) if active["original_available"] else None}
             for cue in merge_cues(cue for cue in recent if not cue.status)[-300:]]
     failed = db.execute("SELECT cues FROM failed_cues WHERE key=? ORDER BY idx DESC LIMIT 100", (active["key"],))
@@ -142,7 +147,9 @@ def inspect_cache(path, selected=None, *, catalog_only=False, rows_only=False):
             return {"files": groups}
         media = [version for group in groups for version in group["versions"]]
         if rows_only and db is not None:
-            row = db.execute("SELECT key, original_available FROM media WHERE key=?", (selected,)).fetchone()
+            columns = {row[1] for row in db.execute("PRAGMA table_info(media)")}
+            flag = "translation_available" if "translation_available" in columns else "NULL AS translation_available"
+            row = db.execute(f"SELECT key, original_available, {flag} FROM media WHERE key=?", (selected,)).fetchone()
             return {"rows": inspect_rows(db, row) if row is not None else []}
         active = next((item for item in media if item["key"] == selected), media[0] if media else None)
         return {"files": groups, "media": media, "key": active["key"] if active else None,

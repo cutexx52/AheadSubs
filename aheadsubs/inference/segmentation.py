@@ -6,7 +6,7 @@ from struct import unpack_from
 SAMPLE_RATE = 16000
 
 
-def _energy_cut(pcm, earliest, latest):
+def quiet_boundary(pcm, earliest, latest, *, preferred=None):
     # No VAD gap fits. Search the last 1.5 seconds for a quieter crossing.
     first = max(earliest, latest - SAMPLE_RATE * 3 // 2)
     half_window = SAMPLE_RATE // 100
@@ -19,6 +19,8 @@ def _energy_cut(pcm, earliest, latest):
         return sum(value * value for value in samples) / len(samples)
 
     candidates = range(latest, first - 1, -half_window)
+    if preferred is not None:
+        return min(candidates, key=lambda cut: (energy(cut), abs(cut - preferred)))
     return min(candidates, key=energy)
 
 
@@ -71,7 +73,7 @@ def plan_spans(pcm, ranges, *, minimum, maximum, preferred_pause, padding):
         if selected is None and fallback is not None:
             selected = fallback[1]
         if selected is None:
-            end = _energy_cut(pcm, min(limit, start + minimum), limit)
+            end = quiet_boundary(pcm, min(limit, start + minimum), limit)
             selected = (end, index, end)
 
         end, index, next_start = selected

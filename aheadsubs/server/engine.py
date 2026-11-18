@@ -23,6 +23,7 @@ from ..inference.recognition_cache import RecognitionCache
 from .history import InspectionError, create_history, remember_failed_cues, remember_media
 from .metrics import SESSION_TIMEOUT, SOURCES, Samples
 from .resources import Resources
+from .transcription import Transcriptions
 
 
 BILINGUAL_SUFFIX = "-bilingual-v3"
@@ -199,7 +200,7 @@ def translate_chunk(playback, index, chunk, recognizer, translator, speech_trans
                 previous.append(absolute)
         if use_neighbors:
             owned.extend((language, cue) for cue in current)
-        elif speech_translator:
+        elif speech_translator or translator is None:
             translated.extend(current)
         else:
             translated.extend(_translate_cues(current, translator, language, playback.target,
@@ -352,11 +353,12 @@ def render_srt(db, key, path, duration, source, target, *, bilingual=False, requ
 class Relay:
     def __init__(self, root, recognizer, translator, profile, workers=4, chunk=8,
                  speech_translator=None, segmenter=None, *, translation_settings=TranslationSettings(),
-                 model_status=lambda: [], cloud_usage=None):
+                 model_status=lambda: [], cloud_usage=None, transcription_profile=None):
         self.root = Path(root).resolve()
         self.root.mkdir(parents=True, exist_ok=True)
         self.recognizer, self.translator = recognizer, translator
         self.speech_translator = speech_translator
+        self.source_only = recognizer is not None and translator is None and speech_translator is None
         self.segmenter = segmenter
         self.translation_settings = translation_settings.for_translator(None if speech_translator else translator)
         self.recognition_cache = RecognitionCache(recognizer) if recognizer and self.translation_settings.previous_cues else None
@@ -385,6 +387,7 @@ class Relay:
         self.rendered = {}
         self.regeneration = None
         self.stopping = threading.Event()
+        self.transcriptions = Transcriptions(self, profile if transcription_profile is None else transcription_profile)
         self.scheduler = threading.Thread(target=self._run, daemon=True)
         self.scheduler.start()
 
@@ -392,6 +395,8 @@ class Relay:
         self.stopping.set()
         self.scheduler.join()
         self.pool.shutdown(wait=True)
+        with self.lock:
+            self.transcriptions.close()
         if self.regeneration is not None:
             self._end_regeneration("interrupted")
         with self.status_lock:
@@ -436,7 +441,7 @@ class Relay:
             task.playback = replace(playback, duration=duration)
             task.count = math.ceil(duration / self.chunk)
             remember_media(self.db, task.key, task.playback, self.speech_translator is None,
-                           info, self.chunk, state="queued")
+                           info, self.chunk, state="queued", translation_available=not self.source_only)
             self.regeneration = task
             if self.background_session is not None:
                 self.drop(self.background_session)
@@ -480,7 +485,8 @@ class Relay:
             previous = self.sessions.get(identifier)
             if (previous is None or previous.key != key
                     or playback.duration is not None and playback.duration != previous.playback.duration):
-                remember_media(self.db, key, playback, self.speech_translator is None, info, self.chunk)
+                remember_media(self.db, key, playback, self.speech_translator is None, info, self.chunk,
+                               translation_available=not self.source_only)
             session = Session(playback, key, now, source if source in SOURCES else "http")
             self.sessions[identifier] = session
             path, revision = self._render(key, playback)
@@ -573,6 +579,7 @@ class Relay:
 
     def _schedule(self):
         now = time.monotonic()
+        self.transcriptions.maintain()
         self.sessions = {name: s for name, s in self.sessions.items() if now - s.updated < SESSION_TIMEOUT}
         active = {session.key for session in self.sessions.values()}
         self.rendered = {render_key: revision for render_key, revision in self.rendered.items()
@@ -590,6 +597,14 @@ class Relay:
             future = self.pool.submit(self._regenerate_chunk, task)
             future.add_done_callback(lambda result: self._finish(job, result, regeneration=task))
             return
+        if not active and not self.inflight and not any(self.text_requests.values()):
+            task = self.transcriptions.next_chunk()
+            if task is not None:
+                job = (task.key, task.index)
+                self.inflight.add(job)
+                future = self.pool.submit(self.transcriptions.process, task)
+                future.add_done_callback(lambda result: self._finish_transcription(job, task, result))
+                return
         candidates = {}
         for session in self.sessions.values():
             playback, key = session.playback, session.key
@@ -618,6 +633,13 @@ class Relay:
             future = self.pool.submit(self._process, playback, job[1])
             future.add_done_callback(lambda result, job=job, media=playback if background else None:
                                      self._finish(job, result, background_media=media))
+
+    def _finish_transcription(self, job, task, future):
+        with self.lock:
+            try:
+                self.transcriptions.finish(task, future)
+            finally:
+                self.inflight.remove(job)
 
     def _process(self, playback, index, *, reuse_recognition=True):
         audio_seconds = 0
