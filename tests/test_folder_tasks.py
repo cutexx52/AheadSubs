@@ -17,6 +17,7 @@ from aheadsubs.automation import OperationError, generate_subtitles
 from aheadsubs.folder_tasks import FolderWorker, RuleSet, TaskFiles, WatchRule
 from aheadsubs.inference.providers import Cue
 from aheadsubs.server.engine import Playback, Relay, SubtitlePipeline, TranslationSettings
+from aheadsubs.server.protocol import playback_from_json
 
 
 class FolderTaskTest(unittest.TestCase):
@@ -256,7 +257,8 @@ class FolderTaskTest(unittest.TestCase):
         for suffix, subtitle in expected.items():
             self.assertIn(subtitle, path.with_suffix(suffix).read_text(encoding="utf-8"))
         self.assertCountEqual(opened, [".asr", ".mt"])
-        result = relay.update("player", Playback(path, 0, duration=9, source="ja"))
+        playback = playback_from_json({"path": str(path), "position": 0, "duration": 9, "source": "ja"}, {})
+        result = relay.update("player", playback)
         self.assertEqual(result["ready_ahead"], 9)
         self.assertIn(expected[".srt"], Path(result["subtitle"]).read_text(encoding="utf-8"))
 
