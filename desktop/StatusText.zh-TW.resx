@@ -34,7 +34,7 @@
   <data name="ResourceScope" xml:space="preserve"><value>字幕服務及其子程序</value></data>
   <data name="ModelTitle" xml:space="preserve"><value>{0} · {1}</value></data>
   <data name="ModelState" xml:space="preserve"><value>{0} · {1}</value></data>
-  <data name="Role_asr" xml:space="preserve"><value>語音識別</value></data>
+  <data name="Role_asr" xml:space="preserve"><value>語音辨識</value></data>
   <data name="Role_ast" xml:space="preserve"><value>語音翻譯</value></data>
   <data name="Role_mt" xml:space="preserve"><value>文字翻譯</value></data>
   <data name="Role_vad" xml:space="preserve"><value>語音活動檢測</value></data>

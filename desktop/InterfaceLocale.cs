@@ -1,8 +1,8 @@
 using System.Globalization;
 using System.IO;
 using System.Resources;
+using System.Runtime.InteropServices;
 using System.Security;
-using System.Windows;
 using Microsoft.Win32;
 
 namespace AheadSubs;
@@ -18,6 +18,7 @@ internal static class InterfaceLocale
         ("fr", "fr", "Français"), ("de", "de", "Deutsch"), ("es", "es", "Español")
     ];
 
+    private static string? previewSystemLanguage;
     internal static string Preference { get; private set; } = Automatic;
     internal static CultureInfo Culture { get; private set; } = CultureInfo.GetCultureInfo("en");
 
@@ -45,12 +46,13 @@ internal static class InterfaceLocale
             try
             {
                 using var key = Registry.CurrentUser.OpenSubKey(Preferences);
-                if (key?.GetValue("Language") is string value && Languages.Any(item => item.Locale == value))
-                    Preference = value;
+                if (key?.GetValue("Language") is string value && value != Automatic)
+                    Preference = Resolve(value).Name;
             }
             catch (Exception ex) when (PreferenceError(ex)) { }
         }
-        Apply(previewLanguage);
+        previewSystemLanguage = previewLanguage;
+        Apply();
     }
 
     internal static bool Select(string value, bool persist)
@@ -65,20 +67,29 @@ internal static class InterfaceLocale
             catch (Exception ex) when (PreferenceError(ex)) { return false; }
         }
         Preference = value;
-        Apply(null);
+        Apply();
         return true;
     }
 
     private static bool PreferenceError(Exception ex) => ex is IOException or UnauthorizedAccessException or SecurityException;
 
-    internal static bool Apply(string? previewLanguage)
+    [DllImport("kernel32.dll")]
+    private static extern ushort GetUserDefaultUILanguage();
+
+    private static string WindowsLanguage()
     {
-        // Keep Windows' UI culture untouched so automatic mode can consult it after a manual choice.
-        var culture = Resolve(previewLanguage ?? (Preference == Automatic
-            ? Environment.GetEnvironmentVariable("AHEADSUBS_UI_LOCALE") ?? CultureInfo.CurrentUICulture.Name
-            : Preference));
+        try { return CultureInfo.GetCultureInfo(GetUserDefaultUILanguage()).Name; }
+        catch (CultureNotFoundException) { return ""; }
+    }
+
+    internal static bool Apply()
+    {
+        var culture = Resolve(Preference == Automatic
+            ? previewSystemLanguage ?? Environment.GetEnvironmentVariable("AHEADSUBS_UI_LOCALE") ?? WindowsLanguage()
+            : Preference);
         bool changed = !Culture.Equals(culture);
         Culture = culture;
+        CultureInfo.DefaultThreadCurrentUICulture = culture;
         if (changed || !System.Windows.Application.Current.Resources.Contains("Desktop.InterfaceLanguage"))
         {
             LoadResources("Desktop", UiText.Resources);
@@ -87,6 +98,7 @@ internal static class InterfaceLocale
         }
         return changed;
     }
+
     private static void LoadResources(string group, ResourceManager manager)
     {
         var resources = System.Windows.Application.Current.Resources;

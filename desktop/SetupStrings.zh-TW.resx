@@ -7,9 +7,9 @@
   <data name="heading" xml:space="preserve"><value>快速預設</value></data>
   <data name="active" xml:space="preserve"><value>快速預設 · {0}</value></data>
   <data name="custom" xml:space="preserve"><value>自定義</value></data>
-  <data name="cpu" xml:space="preserve"><value>純本地 · CPU</value></data>
-  <data name="gpu" xml:space="preserve"><value>純本地 · 獨顯入門</value></data>
-  <data name="high-gpu" xml:space="preserve"><value>純本地 · 高效能 GPU</value></data>
+  <data name="cpu" xml:space="preserve"><value>純本機 · CPU</value></data>
+  <data name="gpu" xml:space="preserve"><value>純本機 · 獨顯入門</value></data>
+  <data name="high-gpu" xml:space="preserve"><value>純本機 · 高效能 GPU</value></data>
   <data name="recommended" xml:space="preserve"><value>作者推薦 · 本地識別 + 雲端翻譯</value></data>
   <data name="detail-cpu" xml:space="preserve"><value>Whisper Small + NLLB · CPU</value></data>
   <data name="detail-gpu" xml:space="preserve"><value>Qwen3-ASR 0.6B · Vulkan / NLLB · CPU</value></data>
@@ -21,8 +21,8 @@
   <data name="retry" xml:space="preserve"><value>重新檢查</value></data>
   <data name="check-failed" xml:space="preserve"><value>暫時無法檢查這套方案，請重試。</value></data>
   <data name="ffmpeg" xml:space="preserve"><value>需要 FFmpeg 和 FFprobe，請使用完整的 Windows 安裝包。</value></data>
-  <data name="vulkan" xml:space="preserve"><value>未檢測到 Vulkan 裝置。請檢查顯示卡驅動，或選擇純本地 CPU 方案。</value></data>
-  <data name="cuda" xml:space="preserve"><value>CUDA 不可用。請檢查 NVIDIA 驅動和 CUDA 安裝包，或選擇純本地獨顯入門方案。</value></data>
+  <data name="vulkan" xml:space="preserve"><value>未檢測到 Vulkan 裝置。請檢查顯示卡驅動，或選擇純本機 CPU 方案。</value></data>
+  <data name="cuda" xml:space="preserve"><value>CUDA 不可用。請檢查 NVIDIA 驅動和 CUDA 安裝包，或選擇純本機獨顯入門方案。</value></data>
   <data name="dashscope" xml:space="preserve"><value>請儲存百鍊 API Key，並檢查服務地址。</value></data>
   <data name="models" xml:space="preserve"><value>管理模型</value></data>
   <data name="download" xml:space="preserve"><value>立即下載</value></data>
@@ -34,8 +34,8 @@
   <data name="downloaded" xml:space="preserve"><value>下載完成。</value></data>
   <data name="download-failed" xml:space="preserve"><value>下載失敗。請檢查網路連線和剩餘磁碟空間，再重試。</value></data>
   <data name="needed" xml:space="preserve"><value>所選方案需要</value></data>
-  <data name="model-page" xml:space="preserve"><value>本地模型</value></data>
-  <data name="model-asr" xml:space="preserve"><value>語音識別</value></data>
+  <data name="model-page" xml:space="preserve"><value>本機模型</value></data>
+  <data name="model-asr" xml:space="preserve"><value>語音辨識</value></data>
   <data name="model-mt" xml:space="preserve"><value>字幕翻譯</value></data>
   <data name="model-vad" xml:space="preserve"><value>語音檢測</value></data>
   <data name="managed-vad" xml:space="preserve"><value>Silero 隨執行環境提供，FSMN 在高階設定中選用後準備。</value></data>

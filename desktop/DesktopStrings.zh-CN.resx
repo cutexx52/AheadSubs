@@ -125,9 +125,6 @@
   <data name="ChatGptProvider" xml:space="preserve"><value>ChatGPT 订阅 · OAuth</value></data>
   <data name="CompatibleProvider" xml:space="preserve"><value>自定义兼容接口 · API Key</value></data>
   <data name="TrayConnecting" xml:space="preserve"><value>AheadSubs · 正在连接</value></data>
-  <data name="ServiceReady" xml:space="preserve"><value>服务已就绪</value></data>
-  <data name="PreviewPlayerHint" xml:space="preserve"><value>在 PotPlayer 播放窗口按 Ctrl+Alt+J 开启，Ctrl+Alt+K 关闭。</value></data>
-  <data name="TwoWindows" xml:space="preserve"><value>已连接 2 个播放窗口。</value></data>
   <data name="SaveApply" xml:space="preserve"><value>保存并应用</value></data>
   <data name="OpenSettings" xml:space="preserve"><value>打开设置</value></data>
   <data name="PotMenu" xml:space="preserve"><value>PotPlayer 预读</value></data>
@@ -217,4 +214,35 @@
   <data name="PreferenceFailed" xml:space="preserve"><value>无法保存界面语言。</value></data>
   <data name="HourlyUsd" xml:space="preserve"><value>约 US${0:F2}–{1:F2}/小时</value></data>
   <data name="HourlyCny" xml:space="preserve"><value>约 ¥{0:F2}–{1:F2}/小时</value></data>
+  <data name="Error_invalid-setting" xml:space="preserve"><value>请检查 {0} 的值。</value></data>
+  <data name="Error_unknown-settings" xml:space="preserve"><value>设置包含未知选项。</value></data>
+  <data name="Error_target-required" xml:space="preserve"><value>请选择字幕目标语言。</value></data>
+  <data name="Error_timeline-number" xml:space="preserve"><value>时间轴设置需要填写数字，小数使用点号。</value></data>
+  <data name="Error_timeline-range" xml:space="preserve"><value>高级时间轴设置超出支持范围。</value></data>
+  <data name="Error_integer-setting" xml:space="preserve"><value>{0} 必须是整数。</value></data>
+  <data name="Error_bad-enhancements" xml:space="preserve"><value>请检查翻译上下文设置。</value></data>
+  <data name="Error_account-model" xml:space="preserve"><value>请在云端模型页选择此 ChatGPT 账号可用的模型。</value></data>
+  <data name="Error_model-unsupported" xml:space="preserve"><value>请选择已支持的本地模型。</value></data>
+  <data name="Error_window-closed" xml:space="preserve"><value>该 PotPlayer 窗口已关闭。</value></data>
+  <data name="Error_player-required" xml:space="preserve"><value>请选择播放器。</value></data>
+  <data name="Error_folder-required" xml:space="preserve"><value>请选择存在的文件夹。</value></data>
+  <data name="Error_player-missing" xml:space="preserve"><value>找不到播放器，请手动选择安装或配置文件夹。</value></data>
+  <data name="Error_key-protection" xml:space="preserve"><value>Windows 无法读取或保护 API Key，请重新输入后保存。</value></data>
+  <data name="Error_key-settings" xml:space="preserve"><value>密钥设置格式无效。</value></data>
+  <data name="Error_key-single-line" xml:space="preserve"><value>{0} 的 API Key 应为一行，且不含空格。</value></data>
+  <data name="Error_key-required" xml:space="preserve"><value>请在云端模型页配置 {0} API Key。</value></data>
+  <data name="Error_key-file-required" xml:space="preserve"><value>请选择 {0} API Key 文件。</value></data>
+  <data name="Error_key-file-invalid" xml:space="preserve"><value>无法从文件读取有效的 {0} API Key，请重新选择密钥文件。</value></data>
+  <data name="Error_key-decryption" xml:space="preserve"><value>无法解密 {0} API Key，请在云端模型页重新输入。</value></data>
+  <data name="Error_key-https" xml:space="preserve"><value>向远程 {0} 地址发送 API Key 时需要使用 HTTPS。</value></data>
+  <data name="Error_bailian-url" xml:space="preserve"><value>请填写百炼控制台的 Base URL，以 /compatible-mode/v1 结尾。</value></data>
+  <data name="Error_browser-unavailable" xml:space="preserve"><value>无法打开默认浏览器。</value></data>
+  <data name="Error_auth-timeout" xml:space="preserve"><value>ChatGPT 登录超时，请重试。</value></data>
+  <data name="Error_auth-invalid" xml:space="preserve"><value>无法验证 ChatGPT 授权，请重新登录。</value></data>
+  <data name="Error_auth-account" xml:space="preserve"><value>返回的 ChatGPT 账号与所选账号不同。</value></data>
+  <data name="Error_auth-models" xml:space="preserve"><value>无法读取 ChatGPT 模型列表，请重试。</value></data>
+  <data name="Error_service-owned" xml:space="preserve"><value>字幕服务由其他程序启动，请从原来的启动方式关闭。</value></data>
+  <data name="Error_service-busy" xml:space="preserve"><value>上一项服务操作尚未完成，请稍后重试。</value></data>
+  <data name="Error_service-start" xml:space="preserve"><value>字幕服务启动失败。请打开高级设置中的诊断日志后重试。</value></data>
+  <data name="Chinese" xml:space="preserve"><value>中文</value></data>
 </root>

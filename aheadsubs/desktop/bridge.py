@@ -6,6 +6,8 @@ import sqlite3
 import sys
 from contextlib import redirect_stdout
 
+from ..user_errors import ServiceStateError, UserInputError
+from ..inference.errors import ProviderError
 from . import assets, credentials, hardware, runtime
 from .assets import MODELS
 from ..inference.chatgpt_auth import ChatGPTAccounts
@@ -37,7 +39,7 @@ def status():
 def check_requirements(item, endpoint=None):
     requested = set(item.split(",")) if item else set()
     if not requested <= {"vulkan", "cuda", "dashscope"}:
-        raise ValueError("未知的预设运行条件。")
+        raise UserInputError("unknown-settings", "未知的预设运行条件。")
     missing = []
     if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
         missing.append("ffmpeg")
@@ -57,7 +59,7 @@ def check_requirements(item, endpoint=None):
 
 def apply(updates):
     if not isinstance(updates, dict) or not updates.keys() <= (runtime.DEFAULTS.keys() | {"credentials"}):
-        raise ValueError("设置包含未知选项。")
+        raise UserInputError("unknown-settings", "设置包含未知选项。")
     settings = runtime.config()
     for key, value in updates.items():
         if key == "credentials":
@@ -69,7 +71,7 @@ def apply(updates):
         if isinstance(value, bool) and key in {"diagnostics", "pot_hotkey", "bilingual"}:
             value = "1" if value else "0"
         if not isinstance(value, (str, int, float)) or isinstance(value, bool):
-            raise ValueError(f"无效的设置项 {key}。")
+            raise UserInputError("invalid-setting", f"无效的设置项 {key}。", key)
         settings[key] = str(value).strip()
     for key, options in {
         "asr": {"local", "openai", "compatible", "qwen", "dashscope"}, "qwen_size": {"0.6b", "1.7b"},
@@ -81,26 +83,26 @@ def apply(updates):
         "dashscope_asr_model": DASHSCOPE_ASR_MODELS,
     }.items():
         if settings[key] not in options:
-            raise ValueError(f"不支持的设置值 {key}。")
+            raise UserInputError("invalid-setting", f"不支持的设置值 {key}。", key)
     if not settings["target"]:
-        raise ValueError("请选择字幕目标语言。")
+        raise UserInputError("target-required", "请选择字幕目标语言。")
     try:
         numbers = {key: float(settings[key]) for key in (
             "chunk", "before", "after", "min_speech", "max_speech", "min_silence_ms", "pad_ms", "vad_threshold", "backfill")}
     except ValueError as exc:
-        raise ValueError("高级时间轴设置需要填写数字。") from exc
+        raise UserInputError("timeline-number", "高级时间轴设置需要填写数字。") from exc
     if not (4 <= numbers["chunk"] <= 20 and 0 <= numbers["before"] <= 5 and 0 <= numbers["after"] <= 5
             and 0.2 <= numbers["min_speech"] <= numbers["max_speech"] and 2 <= numbers["max_speech"] <= 20
             and 40 <= numbers["min_silence_ms"] <= 2000
             and 0 <= numbers["pad_ms"] <= 500 and 0 < numbers["vad_threshold"] < 1
             and 0 <= numbers["backfill"] <= 30):
-        raise ValueError("高级时间轴设置超出支持范围。")
+        raise UserInputError("timeline-range", "高级时间轴设置超出支持范围。")
     for key in ("chunk", "min_silence_ms", "pad_ms"):
         if not numbers[key].is_integer():
-            raise ValueError(f"{key} 必须是整数。")
+            raise UserInputError("integer-setting", f"{key} 必须是整数。", key)
         settings[key] = str(int(numbers[key]))
     if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
-        raise ValueError("未找到 FFmpeg 和 FFprobe。请使用 Windows 发布包，或为源码运行配置 PATH。")
+        raise UserInputError("ffmpeg", "未找到 FFmpeg 和 FFprobe。请使用 Windows 发布包，或为源码运行配置 PATH。")
     ast = settings["route"] == "OpenAI AST (English)"
     if ast or "openai" in (settings["asr"], settings["mt"]):
         credentials.resolve(settings, "openai")
@@ -123,13 +125,13 @@ def apply(updates):
 
 def validate_enhancements(values):
     if not isinstance(values, dict):
-        raise ValueError("翻译增强设置格式无效。")
+        raise UserInputError("bad-enhancements", "翻译增强设置格式无效。")
     for model, value in values.items():
         if not (model.partition(":")[0] in {"openai", "compatible", "qwen-mt", "chatgpt", "minimax"}
                 and isinstance(value, dict)
                 and value.keys() - {"context_chars"} == {"enabled", "previous_cues", "prompt"}
                 and isinstance(value["enabled"], bool) and isinstance(value["prompt"], str)):
-            raise ValueError("翻译增强设置格式无效。")
+            raise UserInputError("bad-enhancements", "翻译增强设置格式无效。")
         TranslationSettings(value["previous_cues"], value["prompt"],
                             value.get("context_chars", TranslationSettings.context_chars))
     return values
@@ -138,9 +140,9 @@ def validate_enhancements(values):
 def validate_chatgpt(account, model):
     profile = next((item for item in ChatGPTAccounts().status() if item["id"] == account), {})
     if not profile.get("connected"):
-        raise ValueError("请在云端配置中登录 ChatGPT 并授权使用订阅。")
+        raise UserInputError("chatgpt_sign_in_required", "请在云端配置中登录 ChatGPT 并授权使用订阅。")
     if not any(item["id"] == model for item in profile["models"]):
-        raise ValueError("请在云端配置中选择此 ChatGPT 账号可用的模型。")
+        raise UserInputError("account-model", "请在云端配置中选择此 ChatGPT 账号可用的模型。")
 
 
 def run_command(command, item=None, folder=None):
@@ -155,6 +157,8 @@ def run_command(command, item=None, folder=None):
                     accounts.models(item)
                 except ValueError as exc:
                     result["notice"] = str(exc)
+                    if isinstance(exc, (ProviderError, UserInputError)):
+                        result["notice_code"] = exc.kind if isinstance(exc, ProviderError) else exc.code
         elif command == "chatgpt-models":
             accounts.models(item)
         elif command == "chatgpt-logout":
@@ -201,13 +205,13 @@ def run_command(command, item=None, folder=None):
                              rows_only=command == "inspect-rows")
     if command == "install":
         if item not in MODELS:
-            raise ValueError("请选择已支持的本地模型。")
+            raise UserInputError("model-unsupported", "请选择已支持的本地模型。")
         if not assets.model_ready(MODELS[item]):
             assets.install_model(MODELS[item])
         return status()
     if command == "uninstall":
         if item not in MODELS:
-            raise ValueError("请选择已支持的本地模型。")
+            raise UserInputError("model-unsupported", "请选择已支持的本地模型。")
         assets.uninstall_model(item, MODELS[item])
         return status()
     if command == "apply":
@@ -227,7 +231,7 @@ def run_command(command, item=None, folder=None):
         if command == "pot-windows":
             return {"windows": [{"id": hwnd, "title": title} for hwnd, title in windows]}
         if not item or not any(str(hwnd) == item for hwnd, _ in windows):
-            raise ValueError("该 PotPlayer 窗口已关闭。")
+            raise UserInputError("window-closed", "该 PotPlayer 窗口已关闭。")
         switches = {"pot-start": "--pot-hwnd", "pot-stop": "--pot-stop-hwnd"}
         runtime.spawn([str(runtime.LAUNCHER), switches[command], item], runtime.DATA / "potplayer.log")
         return {}
@@ -258,12 +262,16 @@ def main():
             result.update(run_command(args.command, args.item, args.folder))
     except InspectionError as exc:
         result = {"ok": False, "error": str(exc), "error_code": str(exc)}
-    except assets.ModelRemovalError as exc:
+    except UserInputError as exc:
+        result = {"ok": False, "error": str(exc), "error_code": exc.code, "error_args": exc.display_args}
+    except ProviderError as exc:
+        result = {"ok": False, "error": str(exc), "error_code": exc.kind}
+    except (ServiceStateError, assets.ModelRemovalError) as exc:
         result = {"ok": False, "error": str(exc), "error_code": exc.code}
     except (ValueError, RuntimeError) as exc:
         result = {"ok": False, "error": str(exc)}
     except Exception as exc:
-        result = {"ok": False, "error": f"操作失败（{type(exc).__name__}）。请检查网络、文件和运行环境。"}
+        result = {"ok": False, "error_code": "backend-failed", "error": f"操作失败（{type(exc).__name__}）。请检查网络、文件和运行环境。"}
         if args.command in {"uninstall", "install"}:
             result["error_code"] = "uninstall-failed" if args.command == "uninstall" else "download-failed"
     print(json.dumps(result, ensure_ascii=True))

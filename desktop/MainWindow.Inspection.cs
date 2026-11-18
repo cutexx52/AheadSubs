@@ -39,7 +39,6 @@ public partial class MainWindow
 
     private void InitializeInspection()
     {
-
         LocalizeInspection();
         InspectStatus.Text = Get("EmptyLibrary");
         inspectionTimer.Tick += async (_, _) =>

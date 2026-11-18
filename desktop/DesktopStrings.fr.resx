@@ -125,9 +125,6 @@
   <data name="ChatGptProvider" xml:space="preserve"><value>Abonnement ChatGPT · OAuth</value></data>
   <data name="CompatibleProvider" xml:space="preserve"><value>Service compatible personnalisé · clé API</value></data>
   <data name="TrayConnecting" xml:space="preserve"><value>AheadSubs · connexion</value></data>
-  <data name="ServiceReady" xml:space="preserve"><value>Service prêt</value></data>
-  <data name="PreviewPlayerHint" xml:space="preserve"><value>Dans PotPlayer, Ctrl+Alt+J démarre la traduction et Ctrl+Alt+K l’arrête.</value></data>
-  <data name="TwoWindows" xml:space="preserve"><value>Deux fenêtres de lecture connectées.</value></data>
   <data name="SaveApply" xml:space="preserve"><value>Enregistrer et appliquer</value></data>
   <data name="OpenSettings" xml:space="preserve"><value>Ouvrir les réglages</value></data>
   <data name="PotMenu" xml:space="preserve"><value>Lecture anticipée PotPlayer</value></data>
@@ -217,4 +214,35 @@
   <data name="PreferenceFailed" xml:space="preserve"><value>Impossible d’enregistrer la langue de l’interface.</value></data>
   <data name="HourlyUsd" xml:space="preserve"><value>≈ {0:F2}–{1:F2} USD/h</value></data>
   <data name="HourlyCny" xml:space="preserve"><value>≈ {0:F2}–{1:F2} CNY/h</value></data>
+  <data name="Error_invalid-setting" xml:space="preserve"><value>Vérifiez la valeur de {0}.</value></data>
+  <data name="Error_unknown-settings" xml:space="preserve"><value>Les réglages contiennent une option inconnue.</value></data>
+  <data name="Error_target-required" xml:space="preserve"><value>Choisissez une langue de sous-titres.</value></data>
+  <data name="Error_timeline-number" xml:space="preserve"><value>Saisissez des nombres pour les réglages temporels, avec un point comme séparateur décimal.</value></data>
+  <data name="Error_timeline-range" xml:space="preserve"><value>Un ou plusieurs réglages temporels sont hors limites.</value></data>
+  <data name="Error_integer-setting" xml:space="preserve"><value>Saisissez un entier pour {0}.</value></data>
+  <data name="Error_bad-enhancements" xml:space="preserve"><value>Vérifiez les réglages de contexte de traduction.</value></data>
+  <data name="Error_account-model" xml:space="preserve"><value>Dans Modèles cloud, choisissez un modèle accessible à ce compte ChatGPT.</value></data>
+  <data name="Error_model-unsupported" xml:space="preserve"><value>Choisissez un modèle local pris en charge.</value></data>
+  <data name="Error_window-closed" xml:space="preserve"><value>La fenêtre PotPlayer choisie a été fermée.</value></data>
+  <data name="Error_player-required" xml:space="preserve"><value>Choisissez un lecteur.</value></data>
+  <data name="Error_folder-required" xml:space="preserve"><value>Choisissez un dossier existant.</value></data>
+  <data name="Error_player-missing" xml:space="preserve"><value>Lecteur introuvable. Choisissez son dossier d’installation ou de configuration.</value></data>
+  <data name="Error_key-protection" xml:space="preserve"><value>Windows n’a pas pu lire ou protéger la clé API. Saisissez-la à nouveau et enregistrez.</value></data>
+  <data name="Error_key-settings" xml:space="preserve"><value>Vérifiez les réglages de la clé API.</value></data>
+  <data name="Error_key-single-line" xml:space="preserve"><value>Saisissez la clé API {0} sur une seule ligne sans espace.</value></data>
+  <data name="Error_key-required" xml:space="preserve"><value>Saisissez la clé API de {0} dans Modèles cloud.</value></data>
+  <data name="Error_key-file-required" xml:space="preserve"><value>Choisissez un fichier de clé API pour {0}.</value></data>
+  <data name="Error_key-file-invalid" xml:space="preserve"><value>Impossible de lire une clé API {0} valide. Sélectionnez à nouveau le fichier.</value></data>
+  <data name="Error_key-decryption" xml:space="preserve"><value>Impossible de déchiffrer la clé API {0}. Saisissez-la à nouveau dans Modèles cloud.</value></data>
+  <data name="Error_key-https" xml:space="preserve"><value>Utilisez HTTPS pour envoyer une clé API au service distant {0}.</value></data>
+  <data name="Error_bailian-url" xml:space="preserve"><value>Saisissez l’URL de base de la console Bailian se terminant par /compatible-mode/v1.</value></data>
+  <data name="Error_browser-unavailable" xml:space="preserve"><value>Impossible d’ouvrir le navigateur par défaut.</value></data>
+  <data name="Error_auth-timeout" xml:space="preserve"><value>La connexion à ChatGPT a expiré. Réessayez.</value></data>
+  <data name="Error_auth-invalid" xml:space="preserve"><value>Impossible de vérifier l’autorisation ChatGPT. Reconnectez-vous.</value></data>
+  <data name="Error_auth-account" xml:space="preserve"><value>Le compte autorisé diffère du compte ChatGPT choisi.</value></data>
+  <data name="Error_auth-models" xml:space="preserve"><value>Impossible de lire les modèles ChatGPT. Actualisez la liste.</value></data>
+  <data name="Error_service-owned" xml:space="preserve"><value>Un autre programme a lancé ce service. Arrêtez-le d’abord depuis ce programme.</value></data>
+  <data name="Error_service-busy" xml:space="preserve"><value>L’opération précédente du service est en cours. Réessayez dans un instant.</value></data>
+  <data name="Error_service-start" xml:space="preserve"><value>Le service n’a pas pu démarrer. Activez les journaux dans les réglages avancés et réessayez.</value></data>
+  <data name="Chinese" xml:space="preserve"><value>Chinois</value></data>
 </root>

@@ -48,8 +48,8 @@
   <data name="FolderMin" xml:space="preserve"><value>最小檔案大小（MiB）</value></data>
   <data name="FolderMax" xml:space="preserve"><value>最大檔案大小（MiB）</value></data>
   <data name="FolderSubtitle" xml:space="preserve"><value>字幕配置</value></data>
-  <data name="FolderModels" xml:space="preserve"><value>可分別指定識別和翻譯模型，也可沿用全域性設定。請在「本地模型」安裝模型，在「雲端模型」配置憑據。</value></data>
-  <data name="FolderSpeechModel" xml:space="preserve"><value>語音識別模型</value></data>
+  <data name="FolderModels" xml:space="preserve"><value>可分別指定識別和翻譯模型，也可沿用全域性設定。請在「本機模型」安裝模型，在「雲端模型」配置憑據。</value></data>
+  <data name="FolderSpeechModel" xml:space="preserve"><value>語音辨識模型</value></data>
   <data name="FolderTranslationModel" xml:space="preserve"><value>字幕翻譯模型</value></data>
   <data name="FolderModelNotInstalled" xml:space="preserve"><value>{0}（未安裝）</value></data>
   <data name="FolderChatGptModel" xml:space="preserve"><value>ChatGPT 訂閱</value></data>
@@ -99,6 +99,6 @@
   <data name="FolderIssue_generation_timeout" xml:space="preserve"><value>字幕生成超過 24 小時。</value></data>
   <data name="FolderIssue_request_timeout" xml:space="preserve"><value>讀取媒體超時。</value></data>
   <data name="FolderIssue_content_blocked" xml:space="preserve"><value>服務提供商返回了內容稽核錯誤。</value></data>
-  <data name="FolderIssue_folder_model_not_installed" xml:space="preserve"><value>請在「本地模型」安裝所選模型後重試。</value></data>
+  <data name="FolderIssue_folder_model_not_installed" xml:space="preserve"><value>請在「本機模型」安裝所選模型後重試。</value></data>
   <data name="FolderIssue_folder_model_unavailable" xml:space="preserve"><value>無法啟動所選模型。請檢查模型安裝、執行庫或雲端設定後重試。</value></data>
 </root>

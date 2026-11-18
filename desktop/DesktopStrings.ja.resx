@@ -125,9 +125,6 @@
   <data name="ChatGptProvider" xml:space="preserve"><value>ChatGPT サブスクリプション · OAuth</value></data>
   <data name="CompatibleProvider" xml:space="preserve"><value>カスタム互換 API · API キー</value></data>
   <data name="TrayConnecting" xml:space="preserve"><value>AheadSubs · 接続中</value></data>
-  <data name="ServiceReady" xml:space="preserve"><value>サービス準備完了</value></data>
-  <data name="PreviewPlayerHint" xml:space="preserve"><value>PotPlayer で Ctrl+Alt+J を押すと開始し、Ctrl+Alt+K で停止します。</value></data>
-  <data name="TwoWindows" xml:space="preserve"><value>再生ウィンドウ 2 個が接続中です。</value></data>
   <data name="SaveApply" xml:space="preserve"><value>保存して適用</value></data>
   <data name="OpenSettings" xml:space="preserve"><value>設定を開く</value></data>
   <data name="PotMenu" xml:space="preserve"><value>PotPlayer 先読み</value></data>
@@ -217,4 +214,35 @@
   <data name="PreferenceFailed" xml:space="preserve"><value>表示言語を保存できませんでした。</value></data>
   <data name="HourlyUsd" xml:space="preserve"><value>約 US${0:F2}–{1:F2}/時</value></data>
   <data name="HourlyCny" xml:space="preserve"><value>約 CN¥{0:F2}–{1:F2}/時</value></data>
+  <data name="Error_invalid-setting" xml:space="preserve"><value>{0} の値を確認してください。</value></data>
+  <data name="Error_unknown-settings" xml:space="preserve"><value>設定に不明な項目があります。</value></data>
+  <data name="Error_target-required" xml:space="preserve"><value>字幕の言語を選択してください。</value></data>
+  <data name="Error_timeline-number" xml:space="preserve"><value>タイムライン設定には数値を入力し、小数点にはピリオドを使用してください。</value></data>
+  <data name="Error_timeline-range" xml:space="preserve"><value>タイムライン設定に範囲外の値があります。</value></data>
+  <data name="Error_integer-setting" xml:space="preserve"><value>{0} には整数を入力してください。</value></data>
+  <data name="Error_bad-enhancements" xml:space="preserve"><value>翻訳コンテキスト設定を確認してください。</value></data>
+  <data name="Error_account-model" xml:space="preserve"><value>クラウドモデルで、この ChatGPT アカウントが利用できるモデルを選択してください。</value></data>
+  <data name="Error_model-unsupported" xml:space="preserve"><value>対応するローカルモデルを選択してください。</value></data>
+  <data name="Error_window-closed" xml:space="preserve"><value>選択した PotPlayer ウィンドウは閉じられました。</value></data>
+  <data name="Error_player-required" xml:space="preserve"><value>プレーヤーを選択してください。</value></data>
+  <data name="Error_folder-required" xml:space="preserve"><value>既存のフォルダーを選択してください。</value></data>
+  <data name="Error_player-missing" xml:space="preserve"><value>プレーヤーが見つかりません。インストール先または設定フォルダーを選択してください。</value></data>
+  <data name="Error_key-protection" xml:space="preserve"><value>Windows が API キーを読み取りまたは保護できません。再入力して保存してください。</value></data>
+  <data name="Error_key-settings" xml:space="preserve"><value>API キーの設定を確認してください。</value></data>
+  <data name="Error_key-single-line" xml:space="preserve"><value>{0} の API キーを空白を含まない 1 行で入力してください。</value></data>
+  <data name="Error_key-required" xml:space="preserve"><value>クラウドモデルで {0} の API キーを入力してください。</value></data>
+  <data name="Error_key-file-required" xml:space="preserve"><value>{0} の API キーファイルを選択してください。</value></data>
+  <data name="Error_key-file-invalid" xml:space="preserve"><value>ファイルから有効な {0} API キーを読み取れません。ファイルを選び直してください。</value></data>
+  <data name="Error_key-decryption" xml:space="preserve"><value>{0} API キーを復号できません。クラウドモデルで再入力してください。</value></data>
+  <data name="Error_key-https" xml:space="preserve"><value>リモートの {0} への API キー送信には HTTPS を使用してください。</value></data>
+  <data name="Error_bailian-url" xml:space="preserve"><value>Bailian コンソールの /compatible-mode/v1 で終わるベース URL を入力してください。</value></data>
+  <data name="Error_browser-unavailable" xml:space="preserve"><value>既定のブラウザーを開けません。</value></data>
+  <data name="Error_auth-timeout" xml:space="preserve"><value>ChatGPT のログインがタイムアウトしました。再試行してください。</value></data>
+  <data name="Error_auth-invalid" xml:space="preserve"><value>ChatGPT の認証を確認できません。再度ログインしてください。</value></data>
+  <data name="Error_auth-account" xml:space="preserve"><value>認証したアカウントが選択した ChatGPT アカウントと異なります。</value></data>
+  <data name="Error_auth-models" xml:space="preserve"><value>ChatGPT のモデル一覧を読み取れません。更新してください。</value></data>
+  <data name="Error_service-owned" xml:space="preserve"><value>字幕サービスを起動した別のアプリから先に停止してください。</value></data>
+  <data name="Error_service-busy" xml:space="preserve"><value>前のサービス操作が完了していません。少し待って再試行してください。</value></data>
+  <data name="Error_service-start" xml:space="preserve"><value>字幕サービスを起動できません。詳細設定で診断ログを有効にして再試行してください。</value></data>
+  <data name="Chinese" xml:space="preserve"><value>中国語</value></data>
 </root>

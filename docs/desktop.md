@@ -4,7 +4,7 @@
 
 ## Everyday use
 
-In **Subtitles → Language and display → Interface language**, choose **Follow Windows** (default) or a display language. An unsupported Windows display language falls back to English. The choice is saved for the current user and is independent of the video and subtitle languages.
+In **Subtitles → Language and display → Interface language**, choose **Follow Windows** (default) or a display language. Changes take effect immediately. The choices are Simplified Chinese, Traditional Chinese, Japanese, English, Korean, French, German and Spanish. Regional variants use the matching language (for example, French for Canada or Traditional Chinese for Hong Kong). Other Windows display languages fall back to English. The choice is saved for the current user and is independent of the video and subtitle languages.
 
 Open **Setup presets** on the **Subtitles** home page. The control starts collapsed. Once you select a preset, **Download now** fetches the missing models. **Manage models** opens the library with the required downloads marked. When the preset is ready, select **Apply preset**. The audio language, subtitle language, and bilingual setting carry over. Manual model combinations appear as **Custom**.
 
@@ -100,7 +100,7 @@ The launcher starts `UI/AheadSubs.exe`. WPF uses `python -m aheadsubs.desktop.br
 | `automation [mcp-enable\|mcp-disable\|cli-install\|cli-remove]` | Reads or updates MCP access, client configuration and CLI user-PATH registration. See [integrations](automation.md). |
 | `folder-tasks [save\|retry]` | Reads rules and queue summaries. `save` replaces the saved rules with `{rules: [...]}` from stdin. Optional `speech_model` and `translation_model` fields accept model choices such as `whisper-small` and `qwen-mt-flash`. Omit either field or use `null` to inherit. `retry` reads `{id: "rule ID"}` and requeues that rule's failed files. |
 
-Each invocation writes one JSON object with `ok` to stdout. Failure adds `error` and a nonzero exit code. External adapters should use HTTP v1 rather than this internal desktop interface.
+Each invocation writes one JSON object with `ok` to stdout. Failure adds `error` and a nonzero exit code. Known errors can also carry a stable `error_code` and an optional ordered list of `error_args` for localized display. Technical details supplied by Windows or external tools may appear in their original language. External adapters should use HTTP v1 rather than this internal desktop interface.
 
 The [Windows user data directory](windows.md) holds `settings.json`, models, caches and control tokens. Independent services with separate control tokens belong to their launcher. `AheadSubs.pyw` launches the app from source. `Subtitle Relay.pyw` continues to handle callbacks from existing player extensions.
 

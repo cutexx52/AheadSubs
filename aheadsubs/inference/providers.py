@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Protocol
 from urllib.parse import urlsplit
 
+from ..user_errors import UserInputError
 from .audio import SAMPLE_RATE, pcm16_samples
 from .errors import completion_text
 from .usage import measured_call
@@ -73,13 +74,13 @@ def provider_key(key_file, variable, provider):
         try:
             contents = Path(key_file).read_text(encoding="utf-8-sig")
         except (OSError, UnicodeError) as exc:
-            raise ValueError(f"无法读取 {provider} 密钥文件，请在云端模型页重新选择。") from exc
+            raise UserInputError("key-file-invalid", f"无法读取 {provider} 密钥文件，请在云端模型页重新选择。", variable) from exc
         match = re.search(r"sk-[A-Za-z0-9_-]+", contents)
         if match is None:
-            raise ValueError(f"密钥文件中没有找到 {provider} API Key，请在云端模型页重新选择。")
+            raise UserInputError("key-file-invalid", f"密钥文件中没有找到 {provider} API Key，请在云端模型页重新选择。", variable)
         key = match.group(0)
     if not key or not key.strip():
-        raise ValueError(f"请选择 {provider} 密钥文件，或设置 {variable}。")
+        raise UserInputError("key-required", f"请选择 {provider} 密钥文件，或设置 {variable}。", variable)
     return key.strip()
 
 
@@ -104,7 +105,7 @@ def qwen_mt_credentials(endpoint, key_file=None, *, api_key=None):
     }
     if (url.scheme != "https" or not official or url.path != "/compatible-mode/v1"
             or url.netloc != host or url.query or url.fragment):
-        raise ValueError("请在云端模型设置填写百炼控制台的 Base URL（以 /compatible-mode/v1 结尾）。")
+        raise UserInputError("bailian-url", "请在云端模型设置填写百炼控制台的 Base URL（以 /compatible-mode/v1 结尾）。")
     return endpoint, api_key or provider_key(key_file, "DASHSCOPE_API_KEY", "百炼")
 
 

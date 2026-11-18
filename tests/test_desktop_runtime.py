@@ -9,6 +9,20 @@ from unittest.mock import patch
 
 @unittest.skipUnless(os.name == "nt", "Desktop runtime requires Windows")
 class DiagnosticsTest(unittest.TestCase):
+    def test_invalid_key_returns_localization_arguments_without_the_key(self):
+        from contextlib import redirect_stdout
+        from aheadsubs.desktop import bridge
+
+        request = {"openai": {"mode": "direct", "value": "private invalid key"}}
+        output = io.StringIO()
+        with patch("sys.argv", ["bridge", "save-credentials"]), patch.object(bridge.runtime, "config", return_value={}), \
+                patch("sys.stdin", io.StringIO(json.dumps(request))), redirect_stdout(output):
+            self.assertEqual(bridge.main(), 1)
+        response = json.loads(output.getvalue())
+        self.assertEqual(response["error_code"], "key-single-line")
+        self.assertEqual(response["error_args"], ["openai"])
+        self.assertNotIn("private invalid key", output.getvalue())
+
     def test_user_data_is_shared_by_models_credentials_and_desktop(self):
         from aheadsubs.inference.chatgpt_auth import ChatGPTAccounts
         from aheadsubs.inference.qwen import paths

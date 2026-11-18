@@ -106,7 +106,7 @@ public partial class MainWindow : Window
         Activated += (_, _) =>
         {
             var previous = InterfaceLocale.Culture;
-            if (InterfaceLocale.Preference == InterfaceLocale.Automatic && InterfaceLocale.Apply(null)) RefreshLanguage(previous);
+            if (InterfaceLocale.Preference == InterfaceLocale.Automatic && InterfaceLocale.Apply()) RefreshLanguage(previous);
         };
         StatusDashboard.Enable(bridge);
         StateChanged += (_, _) => StatusDashboard.SetWindowActive(WindowState != WindowState.Minimized);
@@ -118,7 +118,8 @@ public partial class MainWindow : Window
 
     private void LoadTrayMenu()
     {
-        while (tray.ContextMenuStrip!.Items.Count > 0) tray.ContextMenuStrip.Items[0].Dispose();
+        while (tray.ContextMenuStrip!.Items.Count > 0)
+            tray.ContextMenuStrip.Items[0].Dispose();
         tray.ContextMenuStrip.Items.Add(UiText.Get("OpenSettings"), null, (_, _) => Dispatcher.Invoke(ShowSettings));
         var potMenu = new Forms.ToolStripMenuItem(UiText.Get("PotMenu"));
         potMenu.DropDownItems.Add(UiText.Get("LoadingWindows"));
@@ -332,7 +333,7 @@ public partial class MainWindow : Window
             models = result["models"] as JsonObject ?? new();
             serviceRunning = result["running"]?.GetValue<bool>() == true;
             serviceFailure = null;
-            sessionCount = result["active_sessions"]?.GetValue<int>();
+            sessionCount = result["active_sessions"] is JsonValue sessions && sessions.TryGetValue<int>(out var count) ? count : null;
             RenderServiceStatus();
             integrations = result["integrations"] as JsonObject ?? new();
             UpdatePlayers();
@@ -375,6 +376,7 @@ public partial class MainWindow : Window
 
     private void RenderServiceStatus()
     {
+        tray.Text = UiText.Get(serviceRunning switch { true => "TrayReady", false => "TrayStopped", null => "TrayConnecting" });
         if (serviceFailure is not null)
         {
             ServiceStatus.Text = UiText.Get("ConnectionFailed");
@@ -384,7 +386,6 @@ public partial class MainWindow : Window
         if (serviceRunning is not bool running) return;
         ServiceStatus.Text = UiText.Get(running ? "SubtitlesReady" : "SubtitlesStopped");
         ServiceDetail.Text = UiText.Get(running ? "HotkeyHint" : "StartHint");
-        tray.Text = UiText.Get(running ? "TrayReady" : "TrayStopped");
         ApplyButton.Content = UiText.Get(running ? "SaveApply" : "SaveStart");
         StopButton.IsEnabled = running && !busy;
         SessionStatus.Text = sessionCount is > 0 ? UiText.Get("Sessions", sessionCount.Value) : UiText.Get("NoSessions");
@@ -393,29 +394,29 @@ public partial class MainWindow : Window
 
     private void PopulateModels(string? selectedSpeech = null, string? selectedTranslation = null)
     {
-        string speech = selectedSpeech ?? (Setting("asr", "qwen") switch
+        string speech = Setting("asr", "qwen") switch
         { "qwen" => "qwen-" + Setting("qwen_size", "0.6b"), "local" => "whisper-small",
-          "dashscope" => Setting("dashscope_asr_model", DashScopeSpeechModels[0].Value), var other => other });
-        string translation = selectedTranslation ?? (Setting("mt", "local") switch
-        { "local" => "nllb", "qwen-mt" => Setting("qwen_mt_model", "qwen-mt-flash"), "openai" => Setting("llm_model", "gpt-4.1-mini"), var other => other });
+          "dashscope" => Setting("dashscope_asr_model", DashScopeSpeechModels[0].Value), var other => other };
+        string translation = Setting("mt", "local") switch
+        { "local" => "nllb", "qwen-mt" => Setting("qwen_mt_model", "qwen-mt-flash"), "openai" => Setting("llm_model", "gpt-4.1-mini"), var other => other };
         var speechOptions = LocalModels.Where(m => m.Value != "nllb" && Installed(m.Value))
             .Select(m => new Choice(UiText.Get("LocalModel", m.Label), m.Value)).ToList();
         speechOptions.Add(new(UiText.Get("CloudWhisper"), "openai"));
         speechOptions.AddRange(DashScopeSpeechModels.Select(CloudChoice));
-        if (speech == "compatible") speechOptions.Add(new(UiText.Get("ConfiguredSpeech"), "compatible"));
+        if (speech == "compatible" || selectedSpeech == "compatible") speechOptions.Add(new(UiText.Get("ConfiguredSpeech"), "compatible"));
         SpeechModel.ItemsSource = speechOptions;
-        SpeechModel.SelectedValue = speech;
+        SpeechModel.SelectedValue = selectedSpeech ?? speech;
         var translationOptions = new List<Choice>();
         if (Installed("nllb")) translationOptions.Add(new(UiText.Get("LocalNllb"), "nllb"));
         translationOptions.AddRange(DashScopeTranslationModels.Select(CloudChoice));
         translationOptions.Add(new(UiText.Get("CloudGpt"), "gpt-4.1-mini"));
         translationOptions.Add(new(UiText.Get("CloudChatGpt"), "chatgpt"));
         translationOptions.Add(new(UiText.Get("CloudModel", miniMaxModel), "minimax"));
-        if (translation.Length > 0 && translation != "compatible" && !translationOptions.Any(m => m.Value == translation) && (Setting("mt") == "openai" || selectedTranslation is not null))
+        if (Setting("mt") == "openai" && !translationOptions.Any(m => m.Value == translation))
             translationOptions.Add(new(UiText.Get("CloudOpenAi", translation), translation));
-        if (translation == "compatible") translationOptions.Add(new(UiText.Get("ConfiguredTranslation"), "compatible"));
+        if (translation == "compatible" || selectedTranslation == "compatible") translationOptions.Add(new(UiText.Get("ConfiguredTranslation"), "compatible"));
         TranslationModel.ItemsSource = translationOptions;
-        TranslationModel.SelectedValue = translation;
+        TranslationModel.SelectedValue = selectedTranslation ?? translation;
         UpdateFolderModelChoices(Selected(FolderRuleSpeechModel), Selected(FolderRuleTranslationModel));
         UpdateContext();
     }
@@ -729,6 +730,7 @@ public partial class MainWindow : Window
     internal void RenderPreviews(string directory)
     {
         if (!previewMode) throw new InvalidOperationException("Preview requires fixture mode.");
+        VerifyLanguageSwitch();
         VerifyControls();
         VerifyInspection();
         Directory.CreateDirectory(directory);
@@ -944,7 +946,7 @@ public partial class MainWindow : Window
             string model = Selected(ChatGptModel);
             LoadChatGptAccounts(result["accounts"] as JsonArray ?? new(),
                 result["selected"]?.ToString() ?? account ?? "", model);
-            ActionStatus.Text = result["notice"]?.ToString() ?? (command == "chatgpt-logout"
+            ActionStatus.Text = EngineBridge.LocalizedError(result["notice_code"]?.ToString()) ?? result["notice"]?.ToString() ?? (command == "chatgpt-logout"
                 ? result["revoked"]?.GetValue<bool>() == true ? UiText.Get("SignedOut") : UiText.Get("SignedOutLocal")
                 : ChatGptStatus.Text);
         }

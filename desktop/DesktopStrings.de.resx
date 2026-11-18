@@ -125,9 +125,6 @@
   <data name="ChatGptProvider" xml:space="preserve"><value>ChatGPT-Abo · OAuth</value></data>
   <data name="CompatibleProvider" xml:space="preserve"><value>Eigener kompatibler Endpunkt · API-Schlüssel</value></data>
   <data name="TrayConnecting" xml:space="preserve"><value>AheadSubs · verbindet</value></data>
-  <data name="ServiceReady" xml:space="preserve"><value>Dienst bereit</value></data>
-  <data name="PreviewPlayerHint" xml:space="preserve"><value>In PotPlayer startet Ctrl+Alt+J die Übersetzung, Ctrl+Alt+K beendet sie.</value></data>
-  <data name="TwoWindows" xml:space="preserve"><value>Zwei Wiedergabefenster verbunden.</value></data>
   <data name="SaveApply" xml:space="preserve"><value>Speichern und anwenden</value></data>
   <data name="OpenSettings" xml:space="preserve"><value>Einstellungen öffnen</value></data>
   <data name="PotMenu" xml:space="preserve"><value>PotPlayer-Vorauslesen</value></data>
@@ -217,4 +214,35 @@
   <data name="PreferenceFailed" xml:space="preserve"><value>Oberflächensprache konnte nicht gespeichert werden.</value></data>
   <data name="HourlyUsd" xml:space="preserve"><value>≈ {0:F2}–{1:F2} USD/h</value></data>
   <data name="HourlyCny" xml:space="preserve"><value>≈ {0:F2}–{1:F2} CNY/h</value></data>
+  <data name="Error_invalid-setting" xml:space="preserve"><value>Prüfen Sie den Wert für {0}.</value></data>
+  <data name="Error_unknown-settings" xml:space="preserve"><value>Die Einstellungen enthalten eine unbekannte Option.</value></data>
+  <data name="Error_target-required" xml:space="preserve"><value>Wählen Sie eine Untertitelsprache.</value></data>
+  <data name="Error_timeline-number" xml:space="preserve"><value>Geben Sie für Zeiteinstellungen Zahlen mit Punkt als Dezimaltrennzeichen ein.</value></data>
+  <data name="Error_timeline-range" xml:space="preserve"><value>Ein oder mehrere Zeiteinstellungen liegen außerhalb des zulässigen Bereichs.</value></data>
+  <data name="Error_integer-setting" xml:space="preserve"><value>Geben Sie für {0} eine ganze Zahl ein.</value></data>
+  <data name="Error_bad-enhancements" xml:space="preserve"><value>Prüfen Sie die Einstellungen für den Übersetzungskontext.</value></data>
+  <data name="Error_account-model" xml:space="preserve"><value>Wählen Sie unter „Cloudmodelle“ ein für dieses ChatGPT-Konto verfügbares Modell.</value></data>
+  <data name="Error_model-unsupported" xml:space="preserve"><value>Wählen Sie ein unterstütztes lokales Modell.</value></data>
+  <data name="Error_window-closed" xml:space="preserve"><value>Das gewählte PotPlayer-Fenster wurde geschlossen.</value></data>
+  <data name="Error_player-required" xml:space="preserve"><value>Wählen Sie einen Player.</value></data>
+  <data name="Error_folder-required" xml:space="preserve"><value>Wählen Sie einen vorhandenen Ordner.</value></data>
+  <data name="Error_player-missing" xml:space="preserve"><value>Player nicht gefunden. Wählen Sie seinen Installations- oder Konfigurationsordner.</value></data>
+  <data name="Error_key-protection" xml:space="preserve"><value>Windows konnte den API-Schlüssel nicht lesen oder schützen. Geben Sie ihn erneut ein und speichern Sie ihn.</value></data>
+  <data name="Error_key-settings" xml:space="preserve"><value>Prüfen Sie die API-Schlüsseleinstellungen.</value></data>
+  <data name="Error_key-single-line" xml:space="preserve"><value>Geben Sie den API-Schlüssel für {0} in einer Zeile ohne Leerzeichen ein.</value></data>
+  <data name="Error_key-required" xml:space="preserve"><value>Geben Sie unter „Cloudmodelle“ den API-Schlüssel für {0} ein.</value></data>
+  <data name="Error_key-file-required" xml:space="preserve"><value>Wählen Sie eine API-Schlüsseldatei für {0}.</value></data>
+  <data name="Error_key-file-invalid" xml:space="preserve"><value>Kein gültiger API-Schlüssel für {0} lesbar. Wählen Sie die Schlüsseldatei erneut.</value></data>
+  <data name="Error_key-decryption" xml:space="preserve"><value>API-Schlüssel für {0} nicht entschlüsselbar. Geben Sie ihn unter „Cloudmodelle“ erneut ein.</value></data>
+  <data name="Error_key-https" xml:space="preserve"><value>Verwenden Sie für API-Schlüssel am entfernten Endpunkt {0} HTTPS.</value></data>
+  <data name="Error_bailian-url" xml:space="preserve"><value>Geben Sie die Basis-URL aus der Bailian-Konsole mit der Endung /compatible-mode/v1 ein.</value></data>
+  <data name="Error_browser-unavailable" xml:space="preserve"><value>Standardbrowser konnte nicht geöffnet werden.</value></data>
+  <data name="Error_auth-timeout" xml:space="preserve"><value>Zeitüberschreitung bei der ChatGPT-Anmeldung. Versuchen Sie es erneut.</value></data>
+  <data name="Error_auth-invalid" xml:space="preserve"><value>ChatGPT-Autorisierung konnte nicht geprüft werden. Melden Sie sich erneut an.</value></data>
+  <data name="Error_auth-account" xml:space="preserve"><value>Das autorisierte Konto entspricht nicht dem gewählten ChatGPT-Konto.</value></data>
+  <data name="Error_auth-models" xml:space="preserve"><value>ChatGPT-Modellliste konnte nicht gelesen werden. Aktualisieren Sie sie.</value></data>
+  <data name="Error_service-owned" xml:space="preserve"><value>Dieser Untertiteldienst wurde von einem anderen Programm gestartet. Stoppen Sie ihn zuerst dort.</value></data>
+  <data name="Error_service-busy" xml:space="preserve"><value>Der vorherige Dienstvorgang ist noch nicht fertig. Versuchen Sie es gleich erneut.</value></data>
+  <data name="Error_service-start" xml:space="preserve"><value>Untertiteldienst konnte nicht starten. Aktivieren Sie die Diagnoseprotokolle und versuchen Sie es erneut.</value></data>
+  <data name="Chinese" xml:space="preserve"><value>Chinesisch</value></data>
 </root>
