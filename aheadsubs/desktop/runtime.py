@@ -5,7 +5,7 @@ import secrets
 import subprocess
 import sys
 import time
-from contextlib import nullcontext
+from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from urllib.error import URLError
 from urllib.request import ProxyHandler, build_opener
@@ -139,6 +139,13 @@ def lock_service(stream, wait=False):
             if time.monotonic() >= deadline:
                 raise RuntimeError("等待上一项服务操作超时。")
             time.sleep(0.25)
+
+
+@contextmanager
+def lock_model_use(directory):
+    with (directory / "model-use.lock").open("a+b") as lock:
+        lock_service(lock, wait=True)
+        yield
 
 
 def background_stop():

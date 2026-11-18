@@ -2,7 +2,7 @@
 
 [English](automation.md) | [简体中文](automation.zh-CN.md)
 
-AheadSubs exposes the same operations, argument validation, and error codes over CLI and MCP. Both use the subtitle service's active model profile and cache. Start that service from the desktop Translation page or [run it independently](server.md). The default port is `8769`. For a different local port, append `--port <port>` to the CLI command or MCP launch arguments.
+AheadSubs exposes the same operations, argument validation, and error codes over CLI and MCP. Both use the subtitle service's active model profile and cache. Start that service from the desktop Subtitles page or [run it independently](server.md). The default port is `8769`. For a different local port, append `--port <port>` to the CLI command or MCP launch arguments.
 
 ## Windows desktop setup
 

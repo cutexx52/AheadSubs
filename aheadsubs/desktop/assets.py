@@ -1,10 +1,11 @@
 import os
 import shutil
 import winreg
+from contextlib import ExitStack
 from dataclasses import replace
 from pathlib import Path
 
-from .runtime import DATA, LAUNCHER, PORT, PYTHON, ROOT, QWEN, config, lock_service, save_config, service_health
+from .runtime import DATA, LAUNCHER, PORT, PYTHON, ROOT, QWEN, config, lock_model_use, lock_service, save_config, service_health
 
 MODELS = {
     "qwen-0.6b": "[本地] Qwen3-ASR 0.6B",
@@ -70,8 +71,9 @@ def active_models(health):
 
 def uninstall_model(model_id, label):
     DATA.mkdir(parents=True, exist_ok=True)
-    with (DATA / "starting.lock").open("a+b") as startup:
+    with (DATA / "starting.lock").open("a+b") as startup, ExitStack() as locks:
         lock_service(startup, wait=True)
+        locks.enter_context(lock_model_use(DATA))
         if model_id in active_models(service_health()):
             raise ModelRemovalError("uninstall-active", "请先切换模型或停止字幕服务，再卸载这个模型。")
         if label in QWEN_LABELS:

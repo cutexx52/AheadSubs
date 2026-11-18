@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Markup;
@@ -52,15 +53,49 @@ public partial class MainWindow
         SetFolderTasks(JsonNode.Parse("""
             {"running":true,
              "rules":[{"id":"preview","folder":"D:\\Media\\Series","name":"Series · 日本語",
-                "source":"ja","target":"zh","bilingual":true,"suffix":".zh"}],
+                "source":"ja","target":"zh","bilingual":true,"suffix":".zh", "translation_model":"nllb"}],
              "summary":{"preview":{"counts":{"waiting":3,"running":1,"done":12},
                 "items":[{"path":"D:\\Media\\Series\\第12話.mkv","state":"running"}]}}}
             """)!.AsObject(), true);
         NewFolderRuleButton.IsEnabled = true;
+        FolderSubtitleOptions.IsExpanded = true;
         if (FolderRulePath.Text != @"D:\Media\Series" || Selected(FolderRuleTarget) != "zh"
             || Selected(FolderRuleStyle) != "bilingual" || FolderQueueItems.Items.Count != 1
+            || Selected(FolderRuleSpeechModel) != "" || Selected(FolderRuleTranslationModel) != "nllb"
             || FolderQueueStatus.Text != FolderFormat("Counts", 3, 1, 12, 0, 0))
             throw new InvalidOperationException("Folder task desktop preview failed to load the rule and queue.");
+        bool chinese = AutomationText.Culture.Name == "zh-CN";
+        if (!Equals(TranslationTab.Header, chinese ? "字幕" : "Subtitles")
+            || TranslationTitle.Text != (chinese ? "字幕设置" : "Subtitle settings")
+            || !Equals(InspectTab.Header, chinese ? "字幕库" : "Subtitle library")
+            || InspectTitle.Text != (chinese ? "字幕库" : "Subtitle library"))
+            throw new InvalidOperationException("Subtitle page labels failed to load for the preview locale.");
+    }
+
+    private void UpdateFolderModelChoices(string speech, string translation)
+    {
+        var preferred = new Choice(FolderText("Default"), "");
+        Choice LocalChoice(Choice model) => Installed(model.Value) ? model
+            : model with { Label = FolderFormat("ModelNotInstalled", model.Label) };
+        Choice[] speechChoices = [preferred,
+            .. LocalModels.Where(model => model.Value != "nllb").Select(LocalChoice),
+            new("OpenAI Whisper", "openai"), .. DashScopeSpeechModels,
+            new(FolderText("CustomModel"), "compatible")];
+        FolderRuleSpeechModel.ItemsSource = speechChoices;
+        var translations = new List<Choice> { preferred, LocalChoice(LocalModels.First(model => model.Value == "nllb")) };
+        translations.AddRange(DashScopeTranslationModels);
+        translations.Add(new("OpenAI GPT-4.1 mini", "gpt-4.1-mini"));
+        translations.Add(new(FolderText("ChatGptModel"), "chatgpt"));
+        translations.Add(new(miniMaxModel, "minimax"));
+        translations.Add(new(FolderText("CustomModel"), "compatible"));
+        if (Setting("mt") == "openai" && Setting("llm_model") is { } openAiModel && openAiModel != "gpt-4.1-mini"
+            && Regex.IsMatch(openAiModel, @"\A[A-Za-z0-9][A-Za-z0-9_.:-]{0,255}\z"))
+            translations.Add(new("OpenAI " + openAiModel, "openai:" + openAiModel));
+        if (translation.StartsWith("openai:", StringComparison.Ordinal) && !translations.Any(model => model.Value == translation))
+            translations.Add(new("OpenAI " + translation[7..], translation));
+        FolderRuleTranslationModel.ItemsSource = translations;
+        FolderRuleSpeechModel.SelectedValue = speech;
+        FolderRuleTranslationModel.SelectedValue = translation;
     }
 
     private async Task SelectFolderTasksPage()
@@ -170,6 +205,7 @@ public partial class MainWindow
         FolderRuleTypes.Text = Read("extensions", "mkv, mp4, mov, avi, webm, m4v, ts, mp3, m4a, wav, flac, ogg, opus");
         FolderRuleMin.Text = Size("min_bytes");
         FolderRuleMax.Text = Size("max_bytes");
+        UpdateFolderModelChoices(Read("speech_model"), Read("translation_model"));
         FolderRuleSource.SelectedValue = Read("source");
         FolderRuleTarget.SelectedValue = Read("target");
         FolderRuleAudio.Text = ((rule["audio"]?.GetValue<int>() ?? 0) + 1).ToString(AutomationText.Culture);
@@ -235,6 +271,8 @@ public partial class MainWindow
                 ["enabled"] = FolderRuleEnabled.IsChecked == true, ["recursive"] = FolderRuleRecursive.IsChecked == true,
                 ["include_existing"] = FolderRuleExisting.IsChecked == true, ["pattern"] = FolderRuleRegex.Text,
                 ["extensions"] = FolderRuleTypes.Text, ["min_bytes"] = minimum, ["max_bytes"] = maximum,
+                ["speech_model"] = Optional(Selected(FolderRuleSpeechModel)),
+                ["translation_model"] = Optional(Selected(FolderRuleTranslationModel)),
                 ["source"] = Optional(Selected(FolderRuleSource)), ["target"] = Optional(Selected(FolderRuleTarget)),
                 ["audio"] = audio - 1, ["bilingual"] = Selected(FolderRuleStyle) switch
                 { "bilingual" => JsonValue.Create(true), "translated" => JsonValue.Create(false), _ => null },

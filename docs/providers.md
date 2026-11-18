@@ -79,4 +79,4 @@ Defined in `aheadsubs/inference/providers.py`. Input is 16 kHz mono WAV.
 
 Keep text/time pairing, return actionable errors, and include output-affecting models/options in cache identity, never keys. Test with substitutes implementing these interfaces without models/credentials.
 
-Providers share `inference.errors.ProviderError`. Normalize structured endpoint errors at the boundary. Explicit moderation codes or `content_filter` completion map to `content_blocked`; empty output, request errors and network failures without that evidence retain their own categories. Inspection preserves original text/reason; blocked cache tasks skip automatic retries.
+Providers share `inference.errors.ProviderError`. Normalize structured endpoint errors at the boundary. Explicit moderation codes or `content_filter` completion map to `content_blocked`; empty output, request errors and network failures without that evidence retain their own categories. The subtitle library preserves original text and the reason. Blocked cache tasks skip automatic retries.

@@ -4,7 +4,7 @@
 
 ## Everyday use
 
-Open **Setup presets** on the translation home page. The control starts collapsed. Once you select a preset, **Download now** fetches the missing models. **Manage models** opens the library with the required downloads marked. When the preset is ready, select **Apply preset**. The audio language, subtitle language, and bilingual setting carry over. Manual model combinations appear as **Custom**.
+Open **Setup presets** on the **Subtitles** home page. The control starts collapsed. Once you select a preset, **Download now** fetches the missing models. **Manage models** opens the library with the required downloads marked. When the preset is ready, select **Apply preset**. The audio language, subtitle language, and bilingual setting carry over. Manual model combinations appear as **Custom**.
 
 | Preset | Speech recognition | Translation |
 | --- | --- | --- |
@@ -17,7 +17,7 @@ The GPU presets check for a Vulkan device. The high-performance preset also chec
 
 **Local models** groups speech recognition, translation, and voice activity detection. Whisper and NLLB have separate CPU/CUDA selectors. Use the main **Save and apply** action to apply device changes. Existing configurations use their previous device setting until a per-model setting is saved. Stop the subtitle service or switch models before uninstalling a model in use. Uninstalling Whisper or NLLB removes its repository from the shared Hugging Face cache. Uninstalling one Qwen3-ASR model keeps the shared aligner and Vulkan runtime. Silero is bundled, and FSMN is prepared when selected in Advanced settings.
 
-Under Cloud models (云端模型), select a provider and choose a key file (密钥文件) or direct entry (直接填写). Direct keys use current-user [DPAPI](https://learn.microsoft.com/en-us/windows/win32/api/dpapi/nf-dpapi-cryptprotectdata). File mode saves the path. To remove a direct key, switch to Default/environment (默认（环境变量）) and save. Alibaba recognition/translation share a key and regional endpoint; custom ASR/translation may use separate keys. Remote endpoints require HTTPS for credentials; loopback supports HTTP. Save credentials, then apply translation settings to change the service.
+Under Cloud models (云端模型), select a provider and choose a key file (密钥文件) or direct entry (直接填写). Direct keys use current-user [DPAPI](https://learn.microsoft.com/en-us/windows/win32/api/dpapi/nf-dpapi-cryptprotectdata). File mode saves the path. To remove a direct key, switch to Default/environment (默认（环境变量）) and save. Alibaba recognition/translation share a key and regional endpoint; custom ASR/translation may use separate keys. Remote endpoints require HTTPS for credentials; loopback supports HTTP. Save credentials, then apply your settings on the **Subtitles** page to change the service.
 
 ChatGPT subscription · OAuth (ChatGPT 订阅 · OAuth) opens browser authorization for text translation. MiniMax accepts M Plan and pay-as-you-go keys. See [providers](providers.md).
 
@@ -27,20 +27,22 @@ Settings are single-instance. Closing hides the window; double-click the tray to
 
 ## Automatic subtitle tasks
 
-Use **Automatic tasks** to watch multiple folders. Each rule chooses whether to include subfolders, filename regex, file extensions and size limits, and a subtitle configuration for the source language, target language, audio track and translated or bilingual SRT. Tasks use the recognition and translation models currently saved on the translation page. The default destination is beside the media; a rule can instead choose an output folder. The output uses the media stem and a configurable suffix followed by `.srt`. Existing subtitle files are preserved.
+Use **Automatic tasks** to watch multiple folders. Each rule has its own file filters and subtitle configuration. The default destination is beside the media. The filename uses the media stem, an optional suffix, and `.srt`. Existing subtitle files are preserved.
 
 1. Open **Automatic tasks → Add rule** and choose a folder. Enable **Include subfolders** to scan its tree. Leave **Include files already present** off to start with new or modified files, or turn it on to queue the files already there.
 2. Under **File filters**, enter a case-insensitive filename regex if needed, for example `^Episode.*\.mkv$`. A file must also have an allowed extension and fall within both inclusive size limits. Sizes use MiB. Leave the maximum blank for no upper limit. A regex timeout pauses scanning that folder until a later scan can match successfully.
-3. Under **Subtitle configuration**, select the source language, subtitle language, audio track (numbered from 1), and SRT content. A blank output folder writes beside the media. A separate output folder keeps the watched folder's relative subdirectory structure. For example, a suffix of `.en` writes `Episode 01.en.srt`. When two inputs map to the same output, the first SRT is kept.
+3. Under **Subtitle configuration**, select the speech recognition and subtitle translation models independently, along with the languages, audio track (numbered from 1), and SRT content. **Use global settings** inherits the running service's model for that stage and is the default for new and existing rules. A separate output folder keeps the watched folder's relative subdirectory structure. For example, a suffix of `.en` writes `Episode 01.en.srt`. When two inputs map to the same output, the first SRT is kept.
 4. Select **Save rule** and start the service with the main **Save and start** button if needed. The default idle threshold of 0 waits for AheadSubs playback sessions, text translations, and manual regenerations to finish. Set a positive number to additionally require that many minutes without Windows keyboard or mouse input.
 
 The task worker runs while the desktop-managed subtitle service is running, including when the window is hidden in the tray. It checks folders about every 10 seconds between jobs and requires an unchanged size and file timestamp across two scans before generating. It processes one file and one chunk at a time. Once playback starts, the worker stops queuing new chunks and lets the in-flight chunk finish. The task resumes from cached chunks once idle. Pausing a rule or stopping the service retains the queue. Changes to an existing rule's output options requeue files previously accepted by that rule. Existing SRTs are always preserved.
 
-The selected rule shows waiting, running, completed, skipped, and failed counts. Use **Retry failed files** after fixing a media or provider error. The worker stores the queue and rule settings in `folder-tasks.sqlite3` and `folder-tasks.json` in the app's local data folder. Folder scanning skips symbolic links and directory junctions. The worker can use cloud models configured in the app, so only enable rules for media you intend to process with those providers.
+Install selected local models under **Local models**. Cloud choices use the app's saved credentials and provider settings, including the configured ChatGPT account/model or custom API endpoint. Apply provider setting changes on **Subtitles**. For example, a Japanese series rule can choose Whisper Small with Qwen-MT Flash while a course folder inherits both models. Files processed with different model combinations have separate cached subtitle versions. To generate a new SRT beside an existing one, use a different suffix or output folder.
 
-## Subtitle inspection
+The selected rule shows waiting, running, completed, skipped, and failed counts. Use **Retry failed files** after fixing missing models, provider settings, or media errors. The worker stores the queue and rule settings in `folder-tasks.sqlite3` and `folder-tasks.json` in the app's local data folder. Folder scanning skips symbolic links and directory junctions. Only enable cloud recognition or translation for media you intend to process with those providers.
 
-Open **Subtitle inspection** to search by file name or path and filter by primary source language. History groups records by their stored path and opens the newest version by default. You can switch to an older version. Moving a file creates a new entry. Older records with only a file name stay separate until a playback with the same cache settings records their path.
+## Subtitle library
+
+Open **Subtitle library** to search by file name or path and filter by primary source language. History groups records by their stored path and opens the newest version by default. You can switch to an older version. Moving a file creates a new entry. Older records with only a file name stay separate until a playback with the same cache settings records their path.
 
 Coverage is the share of the selected version's media duration that has been processed, including silence. It is unknown when duration is unavailable. The primary source language is based on the duration of the recognized cues with a reported language. The filter uses the most recent version with a reported language for each file. The listed subtitle languages reflect the available target subtitles across versions of the file.
 
@@ -94,7 +96,7 @@ The launcher starts `UI/AheadSubs.exe`. WPF uses `python -m aheadsubs.desktop.br
 | `inspect-regenerate <key>` | Queues regeneration on the desktop-managed service and returns the new version's `key`. |
 | `inspect-srt <key>` | Reads `{"output":"…"}` from stdin and returns the `subtitle` path. A `null` output writes a copy for viewing in the cache. |
 | `automation [mcp-enable\|mcp-disable\|cli-install\|cli-remove]` | Reads or updates MCP access, client configuration and CLI user-PATH registration. See [integrations](automation.md). |
-| `folder-tasks [save\|retry]` | Reads rules and queue summaries. `save` replaces the saved rules with `{rules: [...]}` from stdin; `retry` reads `{id: "rule ID"}` and requeues that rule's failed files. |
+| `folder-tasks [save\|retry]` | Reads rules and queue summaries. `save` replaces the saved rules with `{rules: [...]}` from stdin. Optional `speech_model` and `translation_model` fields accept model choices such as `whisper-small` and `qwen-mt-flash`. Omit either field or use `null` to inherit. `retry` reads `{id: "rule ID"}` and requeues that rule's failed files. |
 
 Each invocation writes one JSON object with `ok` to stdout. Failure adds `error` and a nonzero exit code. External adapters should use HTTP v1 rather than this internal desktop interface.
 

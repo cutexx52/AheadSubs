@@ -4,14 +4,20 @@ import os
 import shutil
 import tempfile
 import unittest
+from argparse import Namespace
+from contextlib import contextmanager
+from functools import partial
 from pathlib import Path
 from unittest.mock import Mock, patch
 from uuid import uuid4
 
 from pydantic import ValidationError
 
+from aheadsubs.automation import OperationError, generate_subtitles
 from aheadsubs.folder_tasks import FolderWorker, RuleSet, TaskFiles, WatchRule
-from aheadsubs.server.engine import Playback, Relay
+from aheadsubs.inference.providers import Cue
+from aheadsubs.server.engine import Playback, Relay, SubtitlePipeline, TranslationSettings
+from aheadsubs.server.protocol import playback_from_json
 
 
 class FolderTaskTest(unittest.TestCase):
@@ -196,19 +202,96 @@ class FolderTaskTest(unittest.TestCase):
 
     def test_invalid_rule_input_is_rejected(self):
         for invalid in ({"pattern": "["}, {"folder": "./media"}, {"extensions": "srt"},
-                        {"suffix": "/output"}, {"min_bytes": 2, "max_bytes": 1}):
+                        {"suffix": "/output"}, {"min_bytes": 2, "max_bytes": 1},
+                        {"speech_model": "nllb"}, {"translation_model": "whisper-small"},
+                        {"translation_model": "openai:https://example.com"}):
             with self.subTest(invalid=invalid), self.assertRaises(ValidationError):
                 WatchRule.model_validate({**self.rule.model_dump(), **invalid})
+
+    def test_rule_pipeline_isolated_from_other_rules_and_playback_cache(self):
+        path = self.create("film.mp4")
+        default_asr = Mock()
+        default_asr.recognize.return_value = "ja", [Cue(0, 1, "global speech")]
+        other_asr = Mock()
+        other_asr.recognize.return_value = "ja", [Cue(0, 1, "rule speech")]
+        default_mt = Mock()
+        default_mt.translate.side_effect = lambda lines, source, target: ["global: " + line for line in lines]
+        other_mt = Mock()
+        other_mt.translate.side_effect = lambda lines, source, target: ["rule: " + line for line in lines]
+        relay = Relay(self.root / "cache", default_asr, default_mt, "global", chunk=10)
+        self.addCleanup(relay.close)
+        opened = []
+
+        @contextmanager
+        def open_pipeline(rule):
+            opened.append(rule.suffix)
+            yield SubtitlePipeline(other_asr if rule.speech_model else default_asr,
+                                   other_mt if rule.translation_model else default_mt,
+                                   [rule.speech_model, rule.translation_model])
+            self.assertTrue(relay.background_drained.is_set())
+
+        speech = self.rule.model_copy(update={"include_existing": True, "suffix": ".asr", "speech_model": "openai"})
+        translation = speech.model_copy(update={"id": uuid4().hex, "suffix": ".mt", "speech_model": None,
+                                                "translation_model": "qwen-mt-flash"})
+        inherited = {key: value for key, value in self.rule.model_dump().items()
+                     if key not in {"speech_model", "translation_model"}}
+        inherited.update(id=uuid4().hex, include_existing=True)
+        self.files.directory.mkdir()
+        self.files.settings.write_text(json.dumps({"rules": [inherited, speech.model_dump(), translation.model_dump()]}),
+                                       encoding="utf-8")
+        rules = self.files.load().rules
+        worker = FolderWorker(self.files, relay, {"source": "ja", "target": "zh"}, self.idle, open_pipeline)
+
+        def generate_with_timeout(client, args, checkpoint):
+            return generate_subtitles(client, args.model_copy(update={"timeout": 5}), checkpoint)
+
+        with self.files.connect() as db, patch("aheadsubs.server.engine.extract_audio", return_value=bytes(32044)), \
+                patch("aheadsubs.folder_tasks.generate_subtitles", side_effect=generate_with_timeout):
+            worker.scan_rules(db, rules, 0)
+            worker.scan_rules(db, rules, 10)
+            for _ in rules:
+                self.assertTrue(worker.next_job(db, rules))
+            self.assertFalse(worker.next_job(db, rules))
+
+        expected = {".srt": "global: global speech", ".asr.srt": "global: rule speech", ".mt.srt": "rule: global speech"}
+        for suffix, subtitle in expected.items():
+            self.assertIn(subtitle, path.with_suffix(suffix).read_text(encoding="utf-8"))
+        self.assertCountEqual(opened, [".asr", ".mt"])
+        playback = playback_from_json({"path": str(path), "position": 0, "duration": 9, "source": "ja"}, {})
+        result = relay.update("player", playback)
+        self.assertEqual(result["ready_ahead"], 9)
+        self.assertIn(expected[".srt"], Path(result["subtitle"]).read_text(encoding="utf-8"))
+
+    def test_model_change_requeues_but_does_not_open_model_for_existing_srt(self):
+        rule = self.rule.model_copy(update={"include_existing": True})
+        self.configure(rule)
+        media = self.create("film.mp4")
+        worker = self.worker
+        worker.open_pipeline = Mock(side_effect=AssertionError("existing SRT must be checked first"))
+        with self.files.connect() as db:
+            worker.scan(db, rule, 0)
+            worker.scan(db, rule, 10)
+            self.assertTrue(worker.next_job(db, [rule]))
+            previous = media.with_suffix(".srt").read_bytes()
+            changed = rule.model_copy(update={"translation_model": "nllb"})
+            self.configure(changed)
+            worker.scan(db, changed, 20)
+            self.assertTrue(worker.next_job(db, [changed]))
+            self.assertEqual(self.states(changed), {"skipped": 1})
+            self.assertEqual(media.with_suffix(".srt").read_bytes(), previous)
+            worker.open_pipeline.assert_not_called()
 
     def test_real_relay_preempts_the_background_session_and_hides_it_from_player_status(self):
         path = self.create("film.mp4")
         relay = Relay(self.root / "cache", None, None, "test")
         self.addCleanup(relay.close)
         playback = Playback(path, 0, duration=8)
+        alternate = SubtitlePipeline(None, None, "rule")
         with relay.lock:
-            self.assertIsNotNone(relay.update_background("automatic", playback))
+            background = relay.update_background("automatic", playback, alternate)
             self.assertEqual(relay.active_sessions(), 0)
-            relay.update("player", playback)
+            player = relay.update("player", playback)
+            self.assertNotEqual(background["subtitle_generation"], player["subtitle_generation"])
             self.assertEqual(relay.active_sessions(), 1)
             self.assertIsNone(relay.update_background("automatic", playback))
             relay.drop("player")
@@ -230,10 +313,65 @@ class FolderTaskTest(unittest.TestCase):
         from aheadsubs.automation import OperationError
 
         with patch.object(runtime, "DATA", self.files.directory), patch.object(runtime, "healthy", return_value=False):
-            data = {"rules": [self.rule.model_dump()]}
+            data = {"rules": [dict(self.rule.model_dump(), speech_model="qwen-1.7b", translation_model="nllb")]}
             with patch("sys.stdin", io.StringIO(json.dumps(data, ensure_ascii=False))):
                 self.assertEqual(run_command("folder-tasks", "save")["rules"], data["rules"])
             data["rules"][0]["pattern"] = "["
             with patch("sys.stdin", io.StringIO(json.dumps(data))), self.assertRaises(OperationError):
                 run_command("folder-tasks", "save")
             self.assertEqual(run_command("folder-tasks")["rules"][0]["pattern"], "")
+
+    @unittest.skipUnless(os.name == "nt", "Windows desktop model configuration")
+    def test_desktop_pipeline_uses_selected_provider_and_saved_settings(self):
+        from aheadsubs.__main__ import build_folder_pipeline
+        from aheadsubs.desktop import assets, runtime
+        from aheadsubs.desktop.folder_tasks import folder_pipeline
+        from aheadsubs.inference.audio import Segmenter, Segmentation
+
+        self.files.directory.mkdir()
+        args = Namespace(asr="local", mt="local", ast=False, device="cpu", asr_device=None, mt_device=None,
+                         whisper_model="small", nllb_model="nllb", llm_model="gpt-4.1-mini", llm_url="",
+                         qwen_mt_model="qwen-mt-flash", qwen_mt_url="", qwen_mt_key_file=None,
+                         dashscope_asr_model="qwen-audio-3.1-asr-flash", vad_model="silero", no_vad=True, workers=2,
+                         qwen_size="1.7b", qwen_root=None, desktop_config=self.files.settings)
+        relay = Relay(self.root / "cache", Mock(), Mock(), "global", segmenter=Segmenter(Segmentation(enabled=False)))
+        self.addCleanup(relay.close)
+        settings = {"translation_enhancements": {"qwen-mt:qwen-mt-flash": {
+            "enabled": True, "previous_cues": 0, "prompt": "Test guidance"}}}
+        build = partial(build_folder_pipeline, relay, settings)
+        translation = self.rule.model_copy(update={"translation_model": "qwen-mt-flash"})
+        replacement = Mock(model="qwen-mt-flash", supports_style_prompt=True)
+        with patch("aheadsubs.desktop.credentials.resolve", return_value="test-key") as credential, \
+                patch("aheadsubs.__main__.qwen_mt_client") as client, \
+                patch("aheadsubs.__main__.QwenMtTranslation", return_value=replacement) as create:
+            with folder_pipeline(relay, args, settings, translation, build) as pipeline:
+                self.assertIs(pipeline.recognizer, relay.recognizer)
+                self.assertIs(pipeline.translator, replacement)
+                self.assertEqual(pipeline.translation_settings, TranslationSettings(prompt="Test guidance"))
+                self.assertIsNotNone(replacement.usage_meter)
+            self.assertEqual(create.call_args.args[1], "qwen-mt-flash")
+            credential.assert_called_once_with(settings, "dashscope", None)
+            self.assertEqual(client.call_args.kwargs["api_key"], "test-key")
+        self.assertEqual(args.mt, "local")
+
+        speech = self.rule.model_copy(update={"speech_model": "qwen-0.6b"})
+        with patch.object(runtime, "DATA", self.files.directory), patch.object(assets, "model_ready", return_value=False):
+            with self.assertRaises(OperationError) as error, folder_pipeline(relay, args, settings, speech, build):
+                self.fail("the missing model must not be started")
+            self.assertEqual(error.exception.code, "folder_model_not_installed")
+        self.assertFalse(relay.active_background_models())
+
+        @contextmanager
+        def qwen_process(root, size):
+            self.assertEqual(size, "0.6b")
+            self.assertEqual(relay.active_background_models(), {"qwen-0.6b"})
+            yield "http://127.0.0.1:9000/v1"
+
+        with patch.object(runtime, "DATA", self.files.directory), patch.object(assets, "model_ready", return_value=True), \
+                patch("aheadsubs.inference.qwen.run", side_effect=qwen_process), \
+                patch("aheadsubs.__main__.openai_client") as client:
+            with folder_pipeline(relay, args, settings, speech, build) as pipeline:
+                self.assertEqual(pipeline.recognizer.model, "qwen3-asr")
+                self.assertIs(pipeline.translator, relay.translator)
+            self.assertEqual(client.call_args.kwargs["endpoint"], "http://127.0.0.1:9000/v1")
+        self.assertFalse(relay.active_background_models())

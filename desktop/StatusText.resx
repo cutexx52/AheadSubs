@@ -14,7 +14,7 @@
   <data name="Service" xml:space="preserve"><value>Subtitle service</value></data>
   <data name="Ready" xml:space="preserve"><value>Ready</value></data>
   <data name="Degraded" xml:space="preserve"><value>Model unavailable</value></data>
-  <data name="ServiceHint" xml:space="preserve"><value>Start or restart the service in Translation settings.</value></data>
+  <data name="ServiceHint" xml:space="preserve"><value>Start or restart the service from Subtitles.</value></data>
   <data name="Workers" xml:space="preserve"><value>Processing slots in use: {0:N0} / {1:N0}</value></data>
   <data name="Connections" xml:space="preserve"><value>{0:N0} active playback connections</value></data>
   <data name="Sources" xml:space="preserve"><value>Playback connections</value></data>

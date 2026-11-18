@@ -54,7 +54,8 @@ def create_server(relay, port, control_token=None, playback_defaults=None, *, lo
                 return
             if self.path == "/v1/health":
                 self.reply(200, {"service": "subtitle-relay", "pid": os.getpid(),
-                                 "active_sessions": relay.active_sessions(), "local_models": local_models})
+                                 "active_sessions": relay.active_sessions(),
+                                 "local_models": local_models() if callable(local_models) else local_models})
             elif self.path == "/v1/status":
                 if self.headers.get("Origin") or self.headers.get("X-AheadSubs-Status") != "1":
                     self.reply(403, {"error": "native loopback clients only"})

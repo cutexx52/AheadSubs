@@ -9,13 +9,15 @@ import subprocess
 import tempfile
 import threading
 import time
-from contextlib import closing, contextmanager
+from contextlib import ExitStack, closing, contextmanager
 from pathlib import Path
 
 import regex
 from pydantic import Field, field_validator, model_validator
 
 from .automation import Arguments, Generation, MediaPath, OperationError, generate_subtitles
+from .inference.dashscope import DASHSCOPE_ASR_MODELS
+from .inference.providers import QWEN_MT_MODELS
 from .server.protocol import playback_from_json
 
 
@@ -40,9 +42,27 @@ class WatchRule(Arguments):
     target: str | None = Field(None, pattern=r"^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$", max_length=32)
     audio: int = Field(0, ge=0, le=255)
     bilingual: bool | None = None
+    speech_model: str | None = None
+    translation_model: str | None = Field(None, max_length=263)
     suffix: str = Field("", pattern=r"^(?:[._-][A-Za-z0-9_-][A-Za-z0-9._-]{0,62})?$", max_length=64)
     destination: MediaPath | None = None
     idle_minutes: int = Field(0, ge=0, le=120)
+
+    @field_validator("speech_model")
+    @classmethod
+    def valid_speech_model(cls, value):
+        if value is not None and value not in {"whisper-small", "qwen-0.6b", "qwen-1.7b", "openai",
+                                               "compatible", *DASHSCOPE_ASR_MODELS}:
+            raise ValueError("unsupported recognition model")
+        return value
+
+    @field_validator("translation_model")
+    @classmethod
+    def valid_translation_model(cls, value):
+        if value is not None and value not in {"nllb", "gpt-4.1-mini", "chatgpt", "minimax", "compatible", *QWEN_MT_MODELS}:
+            if not re.fullmatch(r"openai:[A-Za-z0-9][A-Za-z0-9_.:-]{0,255}", value):
+                raise ValueError("unsupported translation model")
+        return value
 
     @field_validator("folder", "destination")
     @classmethod
@@ -181,9 +201,11 @@ class Deferred(Exception):
 
 
 class BackgroundPlayback:
-    def __init__(self, relay, defaults):
+    def __init__(self, relay, defaults, open_pipeline=None):
         self.relay = relay
         self.defaults = defaults
+        self.open_pipeline = open_pipeline
+        self.pipeline = None
 
     def send(self, route, data, *, timeout=5):
         if route == "close":
@@ -191,7 +213,15 @@ class BackgroundPlayback:
             return {}
         try:
             playback = playback_from_json(data, self.defaults)
-            result = self.relay.update_background(data["session"], playback)
+            if self.open_pipeline is not None:
+                if not self.relay.background_idle():
+                    raise Deferred
+                self.pipeline = self.open_pipeline()
+                self.open_pipeline = None
+            if self.pipeline is None:
+                result = self.relay.update_background(data["session"], playback)
+            else:
+                result = self.relay.update_background(data["session"], playback, self.pipeline)
         except FileNotFoundError as exc:
             raise Deferred from exc
         if result is None:
@@ -200,10 +230,11 @@ class BackgroundPlayback:
 
 
 class FolderWorker:
-    def __init__(self, files, relay, defaults, idle_seconds):
+    def __init__(self, files, relay, defaults, idle_seconds, open_pipeline=None):
         self.files = files
         self.client = BackgroundPlayback(relay, defaults)
         self.idle_seconds = idle_seconds
+        self.open_pipeline = open_pipeline
         self.stopping = threading.Event()
 
     @contextmanager
@@ -222,7 +253,9 @@ class FolderWorker:
 
     def scan(self, db, rule, now):
         initialized = db.execute("SELECT folder, output_key FROM rules WHERE id=?", (rule.id,)).fetchone()
-        output_key = rule.model_dump_json(include={"source", "target", "audio", "bilingual", "destination", "suffix"})
+        output_fields = {"source", "target", "audio", "bilingual", "destination", "suffix"}
+        output_fields.update(field for field in ("speech_model", "translation_model") if getattr(rule, field) is not None)
+        output_key = rule.model_dump_json(include=output_fields)
         try:
             db.execute("CREATE TEMP TABLE IF NOT EXISTS found (path TEXT PRIMARY KEY, fingerprint TEXT)")
             with db:
@@ -285,7 +318,22 @@ class FolderWorker:
         options = {"audio": rule.audio}
         options.update({key: getattr(rule, key) for key in ("source", "target", "bilingual")
                         if getattr(rule, key) is not None})
-        generate_subtitles(self.client, Generation(path=str(path), output=str(output), timeout=86400, **options), checkpoint)
+        generation = Generation(path=str(path), output=str(output), timeout=86400, **options)
+        with ExitStack() as resources:
+            client = self.client
+            if rule.speech_model is not None or rule.translation_model is not None:
+                if self.open_pipeline is None:
+                    raise OperationError("folder_model_unavailable")
+
+                def open_pipeline():
+                    pipeline = resources.enter_context(self.open_pipeline(rule))
+                    if pipeline is not None:
+                        resources.callback(client.relay.background_drained.wait)
+                    checkpoint()
+                    return pipeline
+
+                client = BackgroundPlayback(client.relay, client.defaults, open_pipeline)
+            generate_subtitles(client, generation, checkpoint)
 
     def next_job(self, db, rules):
         suitable = {rule.id: rule for rule in rules if rule.enabled and self.available(rule)}
