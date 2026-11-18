@@ -120,6 +120,7 @@ Example response:
 | `GET /v1/health` | Returns `service`, `pid`, `active_sessions`, `local_models`. The count covers external playback sessions. Local model IDs let the desktop protect models currently in use. |
 | `GET /v1/status` | Returns live status and weekly cloud totals. Send `X-AheadSubs-Status: 1`. Requests with `Origin` return `403`. The response uses `Cache-Control: no-store`. |
 | `POST /v1/close` | JSON `{"session":"window-1"}` releases a session; success returns `{}`. |
+| `POST /v1/settings/apply` | Desktop control requests a reload of the saved settings using the startup token and a keyed credential digest. A service advertising `live_settings` in health returns `{"applied":true}` after updating its running pipeline, or `{"applied":false}` when a restart is required. |
 | `POST /v1/shutdown` | JSON `{"token":"…"}` stops the service, requiring the startup control token. |
 | `POST /v1/inspection/regenerate` | Desktop control sends JSON `{"token":"…","key":"…"}` with the startup token and a local cache version key. Success returns `202` and the new version's `key`. A rejected job returns `409` with `error_code`. |
 

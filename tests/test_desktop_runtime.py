@@ -96,13 +96,13 @@ class DiagnosticsTest(unittest.TestCase):
             test_key = "sk-test-minimax"
             with patch.object(runtime, "DATA", root), patch.object(runtime, "CONFIG", root / "settings.json"), \
                     patch.object(runtime, "PAUSED", root / "paused"), patch.object(runtime, "service_health", return_value=None), \
-                    patch.object(runtime, "background_start") as start, patch.object(bridge.shutil, "which", return_value="ffmpeg"):
+                    patch.object(runtime, "start_locked") as start, patch.object(bridge.shutil, "which", return_value="ffmpeg"):
                 status = bridge.apply({
                     "mt": "minimax",
                     "credentials": {"minimax": {"mode": "direct", "value": test_key}},
                     "translation_enhancements": {enhancement_key: enhancements},
                 })
-                start.assert_called_once_with(restart=True)
+                start.assert_called_once_with(True, apply_saved=True, progress=None)
                 self.assertEqual(runtime.enhancement_key(runtime.config()), enhancement_key)
                 self.assertEqual(status["settings"]["translation_enhancements"][enhancement_key], enhancements)
                 self.assertEqual(credentials.resolve(runtime.config(), "minimax"), test_key)

@@ -136,8 +136,7 @@ class Transcriptions:
     def __init__(self, relay, profile):
         self.relay = relay
         self.db = relay.db
-        self.profile = hashlib.sha256(json.dumps(["transcription-v2", profile, relay.chunk],
-                                                 sort_keys=True).encode()).hexdigest()
+        self.set_profile(profile)
         self.upload_directory = relay.root / "transcription-staging"
         self.inputs = relay.root / "transcription-inputs"
         self.inflight = None
@@ -152,6 +151,10 @@ class Transcriptions:
             except BaseException:
                 self.lease.close()
                 raise
+
+    def set_profile(self, profile):
+        self.profile = hashlib.sha256(json.dumps(["transcription-v2", profile, self.relay.chunk],
+                                                 sort_keys=True).encode()).hexdigest()
 
     def _initialize(self):
         for directory in (self.upload_directory, self.inputs):
@@ -388,12 +391,12 @@ class Transcriptions:
         self.inflight = identifier
         return TranscriptionChunk(identifier, index, language)
 
-    def process(self, task):
+    def process(self, task, pipeline):
         def recognize(wav):
-            _, cues = self.relay.recognizer.recognize(wav, task.language)
+            _, cues = pipeline.recognizer.recognize(wav, task.language)
             return cues
 
-        return transcribe_chunk(self._input(task.id), task.index, self.relay.chunk, recognize, self.relay.segmenter)
+        return transcribe_chunk(self._input(task.id), task.index, pipeline.chunk, recognize, pipeline.segmenter)
 
     def finish(self, task, future):
         try:

@@ -338,7 +338,7 @@ class FolderTaskTest(unittest.TestCase):
         self.addCleanup(relay.close)
         settings = {"translation_enhancements": {"qwen-mt:qwen-mt-flash": {
             "enabled": True, "previous_cues": 0, "prompt": "Test guidance"}}}
-        build = partial(build_folder_pipeline, relay, settings)
+        build = partial(build_folder_pipeline, relay)
         translation = self.rule.model_copy(update={"translation_model": "qwen-mt-flash"})
         replacement = Mock(model="qwen-mt-flash", supports_style_prompt=True)
         with patch("aheadsubs.desktop.credentials.resolve", return_value="test-key") as credential, \
