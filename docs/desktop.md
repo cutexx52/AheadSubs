@@ -4,7 +4,7 @@
 
 ## Everyday use
 
-In **Subtitles → Language and display → Interface language**, choose **Follow Windows** (default) or a display language. Changes take effect immediately. The choices are Simplified Chinese, Traditional Chinese, Japanese, English, Korean, French, German and Spanish. Regional variants use the matching language (for example, French for Canada or Traditional Chinese for Hong Kong). Other Windows display languages fall back to English. The choice is saved for the current user and is independent of the video and subtitle languages.
+In **App settings → Interface language**, choose **Follow Windows** (default) or a display language. Changes take effect immediately. The choices are Simplified Chinese, Traditional Chinese, Japanese, English, Korean, French, German and Spanish. Regional variants use the matching language (for example, French for Canada or Traditional Chinese for Hong Kong). Other Windows display languages fall back to English. The choice is saved for the current user and is independent of the video and subtitle languages.
 
 Open **Setup presets** on the **Subtitles** home page. The control starts collapsed. Once you select a preset, **Download now** fetches the missing models. **Manage models** opens the library with the required downloads marked. When the preset is ready, select **Apply preset**. The audio language, subtitle language, and bilingual setting carry over. Manual model combinations appear as **Custom**.
 
