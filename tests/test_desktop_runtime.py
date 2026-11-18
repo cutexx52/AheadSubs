@@ -65,6 +65,28 @@ class DiagnosticsTest(unittest.TestCase):
             self.assertFalse(model.exists())
             self.assertTrue(all(path.exists() for path in (executable, aligner, smaller)))
 
+    def test_qwen_setup_repairs_an_existing_install_missing_language_detection(self):
+        from aheadsubs.inference import qwen
+
+        with tempfile.TemporaryDirectory() as directory, \
+                patch.object(qwen, "MODEL_FILES", {"1.7b": (1, "asr")}), \
+                patch.object(qwen, "ALIGNER_FILE", (1, "aligner")):
+            root = Path(directory)
+            executable, model, aligner = qwen.paths(root, "1.7b")
+            executable.parent.mkdir()
+            executable.touch()
+            for asset in (model, aligner):
+                asset.write_bytes(b"x")
+
+            self.assertFalse(qwen.installed(root, "1.7b"))
+            with patch.object(qwen, "download") as download:
+                qwen.install(root, "1.7b")
+
+            download.assert_called_once()
+            self.assertEqual(download.call_args.args[1].parent, root)
+            self.assertEqual(model.read_bytes(), b"x")
+            self.assertEqual(aligner.read_bytes(), b"x")
+
     def test_uninstall_targets_only_the_selected_hugging_face_repository(self):
         from huggingface_hub.utils import DeleteCacheStrategy
         from aheadsubs.desktop import assets, bridge
