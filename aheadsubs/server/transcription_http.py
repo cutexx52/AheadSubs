@@ -31,6 +31,8 @@ UPLOAD_TIMEOUT = 30
 DECODE_TIMEOUT = 60
 COMPATIBLE_TIMEOUT = 180
 POLL_INTERVAL = 0.2
+REJECT_DRAIN_BYTES = 65_536
+REJECT_DRAIN_TIMEOUT = 0.2
 MEDIA_FORMATS = ("aac", "flac", "m4a", "mkv", "mov", "mp3", "mp4", "ogg", "opus", "wav", "webm")
 DEMUXERS = "aac,flac,matroska,webm,mov,mp4,m4a,3gp,3g2,mj2,mp3,ogg,wav"
 
@@ -188,6 +190,26 @@ def request_parameters(fields, *, compatible):
 
 def invalid_audio():
     return RequestError(415, "invalid_audio", "Audio could not be decoded in a supported format", "file")
+
+
+def close_rejected_upload(handler):
+    if handler.command != "POST" or (
+            handler.headers.get("Content-Length") in {None, "0"} and "Transfer-Encoding" not in handler.headers):
+        return
+    # Deliver the rejection before closing a connection that may still have unread upload bytes.
+    handler.wfile.flush()
+    handler.connection.shutdown(socket.SHUT_WR)
+    deadline = time.monotonic() + REJECT_DRAIN_TIMEOUT
+    remaining = REJECT_DRAIN_BYTES
+    while remaining:
+        timeout = deadline - time.monotonic()
+        if timeout <= 0:
+            break
+        handler.connection.settimeout(timeout)
+        block = handler.rfile.read1(min(remaining, 8192))
+        if not block:
+            break
+        remaining -= len(block)
 
 
 def decode_upload(upload, output, limit):
@@ -366,5 +388,6 @@ class TranscriptionHTTP:
             headers["WWW-Authenticate"] = "Bearer"
         try:
             handler.reply(exc.status, payload, headers=headers)
+            close_rejected_upload(handler)
         except OSError:
             pass
